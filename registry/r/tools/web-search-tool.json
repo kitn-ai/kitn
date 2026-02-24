@@ -1,0 +1,28 @@
+{
+  "$schema": "https://kitn.dev/schema/registry-item.json",
+  "name": "web-search-tool",
+  "type": "kitn:tool",
+  "description": "Search the web using Brave Search API and return structured results",
+  "dependencies": [
+    "ai",
+    "zod"
+  ],
+  "registryDependencies": [],
+  "envVars": {
+    "BRAVE_API_KEY": "Brave Search API subscription token (https://brave.com/search/api/)"
+  },
+  "files": [
+    {
+      "path": "tools/web-search.ts",
+      "content": "import { tool } from \"ai\";\nimport { z } from \"zod\";\n\nconst BRAVE_SEARCH_URL = \"https://api.search.brave.com/res/v1/web/search\";\n\n/**\n * Strip HTML tags and decode common HTML entities from a string.\n * Used to clean Brave Search descriptions which contain markup.\n */\nfunction stripHtml(text: string): string {\n  return text\n    .replace(/<[^>]+>/g, \"\")\n    .replace(/&#x27;/g, \"'\")\n    .replace(/&#x2F;/g, \"/\")\n    .replace(/&#39;/g, \"'\")\n    .replace(/&quot;/g, '\"')\n    .replace(/&amp;/g, \"&\")\n    .replace(/&lt;/g, \"<\")\n    .replace(/&gt;/g, \">\")\n    .replace(/&nbsp;/g, \" \")\n    .trim();\n}\n\nexport const searchWebTool = tool({\n  description:\n    \"Search the web using Brave Search. Returns a list of results with titles, URLs, and descriptions.\",\n  inputSchema: z.object({\n    query: z.string().describe(\"The search query\"),\n    count: z\n      .number()\n      .min(1)\n      .max(10)\n      .default(5)\n      .describe(\"Number of results to return (1-10, default 5)\"),\n  }),\n  execute: async ({ query, count }) => {\n    const apiKey = process.env.BRAVE_API_KEY;\n    if (!apiKey) {\n      throw new Error(\"BRAVE_API_KEY environment variable is required\");\n    }\n\n    const params = new URLSearchParams({\n      q: query,\n      count: String(count ?? 5),\n    });\n\n    const res = await fetch(`${BRAVE_SEARCH_URL}?${params}`, {\n      headers: {\n        Accept: \"application/json\",\n        \"Accept-Encoding\": \"gzip\",\n        \"X-Subscription-Token\": apiKey,\n      },\n    });\n\n    if (!res.ok) {\n      throw new Error(`Brave Search failed: ${res.status} ${res.statusText}`);\n    }\n\n    const data = await res.json();\n    const webResults = data.web?.results ?? [];\n\n    return {\n      query,\n      resultCount: webResults.length,\n      results: webResults.map(\n        (r: {\n          title: string;\n          url: string;\n          description: string;\n          thumbnail?: { src: string };\n        }) => ({\n          title: stripHtml(r.title),\n          url: r.url,\n          description: stripHtml(r.description),\n          ...(r.thumbnail?.src && { thumbnail: r.thumbnail.src }),\n        })\n      ),\n    };\n  },\n});\n",
+      "type": "kitn:tool"
+    }
+  ],
+  "docs": "Requires a BRAVE_API_KEY environment variable. Get one at https://brave.com/search/api/. The tool searches the web and returns titles, URLs, and descriptions.",
+  "categories": [
+    "web",
+    "search",
+    "api"
+  ],
+  "version": "1.0.0"
+}

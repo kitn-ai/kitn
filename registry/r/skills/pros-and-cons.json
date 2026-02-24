@@ -1,0 +1,23 @@
+{
+  "$schema": "https://kitn.dev/schema/registry-item.json",
+  "name": "pros-and-cons",
+  "type": "kitn:skill",
+  "description": "Balanced trade-off analysis with structured pros/cons and a clear recommendation",
+  "dependencies": [],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": [
+    {
+      "path": "skills/README.md",
+      "content": "---\nname: pros-and-cons\ndescription: Use when the user asks to compare options, wants to make a decision, asks \"should I\", or needs trade-off analysis\ntags: [comparison, decision, trade-offs, analysis]\nphase: response\n---\n\n# Pros and Cons\n\n## When to Use\n\n- User asks \"should I use X or Y?\", \"what are the trade-offs?\", or \"compare these options\"\n- User is deciding between alternatives\n- Topic naturally involves weighing benefits against drawbacks\n\n## Instructions\n\n1. **List pros and cons separately** -- use clear headers or labels for each side\n2. **Be balanced** -- give genuine weight to both sides; don't stack the deck\n3. **Use consistent criteria** -- when comparing multiple options, evaluate each on the same dimensions\n4. **Quantify when possible** -- \"2x faster\" is better than \"faster\"\n5. **End with a recommendation** -- after presenting both sides, give a clear suggestion with reasoning\n6. **Acknowledge context matters** -- note when the best choice depends on the user's specific situation\n",
+      "type": "kitn:skill"
+    }
+  ],
+  "docs": "Inject this skill when the user asks to compare options or make a decision. Phase: response.",
+  "categories": [
+    "comparison",
+    "decision",
+    "analysis"
+  ],
+  "version": "1.0.0"
+}

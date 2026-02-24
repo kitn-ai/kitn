@@ -1,0 +1,25 @@
+{
+  "$schema": "https://kitn.dev/schema/registry-item.json",
+  "name": "memory-agent",
+  "type": "kitn:agent",
+  "description": "Memory-enabled agent that saves and recalls information across conversations",
+  "dependencies": [
+    "ai",
+    "zod"
+  ],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": [
+    {
+      "path": "agents/memory-agent.ts",
+      "content": "import { tool } from \"ai\";\nimport { z } from \"zod\";\n\nconst SYSTEM_PROMPT = `You are a memory-enabled agent. You can remember information across conversations by saving and recalling memories.\n\nWhen the user tells you to remember something:\n1. Use the saveMemory tool to store the information with a descriptive key\n2. Confirm what you've saved\n\nWhen the user asks about something they previously told you:\n1. Use the recallMemory tool to look up specific information\n2. Use the listMemories tool to see all stored memories if needed\n3. Respond based on what you find\n\nBe proactive about saving relevant preferences, facts, and context the user shares.`;\n\n/**\n * In-memory store for demonstration purposes.\n * Replace with your own persistent storage backend.\n */\nconst memoryStore = new Map<string, { key: string; value: string; savedAt: string }>();\n\nconst saveMemoryTool = tool({\n  description: \"Save a piece of information to persistent memory\",\n  inputSchema: z.object({\n    key: z\n      .string()\n      .describe(\"A descriptive key for this memory (e.g. 'user_name', 'preferred_language')\"),\n    value: z.string().describe(\"The information to remember\"),\n  }),\n  execute: async ({ key, value }) => {\n    const entry = { key, value, savedAt: new Date().toISOString() };\n    memoryStore.set(key, entry);\n    return { saved: true, key: entry.key, value: entry.value };\n  },\n});\n\nconst recallMemoryTool = tool({\n  description: \"Recall a specific piece of information from memory by key\",\n  inputSchema: z.object({\n    key: z.string().describe(\"The key of the memory to recall\"),\n  }),\n  execute: async ({ key }) => {\n    const entry = memoryStore.get(key);\n    if (!entry) return { found: false, key };\n    return { found: true, key: entry.key, value: entry.value };\n  },\n});\n\nconst listMemoriesTool = tool({\n  description: \"List all stored memories\",\n  inputSchema: z.object({}),\n  execute: async () => {\n    const memories = [...memoryStore.values()];\n    return {\n      count: memories.length,\n      memories: memories.map((m) => ({ key: m.key, value: m.value })),\n    };\n  },\n});\n\nexport const MEMORY_AGENT_CONFIG = {\n  system: SYSTEM_PROMPT,\n  tools: {\n    saveMemory: saveMemoryTool,\n    recallMemory: recallMemoryTool,\n    listMemories: listMemoriesTool,\n  },\n};\n",
+      "type": "kitn:agent"
+    }
+  ],
+  "docs": "Demonstrates persistent memory with saveMemory, recallMemory, and listMemories tools. Wire the tool execute functions to your own storage backend.",
+  "categories": [
+    "memory",
+    "persistence"
+  ],
+  "version": "1.0.0"
+}

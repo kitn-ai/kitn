@@ -1,0 +1,24 @@
+{
+  "$schema": "https://kitn.dev/schema/registry-item.json",
+  "name": "compact-agent",
+  "type": "kitn:agent",
+  "description": "Conversation compaction agent that summarizes verbose conversations into concise context blocks",
+  "dependencies": [
+    "ai"
+  ],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": [
+    {
+      "path": "agents/compact-agent.ts",
+      "content": "const SYSTEM_PROMPT = `You are a conversation compaction agent. Your job is to take a long, verbose conversation and compress it into a concise summary that preserves all essential information.\n\nRules:\n1. Preserve all key facts, data points, and decisions\n2. Remove pleasantries, filler words, and redundant explanations\n3. Collapse repetitive back-and-forth into compact statements\n4. Maintain context someone would need to continue the conversation\n5. Use bullet points or short sentences -- no paragraphs\n6. Include specific numbers, names, and concrete details\n7. The result should be dramatically shorter than the original\n\nFormat your output as a compact context block that could replace the full conversation history.`;\n\nexport const COMPACT_AGENT_CONFIG = {\n  system: SYSTEM_PROMPT,\n  tools: {} as Record<string, never>,\n};\n",
+      "type": "kitn:agent"
+    }
+  ],
+  "docs": "A tool-less agent that compresses long conversations into compact context blocks preserving all essential information.",
+  "categories": [
+    "utility",
+    "summarization"
+  ],
+  "version": "1.0.0"
+}

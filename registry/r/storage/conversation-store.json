@@ -1,0 +1,23 @@
+{
+  "$schema": "https://kitn.dev/schema/registry-item.json",
+  "name": "conversation-store",
+  "type": "kitn:storage",
+  "description": "File-based JSON conversation storage with append, list, clear, and delete operations",
+  "dependencies": [],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": [
+    {
+      "path": "storage/conversation-store.ts",
+      "content": "import { readFile, writeFile, mkdir, readdir, unlink } from \"node:fs/promises\";\nimport { existsSync } from \"node:fs\";\n\n/** A single message within a conversation */\nexport interface ConversationMessage {\n  role: \"user\" | \"assistant\";\n  content: string;\n  timestamp: string;\n  metadata?: Record<string, unknown>;\n}\n\n/** Full conversation record including all messages */\nexport interface Conversation {\n  id: string;\n  messages: ConversationMessage[];\n  createdAt: string;\n  updatedAt: string;\n}\n\n/** Lightweight conversation summary for listing */\nexport interface ConversationSummary {\n  id: string;\n  messageCount: number;\n  updatedAt: string;\n}\n\nexport interface ConversationStore {\n  get(id: string): Promise<Conversation | null>;\n  list(): Promise<ConversationSummary[]>;\n  create(id: string): Promise<Conversation>;\n  append(id: string, message: ConversationMessage): Promise<Conversation>;\n  delete(id: string): Promise<boolean>;\n  clear(id: string): Promise<Conversation>;\n}\n\nexport function createConversationStore(dataDir: string): ConversationStore {\n  const dir = `${dataDir}/conversations`;\n\n  let lock: Promise<void> = Promise.resolve();\n  function withLock<T>(fn: () => Promise<T>): Promise<T> {\n    const prev = lock;\n    let result: Promise<T>;\n    const next = prev\n      .then(async () => { result = fn(); await result; })\n      .catch(() => {});\n    lock = next;\n    return next.then(() => result!);\n  }\n\n  function filePath(id: string): string { return `${dir}/${id}.json`; }\n\n  async function ensureDir() {\n    if (!existsSync(dir)) await mkdir(dir, { recursive: true });\n  }\n\n  async function readConversation(id: string): Promise<Conversation | null> {\n    const path = filePath(id);\n    if (!existsSync(path)) return null;\n    const raw = await readFile(path, \"utf-8\");\n    try { return JSON.parse(raw); } catch { return null; }\n  }\n\n  async function writeConversation(conv: Conversation): Promise<void> {\n    await ensureDir();\n    await writeFile(filePath(conv.id), JSON.stringify(conv, null, 2));\n  }\n\n  return {\n    async get(id) {\n      await ensureDir();\n      return readConversation(id);\n    },\n\n    async list() {\n      await ensureDir();\n      if (!existsSync(dir)) return [];\n      const files = await readdir(dir);\n      const summaries: ConversationSummary[] = [];\n      for (const file of files) {\n        if (!file.endsWith(\".json\")) continue;\n        const id = file.replace(\".json\", \"\");\n        const conv = await readConversation(id);\n        if (conv) {\n          summaries.push({ id: conv.id, messageCount: conv.messages.length, updatedAt: conv.updatedAt });\n        }\n      }\n      return summaries;\n    },\n\n    create(id) {\n      return withLock(async () => {\n        await ensureDir();\n        const now = new Date().toISOString();\n        const conv: Conversation = { id, messages: [], createdAt: now, updatedAt: now };\n        await writeConversation(conv);\n        return conv;\n      });\n    },\n\n    append(id, message) {\n      return withLock(async () => {\n        await ensureDir();\n        let conv = await readConversation(id);\n        if (!conv) {\n          const now = new Date().toISOString();\n          conv = { id, messages: [], createdAt: now, updatedAt: now };\n        }\n        conv.messages.push(message);\n        conv.updatedAt = new Date().toISOString();\n        await writeConversation(conv);\n        return conv;\n      });\n    },\n\n    async delete(id) {\n      const path = filePath(id);\n      if (!existsSync(path)) return false;\n      await unlink(path);\n      return true;\n    },\n\n    clear(id) {\n      return withLock(async () => {\n        let conv = await readConversation(id);\n        if (!conv) throw new Error(`Conversation not found: ${id}`);\n        conv.messages = [];\n        conv.updatedAt = new Date().toISOString();\n        await writeConversation(conv);\n        return conv;\n      });\n    },\n  };\n}\n",
+      "type": "kitn:storage"
+    }
+  ],
+  "docs": "Call createConversationStore(dataDir) with a path to your data directory. Conversations are stored as individual JSON files. Includes write locking for concurrent safety.",
+  "categories": [
+    "storage",
+    "conversations",
+    "persistence"
+  ],
+  "version": "1.0.0"
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://kitn.dev/schema/registry-item.json",
+  "name": "web-search-agent",
+  "type": "kitn:agent",
+  "description": "Web search specialist agent using Brave Search with page fetching and OpenGraph extraction",
+  "dependencies": [
+    "ai"
+  ],
+  "registryDependencies": [
+    "web-search-tool",
+    "web-fetch-tool"
+  ],
+  "envVars": {},
+  "files": [
+    {
+      "path": "agents/web-search-agent.ts",
+      "content": "import { searchWebTool } from \"../tools/web-search.js\";\nimport { fetchPageTool, getPageMetaTool } from \"../tools/web-fetch.js\";\n\nconst SYSTEM_PROMPT = `You are a web search specialist agent. Your job is to find information on the internet and provide accurate, well-sourced answers.\n\nYou have three tools:\n\n1. **searchWeb** -- Search the web for a query. Use this first to find relevant results.\n2. **fetchPage** -- Fetch and extract readable text from a specific URL. Use this when you need detailed content from a page (e.g., menus, full articles, product details).\n3. **getPageMeta** -- Extract OpenGraph metadata from a URL. Use this when a rich preview card would be helpful (restaurants, articles, products, businesses).\n\nWorkflow:\n1. Start with searchWeb to find relevant results\n2. If the user needs specific details from a page, use fetchPage on the most relevant URLs\n3. If the user would benefit from a visual preview card, use getPageMeta on key URLs\n4. Synthesize the information into a clear, helpful response\n\nAlways:\n- Cite your sources with URLs\n- Be upfront if search results are limited or inconclusive\n- Use fetchPage selectively -- only on the most relevant 1-2 URLs, not every result`;\n\nexport const WEB_SEARCH_AGENT_CONFIG = {\n  system: SYSTEM_PROMPT,\n  tools: {\n    searchWeb: searchWebTool,\n    fetchPage: fetchPageTool,\n    getPageMeta: getPageMetaTool,\n  },\n};\n",
+      "type": "kitn:agent"
+    }
+  ],
+  "docs": "Combines web-search-tool and web-fetch-tool to search the web, fetch page content, and extract OpenGraph metadata.",
+  "categories": [
+    "web",
+    "search"
+  ],
+  "version": "1.0.0"
+}

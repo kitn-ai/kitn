@@ -1,0 +1,26 @@
+{
+  "$schema": "https://kitn.dev/schema/registry-item.json",
+  "name": "guardrails-agent",
+  "type": "kitn:agent",
+  "description": "Guardrails finance advisor that classifies input before generating advice, blocking off-topic queries",
+  "dependencies": [
+    "ai",
+    "zod"
+  ],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": [
+    {
+      "path": "agents/guardrails-agent.ts",
+      "content": "import { z } from \"zod\";\n\nconst classificationSchema = z.object({\n  allowed: z.boolean().describe(\"Whether the query is a personal finance question\"),\n  category: z.enum([\n    \"budgeting\",\n    \"investing\",\n    \"debt\",\n    \"savings\",\n    \"taxes\",\n    \"retirement\",\n    \"off-topic\",\n  ]).describe(\"The finance category, or 'off-topic' if not finance-related\"),\n  reason: z.string().describe(\"Brief explanation of the classification decision\"),\n});\n\nconst CLASSIFICATION_PROMPT = `You are a content classifier for a personal finance advisor.\nYour job is to determine whether the user's message is a personal finance question.\n\nAllowed topics: budgeting, investing, debt management, savings, taxes, retirement planning.\nBlock anything unrelated to personal finance (cooking, sports, coding, general chat, etc.).\n\nClassify the message and provide a brief reason for your decision.`;\n\nconst FINANCE_ADVISOR_PROMPT = `You are a knowledgeable personal finance advisor.\nProvide clear, actionable advice based on the user's question.\n\nGuidelines:\n- Give practical, specific advice\n- Mention relevant rules of thumb (e.g., 50/30/20 budget, emergency fund = 3-6 months expenses)\n- Note when professional advice should be sought for complex situations\n- Keep responses concise but thorough`;\n\nexport const GUARDRAILS_AGENT_CONFIG = {\n  classificationSchema,\n  classificationPrompt: CLASSIFICATION_PROMPT,\n  advicePrompt: FINANCE_ADVISOR_PROMPT,\n  system: CLASSIFICATION_PROMPT,\n  tools: {} as Record<string, never>,\n};\n",
+      "type": "kitn:agent"
+    }
+  ],
+  "docs": "Demonstrates the guardrails pattern: Phase 1 classifies whether the query is a personal finance question (using generateObject), Phase 2 generates advice only for allowed queries.",
+  "categories": [
+    "guardrails",
+    "finance",
+    "safety"
+  ],
+  "version": "1.0.0"
+}

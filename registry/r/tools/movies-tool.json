@@ -1,0 +1,28 @@
+{
+  "$schema": "https://kitn.dev/schema/registry-item.json",
+  "name": "movies-tool",
+  "type": "kitn:tool",
+  "description": "Search and get details for movies using The Movie Database (TMDB) API",
+  "dependencies": [
+    "ai",
+    "zod"
+  ],
+  "registryDependencies": [],
+  "envVars": {
+    "TMDB_API_KEY": "TMDB API bearer token (https://www.themoviedb.org/settings/api)"
+  },
+  "files": [
+    {
+      "path": "tools/movies.ts",
+      "content": "import { tool } from \"ai\";\nimport { z } from \"zod\";\n\nconst TMDB_BASE = \"https://api.themoviedb.org/3\";\n\nfunction tmdbHeaders() {\n  const apiKey = process.env.TMDB_API_KEY;\n  if (!apiKey) {\n    throw new Error(\"TMDB_API_KEY environment variable is required\");\n  }\n  return {\n    Authorization: `Bearer ${apiKey}`,\n    \"Content-Type\": \"application/json\",\n  };\n}\n\nexport const movieSearchTool = tool({\n  description:\n    \"Search for movies by title, keywords, or description. Returns a list of matching movies with ratings.\",\n  inputSchema: z.object({\n    query: z.string().describe(\"Movie search query (title, keywords, etc.)\"),\n  }),\n  execute: async ({ query }) => {\n    const response = await fetch(\n      `${TMDB_BASE}/search/movie?query=${encodeURIComponent(query)}&language=en-US&page=1`,\n      { headers: tmdbHeaders() }\n    );\n\n    if (!response.ok) throw new Error(`TMDB API error: ${response.statusText}`);\n\n    const data = await response.json();\n\n    return {\n      movies: (data.results ?? []).slice(0, 10).map((m: any) => ({\n        id: m.id,\n        title: m.title,\n        overview: m.overview?.slice(0, 200) ?? \"\",\n        releaseDate: m.release_date ?? null,\n        voteAverage: m.vote_average,\n        voteCount: m.vote_count,\n        posterPath: m.poster_path\n          ? `https://image.tmdb.org/t/p/w500${m.poster_path}`\n          : null,\n      })),\n      totalResults: data.total_results,\n    };\n  },\n});\n\nexport const movieDetailTool = tool({\n  description:\n    \"Get detailed information about a specific movie by its TMDB ID.\",\n  inputSchema: z.object({\n    movieId: z.number().describe(\"The TMDB movie ID\"),\n  }),\n  execute: async ({ movieId }) => {\n    const response = await fetch(\n      `${TMDB_BASE}/movie/${movieId}?language=en-US`,\n      { headers: tmdbHeaders() }\n    );\n\n    if (!response.ok) throw new Error(`TMDB API error: ${response.statusText}`);\n\n    const m = await response.json();\n\n    return {\n      id: m.id,\n      title: m.title,\n      tagline: m.tagline ?? \"\",\n      overview: m.overview ?? \"\",\n      releaseDate: m.release_date ?? null,\n      runtime: m.runtime,\n      genres: (m.genres ?? []).map((g: any) => g.name),\n      voteAverage: m.vote_average,\n      voteCount: m.vote_count,\n      budget: m.budget,\n      revenue: m.revenue,\n      posterPath: m.poster_path\n        ? `https://image.tmdb.org/t/p/w500${m.poster_path}`\n        : null,\n      homepage: m.homepage ?? null,\n    };\n  },\n});\n",
+      "type": "kitn:tool"
+    }
+  ],
+  "docs": "Requires a TMDB_API_KEY environment variable. Get one at https://www.themoviedb.org/settings/api. Provides movieSearchTool and movieDetailTool.",
+  "categories": [
+    "movies",
+    "entertainment",
+    "api"
+  ],
+  "version": "1.0.0"
+}

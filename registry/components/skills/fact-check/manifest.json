@@ -1,0 +1,11 @@
+{
+  "name": "fact-check",
+  "type": "kitn:skill",
+  "description": "Verifies claims with evidence, flags confidence levels, and separates fact from belief",
+  "dependencies": [],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": ["README.md"],
+  "docs": "Inject this skill when the user asks to verify claims or wants evidence-based answers. Phase: query (affects research behavior).",
+  "categories": ["verification", "accuracy", "research"]
+}

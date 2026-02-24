@@ -34,4 +34,13 @@ program
     await listCommand(opts);
   });
 
+program
+  .command("diff")
+  .description("Show differences between local and registry version")
+  .argument("<component>", "component name")
+  .action(async (component: string) => {
+    const { diffCommand } = await import("./commands/diff.js");
+    await diffCommand(component);
+  });
+
 program.parse();

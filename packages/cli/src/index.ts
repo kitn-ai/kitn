@@ -52,4 +52,13 @@ program
     await removeCommand(component);
   });
 
+program
+  .command("update")
+  .description("Update installed components to latest registry version")
+  .argument("[components...]", "component names to update")
+  .action(async (components: string[]) => {
+    const { updateCommand } = await import("./commands/update.js");
+    await updateCommand(components);
+  });
+
 program.parse();

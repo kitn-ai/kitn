@@ -1,0 +1,11 @@
+{
+  "name": "compact-agent",
+  "type": "kitn:agent",
+  "description": "Conversation compaction agent that summarizes verbose conversations into concise context blocks",
+  "dependencies": ["ai"],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": ["compact-agent.ts"],
+  "docs": "A tool-less agent that compresses long conversations into compact context blocks preserving all essential information.",
+  "categories": ["utility", "summarization"]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "skills-agent",
+  "type": "kitn:agent",
+  "description": "Skills management agent that creates, edits, and manages behavioral skills for other agents",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": ["skills-agent.ts"],
+  "docs": "Provides CRUD tools for managing behavioral skills (markdown documents with frontmatter). Wire the tool execute functions to your own skill storage backend.",
+  "categories": ["skills", "management"]
+}

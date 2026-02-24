@@ -1,0 +1,11 @@
+{
+  "name": "supervisor-agent",
+  "type": "kitn:agent",
+  "description": "Supervisor agent that routes queries to specialist agents and orchestrates parallel task execution",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["weather-agent", "hackernews-agent"],
+  "envVars": {},
+  "files": ["supervisor-agent.ts"],
+  "docs": "The supervisor dynamically discovers registered agents and routes queries using routeToAgent (single-domain) or createTask (parallel multi-domain). Customize by adding more agent dependencies.",
+  "categories": ["orchestration", "routing"]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "taskboard-agent",
+  "type": "kitn:agent",
+  "description": "Task board agent that manages a Kanban board through natural language",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": ["taskboard-agent.ts"],
+  "docs": "Manages a Kanban-style board with To Do, In Progress, and Done columns. Wire the tool execute functions to your own task storage backend.",
+  "categories": ["tasks", "kanban", "productivity"]
+}

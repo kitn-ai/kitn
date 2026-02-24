@@ -1,0 +1,11 @@
+{
+  "name": "human-in-loop-agent",
+  "type": "kitn:agent",
+  "description": "Agent that proposes actions for human approval before executing them",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": ["human-in-loop-agent.ts"],
+  "docs": "Demonstrates human-in-the-loop pattern with schema-only tools (sendEmail, deleteData, publishContent). Actions are queued for approval, not auto-executed.",
+  "categories": ["human-in-loop", "approval", "safety"]
+}

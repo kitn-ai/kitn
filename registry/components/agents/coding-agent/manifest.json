@@ -1,0 +1,11 @@
+{
+  "name": "coding-agent",
+  "type": "kitn:agent",
+  "description": "Code generation and execution agent with sandboxed JavaScript runtime",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": ["coding-agent.ts"],
+  "docs": "The coding agent writes and executes JavaScript in a sandboxed vm context. No file system or network access in the sandbox.",
+  "categories": ["coding", "execution"]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "knowledge-agent",
+  "type": "kitn:agent",
+  "description": "Movie knowledge and recommendation agent powered by TMDB",
+  "dependencies": ["ai"],
+  "registryDependencies": ["movies-tool"],
+  "envVars": {},
+  "files": ["knowledge-agent.ts"],
+  "docs": "Uses movies-tool to search and get movie details. Provides recommendations in an engaging film-critic style.",
+  "categories": ["movies", "entertainment"]
+}

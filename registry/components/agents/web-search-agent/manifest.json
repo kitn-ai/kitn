@@ -1,0 +1,11 @@
+{
+  "name": "web-search-agent",
+  "type": "kitn:agent",
+  "description": "Web search specialist agent using Brave Search with page fetching and OpenGraph extraction",
+  "dependencies": ["ai"],
+  "registryDependencies": ["web-search-tool", "web-fetch-tool"],
+  "envVars": {},
+  "files": ["web-search-agent.ts"],
+  "docs": "Combines web-search-tool and web-fetch-tool to search the web, fetch page content, and extract OpenGraph metadata.",
+  "categories": ["web", "search"]
+}

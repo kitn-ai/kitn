@@ -1,0 +1,11 @@
+{
+  "name": "web-fetch-tool",
+  "type": "kitn:tool",
+  "description": "Fetch web pages and extract readable text content or OpenGraph metadata",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": ["web-fetch.ts"],
+  "docs": "Provides two tools: fetchPageTool (extract readable text from URLs) and getPageMetaTool (extract OpenGraph metadata for rich cards).",
+  "categories": ["web", "fetch", "scraping"]
+}

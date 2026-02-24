@@ -1,0 +1,13 @@
+{
+  "name": "web-search-tool",
+  "type": "kitn:tool",
+  "description": "Search the web using Brave Search API and return structured results",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": [],
+  "envVars": {
+    "BRAVE_API_KEY": "Brave Search API subscription token (https://brave.com/search/api/)"
+  },
+  "files": ["web-search.ts"],
+  "docs": "Requires a BRAVE_API_KEY environment variable. Get one at https://brave.com/search/api/. The tool searches the web and returns titles, URLs, and descriptions.",
+  "categories": ["web", "search", "api"]
+}

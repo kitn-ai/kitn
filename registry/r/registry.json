@@ -1,0 +1,30 @@
+{
+  "$schema": "https://kitn.dev/schema/registry.json",
+  "version": "1.0.0",
+  "items": [
+    {
+      "name": "weather-agent",
+      "type": "kitn:agent",
+      "description": "Weather specialist agent using Open-Meteo API data",
+      "registryDependencies": [
+        "weather-tool"
+      ],
+      "categories": [
+        "weather",
+        "api"
+      ],
+      "version": "1.0.0"
+    },
+    {
+      "name": "weather-tool",
+      "type": "kitn:tool",
+      "description": "Get current weather information for any location using Open-Meteo API",
+      "registryDependencies": [],
+      "categories": [
+        "weather",
+        "api"
+      ],
+      "version": "1.0.0"
+    }
+  ]
+}

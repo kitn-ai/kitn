@@ -43,4 +43,13 @@ program
     await diffCommand(component);
   });
 
+program
+  .command("remove")
+  .description("Remove an installed component")
+  .argument("<component>", "component name to remove")
+  .action(async (component: string) => {
+    const { removeCommand } = await import("./commands/remove.js");
+    await removeCommand(component);
+  });
+
 program.parse();

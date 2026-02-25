@@ -15,6 +15,7 @@ import {
 import { installDependencies } from "../installers/dep-installer.js";
 import { checkEnvVars } from "../installers/env-checker.js";
 import { rewriteKitnImports } from "../installers/import-rewriter.js";
+import { patchProjectTsconfig } from "../installers/tsconfig-patcher.js";
 import { contentHash } from "../utils/hash.js";
 import { typeToDir, type RegistryItem, type ComponentType } from "../registry/schema.js";
 
@@ -38,6 +39,15 @@ export async function addCommand(components: string[], opts: AddOptions) {
     process.exit(1);
   }
 
+  // Resolve "routes" to framework-specific package name
+  const resolvedComponents = components.map((c) => {
+    if (c === "routes") {
+      const fw = config.framework ?? "hono";
+      return fw;
+    }
+    return c;
+  });
+
   const fetcher = new RegistryFetcher(config.registries);
 
   const s = p.spinner();
@@ -45,7 +55,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
 
   let resolved: RegistryItem[];
   try {
-    resolved = await resolveDependencies(components, async (name) => {
+    resolved = await resolveDependencies(resolvedComponents, async (name) => {
       const index = await fetcher.fetchIndex();
       const indexItem = index.items.find((i) => i.name === name);
       if (!indexItem) throw new Error(`Component '${name}' not found in registry`);
@@ -62,7 +72,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
 
   p.log.info("Components to install:");
   for (const item of resolved) {
-    const isExplicit = components.includes(item.name);
+    const isExplicit = resolvedComponents.includes(item.name) || components.includes(item.name);
     const label = isExplicit ? item.name : `${item.name} ${pc.dim("(dependency)")}`;
     p.log.message(`  ${pc.cyan(label)}`);
   }
@@ -79,70 +89,79 @@ export async function addCommand(components: string[], opts: AddOptions) {
       allEnvWarnings.push(...checkEnvVars(item.envVars));
     }
 
-    for (const file of item.files) {
-      const aliasKey = (() => {
-        switch (item.type) {
-          case "kitn:agent": return "agents";
-          case "kitn:tool": return "tools";
-          case "kitn:skill": return "skills";
-          case "kitn:storage": return "storage";
-        }
-      })() as keyof typeof config.aliases;
+    if (item.type === "kitn:package") {
+      // Package install — multi-file, preserved directory structure
+      const baseDir = config.aliases.base ?? "src/ai";
 
-      const fileName = file.path.split("/").pop()!;
-      const targetPath = join(cwd, config.aliases[aliasKey], fileName);
-      const relativePath = join(config.aliases[aliasKey], fileName);
-      const content = rewriteKitnImports(file.content, item.type, fileName, config.aliases);
+      for (const file of item.files) {
+        const targetPath = join(cwd, baseDir, file.path);
+        const relativePath = join(baseDir, file.path);
 
-      const status = await checkFileStatus(targetPath, content);
+        const status = await checkFileStatus(targetPath, file.content);
 
-      switch (status) {
-        case FileStatus.New:
-          await writeComponentFile(targetPath, content);
-          created.push(relativePath);
-          break;
+        switch (status) {
+          case FileStatus.New:
+            await writeComponentFile(targetPath, file.content);
+            created.push(relativePath);
+            break;
 
-        case FileStatus.Identical:
-          skipped.push(relativePath);
-          break;
+          case FileStatus.Identical:
+            skipped.push(relativePath);
+            break;
 
-        case FileStatus.Different:
-          if (opts.overwrite) {
-            await writeComponentFile(targetPath, content);
-            updated.push(relativePath);
-          } else {
-            const existing = await readExistingFile(targetPath);
-            const diff = generateDiff(relativePath, existing ?? "", content);
-            p.log.message(pc.dim(diff));
-
-            const action = await p.select({
-              message: `${relativePath} already exists and differs. What to do?`,
-              options: [
-                { value: "skip", label: "Keep local version" },
-                { value: "overwrite", label: "Overwrite with registry version" },
-              ],
-            });
-
-            if (!p.isCancel(action) && action === "overwrite") {
-              await writeComponentFile(targetPath, content);
+          case FileStatus.Different:
+            if (opts.overwrite) {
+              await writeComponentFile(targetPath, file.content);
               updated.push(relativePath);
             } else {
-              skipped.push(relativePath);
-            }
-          }
-          break;
-      }
-    }
+              const existing = await readExistingFile(targetPath);
+              const diff = generateDiff(relativePath, existing ?? "", file.content);
+              p.log.message(pc.dim(diff));
 
-    const installed = config._installed ?? {};
-    const allContent = item.files.map((f) => {
-      const fn = f.path.split("/").pop()!;
-      return rewriteKitnImports(f.content, item.type, fn, config.aliases);
-    }).join("\n");
-    installed[item.name] = {
-      version: item.version ?? "1.0.0",
-      installedAt: new Date().toISOString(),
-      files: item.files.map((f) => {
+              const action = await p.select({
+                message: `${relativePath} already exists and differs. What to do?`,
+                options: [
+                  { value: "skip", label: "Keep local version" },
+                  { value: "overwrite", label: "Overwrite with registry version" },
+                ],
+              });
+
+              if (!p.isCancel(action) && action === "overwrite") {
+                await writeComponentFile(targetPath, file.content);
+                updated.push(relativePath);
+              } else {
+                skipped.push(relativePath);
+              }
+            }
+            break;
+        }
+      }
+
+      // Patch tsconfig.json with package paths
+      if (item.tsconfig) {
+        const resolvedPaths: Record<string, string[]> = {};
+        const installDir = item.installDir ?? item.name;
+        for (const [key, values] of Object.entries(item.tsconfig)) {
+          resolvedPaths[key] = values.map((v) => `./${join(baseDir, installDir, v)}`);
+        }
+        await patchProjectTsconfig(cwd, resolvedPaths);
+        p.log.info(`Patched tsconfig.json with paths: ${Object.keys(resolvedPaths).join(", ")}`);
+      }
+
+      // Track in _installed
+      const installed = config._installed ?? {};
+      const allContent = item.files.map((f) => f.content).join("\n");
+      installed[item.name] = {
+        version: item.version ?? "1.0.0",
+        installedAt: new Date().toISOString(),
+        files: item.files.map((f) => join(baseDir, f.path)),
+        hash: contentHash(allContent),
+      };
+      config._installed = installed;
+
+    } else {
+      // Regular component install — single file, import rewriting
+      for (const file of item.files) {
         const aliasKey = (() => {
           switch (item.type) {
             case "kitn:agent": return "agents";
@@ -150,13 +169,78 @@ export async function addCommand(components: string[], opts: AddOptions) {
             case "kitn:skill": return "skills";
             case "kitn:storage": return "storage";
           }
-        })() as keyof typeof config.aliases;
-        const fileName = f.path.split("/").pop()!;
-        return join(config.aliases[aliasKey], fileName);
-      }),
-      hash: contentHash(allContent),
-    };
-    config._installed = installed;
+        })() as "agents" | "tools" | "skills" | "storage";
+
+        const fileName = file.path.split("/").pop()!;
+        const targetPath = join(cwd, config.aliases[aliasKey], fileName);
+        const relativePath = join(config.aliases[aliasKey], fileName);
+        const content = rewriteKitnImports(file.content, item.type, fileName, config.aliases);
+
+        const status = await checkFileStatus(targetPath, content);
+
+        switch (status) {
+          case FileStatus.New:
+            await writeComponentFile(targetPath, content);
+            created.push(relativePath);
+            break;
+
+          case FileStatus.Identical:
+            skipped.push(relativePath);
+            break;
+
+          case FileStatus.Different:
+            if (opts.overwrite) {
+              await writeComponentFile(targetPath, content);
+              updated.push(relativePath);
+            } else {
+              const existing = await readExistingFile(targetPath);
+              const diff = generateDiff(relativePath, existing ?? "", content);
+              p.log.message(pc.dim(diff));
+
+              const action = await p.select({
+                message: `${relativePath} already exists and differs. What to do?`,
+                options: [
+                  { value: "skip", label: "Keep local version" },
+                  { value: "overwrite", label: "Overwrite with registry version" },
+                ],
+              });
+
+              if (!p.isCancel(action) && action === "overwrite") {
+                await writeComponentFile(targetPath, content);
+                updated.push(relativePath);
+              } else {
+                skipped.push(relativePath);
+              }
+            }
+            break;
+        }
+      }
+
+      // Track in _installed
+      const installed = config._installed ?? {};
+      const allContent = item.files.map((f) => {
+        const fn = f.path.split("/").pop()!;
+        return rewriteKitnImports(f.content, item.type, fn, config.aliases);
+      }).join("\n");
+      installed[item.name] = {
+        version: item.version ?? "1.0.0",
+        installedAt: new Date().toISOString(),
+        files: item.files.map((f) => {
+          const aliasKey = (() => {
+            switch (item.type) {
+              case "kitn:agent": return "agents";
+              case "kitn:tool": return "tools";
+              case "kitn:skill": return "skills";
+              case "kitn:storage": return "storage";
+            }
+          })() as "agents" | "tools" | "skills" | "storage";
+          const fileName = f.path.split("/").pop()!;
+          return join(config.aliases[aliasKey], fileName);
+        }),
+        hash: contentHash(allContent),
+      };
+      config._installed = installed;
+    }
   }
 
   await writeConfig(cwd, config);

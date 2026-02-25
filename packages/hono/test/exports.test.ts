@@ -4,7 +4,6 @@
  */
 import { describe, test, expect } from "bun:test";
 import { createAIPlugin } from "../src/plugin.js";
-import { createApiKeyAuth } from "../src/lib/auth.js";
 import { toAgentRequest } from "../src/adapters/request-adapter.js";
 import { AgentRegistry } from "../../core/src/registry/agent-registry.js";
 import { ToolRegistry } from "../../core/src/registry/tool-registry.js";
@@ -13,9 +12,6 @@ import { createOrchestratorAgent } from "../../core/src/agents/orchestrator.js";
 describe("@kitnai/hono exports", () => {
   test("exports createAIPlugin", () => {
     expect(createAIPlugin).toBeDefined();
-  });
-  test("exports createApiKeyAuth", () => {
-    expect(createApiKeyAuth).toBeDefined();
   });
   test("exports toAgentRequest", () => {
     expect(toAgentRequest).toBeDefined();

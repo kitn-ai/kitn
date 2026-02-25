@@ -75,7 +75,7 @@ export async function initCommand() {
       storage: aliases.storage as string,
     },
     registries: {
-      "@kitn": "https://kitn.dev/r/{type}/{name}.json",
+      "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
     },
   };
 

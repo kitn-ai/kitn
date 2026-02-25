@@ -1,5 +1,4 @@
 import { z } from "zod";
-import "@asteasolutions/zod-to-openapi";
 
 export const skillMetaSchema = z.object({
   name: z.string(),

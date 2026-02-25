@@ -1,5 +1,4 @@
 import { z } from "zod";
-import "@asteasolutions/zod-to-openapi";
 
 export const agentRequestSchema = z.object({
   message: z.string().min(1).openapi({ example: "Hello, how can you help me?" }),

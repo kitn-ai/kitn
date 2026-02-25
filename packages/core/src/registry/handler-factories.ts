@@ -22,10 +22,16 @@ export function makeRegistryStreamHandler(config: RegistryHandlerConfig, ctx: Pl
       ? `${systemPrompt}\n\n## Memory Context\n${memoryContext}`
       : systemPrompt;
 
-    // If a conversationId is provided, load history (with auto-compaction) from the store
+    // Load history from existing conversation, or save first user message to new conversation
     let historyMessages: Array<{ role: "user" | "assistant"; content: string }> | undefined;
     if (cid) {
       historyMessages = await loadConversationWithCompaction(ctx, cid, message);
+    } else if (message) {
+      await ctx.storage.conversations.append(convId, {
+        role: "user",
+        content: message,
+        timestamp: new Date().toISOString(),
+      });
     }
 
     const promptOrMessages = historyMessages
@@ -41,17 +47,15 @@ export function makeRegistryStreamHandler(config: RegistryHandlerConfig, ctx: Pl
       model,
       maxSteps: config.maxSteps,
       conversationId: convId,
-      onStreamComplete: cid
-        ? async ({ text }) => {
-            if (text) {
-              await ctx.storage.conversations.append(cid, {
-                role: "assistant",
-                content: text,
-                timestamp: new Date().toISOString(),
-              });
-            }
-          }
-        : undefined,
+      onStreamComplete: async ({ text }) => {
+        if (text) {
+          await ctx.storage.conversations.append(convId, {
+            role: "assistant",
+            content: text,
+            timestamp: new Date().toISOString(),
+          });
+        }
+      },
     });
   };
 }
@@ -60,10 +64,22 @@ export function makeRegistryJsonHandler(config: RegistryHandlerConfig, ctx: Plug
   return async (req: AgentRequest, { systemPrompt, memoryContext }) => {
     const { runAgent } = await import("../agents/run-agent.js");
     const { message, conversationId: cid, model } = await req.json<any>();
+    const convId = generateConversationId(cid);
 
     const system = memoryContext
       ? `${systemPrompt}\n\n## Memory Context\n${memoryContext}`
       : systemPrompt;
+
+    // Persist user message
+    if (cid) {
+      await loadConversationWithCompaction(ctx, cid, message);
+    } else if (message) {
+      await ctx.storage.conversations.append(convId, {
+        role: "user",
+        content: message,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     const result = await runAgent(
       ctx,
@@ -72,7 +88,17 @@ export function makeRegistryJsonHandler(config: RegistryHandlerConfig, ctx: Plug
       model,
       config.maxSteps,
     );
-    return new Response(JSON.stringify({ ...result, conversationId: generateConversationId(cid) }), {
+
+    // Persist assistant response
+    if (result.response) {
+      await ctx.storage.conversations.append(convId, {
+        role: "assistant",
+        content: result.response,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    return new Response(JSON.stringify({ ...result, conversationId: convId }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });

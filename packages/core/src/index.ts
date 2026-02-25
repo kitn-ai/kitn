@@ -93,6 +93,7 @@ export type { CompactionResult } from "./utils/compaction.js";
 export { loadConversationWithCompaction } from "./utils/conversation-helpers.js";
 
 // ── Schemas ──
+import "./schemas/setup-openapi.js";
 export { generateRequestSchema, generateResponseSchema } from "./schemas/generate.schemas.js";
 export { agentRequestSchema, agentResponseSchema, approveRequestSchema, agentPatchSchema } from "./schemas/agents.schemas.js";
 export { memoryEntrySchema, memorySaveSchema } from "./schemas/memory.schemas.js";

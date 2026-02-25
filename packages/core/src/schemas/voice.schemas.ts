@@ -1,5 +1,4 @@
 import { z } from "zod";
-import "@asteasolutions/zod-to-openapi";
 
 export const speakRequestSchema = z.object({
   text: z.string().min(1).openapi({ example: "Hello, how can I help you today?" }),

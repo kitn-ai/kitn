@@ -37,7 +37,7 @@ export function configureOpenAPI(app: OpenAPIHono, config: OpenAPIConfig = {}) {
   app.get(
     "/reference",
     apiReference({
-      url: "/doc",
+      url: "./doc",
       theme: "kepler",
       layout: "modern",
       defaultHttpClient: { targetKey: "js", clientKey: "fetch" },

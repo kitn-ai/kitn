@@ -1,5 +1,4 @@
 import { z } from "zod";
-import "@asteasolutions/zod-to-openapi";
 
 export const memoryEntrySchema = z.object({
   key: z.string(),

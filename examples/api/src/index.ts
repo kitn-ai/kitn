@@ -72,7 +72,8 @@ app.route("/api", plugin.app);
 await plugin.initialize();
 
 printConfig();
-console.log(`[test-server] Running on http://localhost:${env.PORT}`);
+console.log(`[kitn-api] Running on http://localhost:${env.PORT}`);
+console.log(`[kitn-api] API Reference: http://localhost:${env.PORT}/api/reference`);
 
 export default {
   port: env.PORT,

@@ -17,6 +17,7 @@ import { checkEnvVars } from "../installers/env-checker.js";
 import { rewriteKitnImports } from "../installers/import-rewriter.js";
 import { patchProjectTsconfig } from "../installers/tsconfig-patcher.js";
 import { contentHash } from "../utils/hash.js";
+import { parseComponentRef, type ComponentRef } from "../utils/parse-ref.js";
 import { typeToDir, type RegistryItem, type ComponentType } from "../registry/schema.js";
 
 interface AddOptions {
@@ -39,7 +40,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
     process.exit(1);
   }
 
-  // Resolve "routes" to framework-specific package name
+  // Resolve "routes" to framework-specific package name, then parse refs
   const resolvedComponents = components.map((c) => {
     if (c === "routes") {
       const fw = config.framework ?? "hono";
@@ -48,6 +49,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
     return c;
   });
 
+  const refs = resolvedComponents.map(parseComponentRef);
   const fetcher = new RegistryFetcher(config.registries);
 
   const s = p.spinner();
@@ -56,11 +58,12 @@ export async function addCommand(components: string[], opts: AddOptions) {
   let resolved: RegistryItem[];
   try {
     resolved = await resolveDependencies(resolvedComponents, async (name) => {
-      const index = await fetcher.fetchIndex();
+      const ref = refs.find((r) => r.name === name) ?? { namespace: "@kitn", name, version: undefined };
+      const index = await fetcher.fetchIndex(ref.namespace);
       const indexItem = index.items.find((i) => i.name === name);
-      if (!indexItem) throw new Error(`Component '${name}' not found in registry`);
+      if (!indexItem) throw new Error(`Component '${name}' not found in ${ref.namespace} registry`);
       const dir = typeToDir[indexItem.type];
-      return fetcher.fetchItem(name, dir as any);
+      return fetcher.fetchItem(name, dir as any, ref.namespace, ref.version);
     });
   } catch (err: any) {
     s.stop(pc.red("Failed to resolve dependencies"));
@@ -151,8 +154,10 @@ export async function addCommand(components: string[], opts: AddOptions) {
       // Track in installed
       const installed = config.installed ?? {};
       const allContent = item.files.map((f) => f.content).join("\n");
-      installed[item.name] = {
-        registry: "@kitn",
+      const ref = refs.find((r) => r.name === item.name) ?? { namespace: "@kitn", name: item.name, version: undefined };
+      const installedKey = ref.namespace === "@kitn" ? item.name : `${ref.namespace}/${item.name}`;
+      installed[installedKey] = {
+        registry: ref.namespace,
         version: item.version ?? "1.0.0",
         installedAt: new Date().toISOString(),
         files: item.files.map((f) => join(baseDir, f.path)),
@@ -223,8 +228,10 @@ export async function addCommand(components: string[], opts: AddOptions) {
         const fn = f.path.split("/").pop()!;
         return rewriteKitnImports(f.content, item.type, fn, config.aliases);
       }).join("\n");
-      installed[item.name] = {
-        registry: "@kitn",
+      const ref = refs.find((r) => r.name === item.name) ?? { namespace: "@kitn", name: item.name, version: undefined };
+      const installedKey = ref.namespace === "@kitn" ? item.name : `${ref.namespace}/${item.name}`;
+      installed[installedKey] = {
+        registry: ref.namespace,
         version: item.version ?? "1.0.0",
         installedAt: new Date().toISOString(),
         files: item.files.map((f) => {

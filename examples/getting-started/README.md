@@ -1,6 +1,6 @@
 # kitn Getting Started
 
-Minimal example showing how to use kitn components with `@kitnai/server`.
+Minimal example showing how to use kitn components with `@kitnai/hono`.
 
 This project contains a weather agent and tool as if installed via `kitn add weather-agent`.
 

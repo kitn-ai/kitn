@@ -1,4 +1,6 @@
 import type { LanguageModel } from "ai";
+import type { AgentRegistry } from "./registry/agent-registry.js";
+export type { AgentRegistry };
 import type { ToolRegistry } from "./registry/tool-registry.js";
 import type { StorageProvider } from "./storage/interfaces.js";
 import type { VoiceManager } from "./voice/voice-manager.js";
@@ -80,9 +82,3 @@ export interface PluginContext {
   config: CoreConfig;
 }
 
-// AgentRegistry is defined in ./registry/agent-registry.ts (moved in Task 4).
-// Placeholder until that file arrives.
-/** @see ./registry/agent-registry.ts */
-export interface AgentRegistry {
-  [key: string]: any;
-}

@@ -78,3 +78,46 @@ describe("config schema", () => {
     expect(parsed.aliases.base).toBe("src/ai");
   });
 });
+
+describe("changelog schema", () => {
+  test("accepts changelog on registry item", () => {
+    const { registryItemSchema } = require("../src/registry/schema.js");
+    const item = {
+      name: "test",
+      type: "kitn:agent",
+      description: "test",
+      files: [{ path: "agents/test.ts", content: "", type: "kitn:agent" }],
+      version: "1.1.0",
+      updatedAt: "2026-02-25T16:30:00Z",
+      changelog: [
+        { version: "1.1.0", date: "2026-02-25", type: "feature", note: "Added streaming" },
+        { version: "1.0.0", date: "2026-02-15", type: "initial", note: "Initial release" },
+      ],
+    };
+    expect(() => registryItemSchema.parse(item)).not.toThrow();
+  });
+
+  test("changelog is optional", () => {
+    const { registryItemSchema } = require("../src/registry/schema.js");
+    const item = {
+      name: "test",
+      type: "kitn:agent",
+      description: "test",
+      files: [{ path: "agents/test.ts", content: "", type: "kitn:agent" }],
+    };
+    expect(() => registryItemSchema.parse(item)).not.toThrow();
+  });
+
+  test("registry index includes versions array and updatedAt", () => {
+    const { registryIndexItemSchema } = require("../src/registry/schema.js");
+    const item = {
+      name: "test",
+      type: "kitn:agent",
+      description: "test",
+      version: "1.1.0",
+      versions: ["1.1.0", "1.0.0"],
+      updatedAt: "2026-02-25T16:30:00Z",
+    };
+    expect(() => registryIndexItemSchema.parse(item)).not.toThrow();
+  });
+});

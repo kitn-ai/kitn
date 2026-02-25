@@ -9,6 +9,14 @@ export const registryFileSchema = z.object({
   type: componentType,
 });
 
+export const changelogEntrySchema = z.object({
+  version: z.string(),
+  date: z.string(),
+  type: z.enum(["feature", "fix", "breaking", "initial"]),
+  note: z.string(),
+});
+export type ChangelogEntry = z.infer<typeof changelogEntrySchema>;
+
 export const registryItemSchema = z.object({
   $schema: z.string().optional(),
   name: z.string(),
@@ -24,6 +32,8 @@ export const registryItemSchema = z.object({
   docs: z.string().optional(),
   categories: z.array(z.string()).optional(),
   version: z.string().optional(),
+  updatedAt: z.string().optional(),
+  changelog: z.array(changelogEntrySchema).optional(),
 });
 export type RegistryItem = z.infer<typeof registryItemSchema>;
 
@@ -34,6 +44,8 @@ export const registryIndexItemSchema = z.object({
   registryDependencies: z.array(z.string()).optional(),
   categories: z.array(z.string()).optional(),
   version: z.string().optional(),
+  versions: z.array(z.string()).optional(),
+  updatedAt: z.string().optional(),
 });
 
 export const registryIndexSchema = z.object({

@@ -18,6 +18,15 @@ export const registryFileSchema = z.object({
 });
 export type RegistryFile = z.infer<typeof registryFileSchema>;
 
+// Changelog entry
+export const changelogEntrySchema = z.object({
+  version: z.string(),
+  date: z.string(),
+  type: z.enum(["feature", "fix", "breaking", "initial"]),
+  note: z.string(),
+});
+export type ChangelogEntry = z.infer<typeof changelogEntrySchema>;
+
 // Full registry item (fetched on demand, includes file content)
 export const registryItemSchema = z.object({
   $schema: z.string().optional(),
@@ -34,6 +43,8 @@ export const registryItemSchema = z.object({
   docs: z.string().optional().describe("Post-install instructions shown in terminal"),
   categories: z.array(z.string()).optional(),
   version: z.string().optional().default("1.0.0"),
+  updatedAt: z.string().optional(),
+  changelog: z.array(changelogEntrySchema).optional(),
 });
 export type RegistryItem = z.infer<typeof registryItemSchema>;
 
@@ -45,6 +56,8 @@ export const registryIndexItemSchema = z.object({
   registryDependencies: z.array(z.string()).optional(),
   categories: z.array(z.string()).optional(),
   version: z.string().optional(),
+  versions: z.array(z.string()).optional(),
+  updatedAt: z.string().optional(),
 });
 export type RegistryIndexItem = z.infer<typeof registryIndexItemSchema>;
 

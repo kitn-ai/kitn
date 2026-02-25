@@ -21,6 +21,7 @@ Users who want a different framework (Express, Elysia, Cloudflare Workers) canno
 | Package naming | `@kitnai/core` (engine) + `@kitnai/hono` (adapter) |
 | Install directory | Default `src/ai/`, configurable via `kitn.json` |
 | Extraction approach | Restructure into domain modules (Approach B) |
+| Distribution model | Source-only via CLI (`kitn add`). No npm packages for end users. |
 | Implementation scope | Design all layers, implement Layer A first |
 
 ## Layer A: Core Extraction (implement now)
@@ -264,16 +265,15 @@ Installing @kitnai/hono...
 
 Include OpenAPI route registration?  [Yes / No]
 Include Scalar API reference UI?     [Yes / No]
-Install @kitnai/core as:             [npm package / source]
 
+Installing @kitnai/core dependency...
 Installing to: src/ai/hono/
 ```
 
 Based on selections:
 - **No OpenAPI**: Routes use plain `Hono` instead of `OpenAPIHono`. Schema files excluded.
 - **No Scalar**: `configure-openapi.ts` omits Scalar handler. `@scalar/hono-api-reference` not installed.
-- **Core as npm**: `npm install @kitnai/core`. Core stays in node_modules.
-- **Core as source**: Runs `kitn add core` first, then installs hono source.
+- **Core dependency**: Always installed as source via `kitn add core`. No npm option — source-only distribution keeps the "own the code" philosophy consistent.
 
 ### Registry Format for Packages
 
@@ -284,8 +284,7 @@ New component type `kitn:package` with nested file paths:
   "name": "core",
   "type": "kitn:package",
   "description": "Framework-agnostic AI agent engine",
-  "dependencies": [],
-  "peerDependencies": ["ai", "zod"],
+  "dependencies": ["ai", "zod"],
   "files": [
     { "path": "core/index.ts", "content": "..." },
     { "path": "core/types.ts", "content": "..." },
@@ -328,7 +327,7 @@ Compares `_installed[name].version` against registry. Shows available updates wi
 kitn status
 ```
 
-Shows installed components, versions, modification status (local changes detected via hash comparison), and packages (source vs npm).
+Shows installed components and packages, versions, and modification status (local changes detected via hash comparison).
 
 ### Registry Versioning
 

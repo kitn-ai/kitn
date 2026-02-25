@@ -11,7 +11,11 @@
         "coding",
         "execution"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.475Z"
     },
     {
       "name": "recipe-agent",
@@ -22,7 +26,11 @@
         "structured-output",
         "recipes"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.478Z"
     },
     {
       "name": "supervisor-agent",
@@ -36,7 +44,11 @@
         "orchestration",
         "routing"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.479Z"
     },
     {
       "name": "human-in-loop-agent",
@@ -48,7 +60,11 @@
         "approval",
         "safety"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.481Z"
     },
     {
       "name": "taskboard-agent",
@@ -60,7 +76,11 @@
         "kanban",
         "productivity"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.482Z"
     },
     {
       "name": "knowledge-agent",
@@ -73,7 +93,11 @@
         "movies",
         "entertainment"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.483Z"
     },
     {
       "name": "skills-agent",
@@ -84,7 +108,11 @@
         "skills",
         "management"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.484Z"
     },
     {
       "name": "weather-agent",
@@ -97,7 +125,11 @@
         "weather",
         "api"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.485Z"
     },
     {
       "name": "memory-agent",
@@ -108,7 +140,11 @@
         "memory",
         "persistence"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.486Z"
     },
     {
       "name": "guardrails-agent",
@@ -120,7 +156,11 @@
         "finance",
         "safety"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.487Z"
     },
     {
       "name": "compact-agent",
@@ -131,7 +171,11 @@
         "utility",
         "summarization"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.487Z"
     },
     {
       "name": "hackernews-agent",
@@ -144,7 +188,11 @@
         "hackernews",
         "news"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.488Z"
     },
     {
       "name": "web-search-agent",
@@ -158,7 +206,11 @@
         "web",
         "search"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.489Z"
     },
     {
       "name": "hackernews-tool",
@@ -170,7 +222,11 @@
         "api",
         "news"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.490Z"
     },
     {
       "name": "movies-tool",
@@ -182,7 +238,11 @@
         "entertainment",
         "api"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.491Z"
     },
     {
       "name": "web-search-tool",
@@ -194,7 +254,11 @@
         "search",
         "api"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.492Z"
     },
     {
       "name": "weather-tool",
@@ -205,7 +269,11 @@
         "weather",
         "api"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.493Z"
     },
     {
       "name": "web-fetch-tool",
@@ -217,7 +285,11 @@
         "fetch",
         "scraping"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.494Z"
     },
     {
       "name": "step-by-step-reasoning",
@@ -229,7 +301,11 @@
         "analysis",
         "problem-solving"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.495Z"
     },
     {
       "name": "concise-summarizer",
@@ -241,7 +317,11 @@
         "concise",
         "productivity"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.497Z"
     },
     {
       "name": "fact-check",
@@ -253,7 +333,11 @@
         "accuracy",
         "research"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.497Z"
     },
     {
       "name": "eli5",
@@ -265,7 +349,11 @@
         "beginner",
         "simplification"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.498Z"
     },
     {
       "name": "pros-and-cons",
@@ -277,7 +365,11 @@
         "decision",
         "analysis"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.499Z"
     },
     {
       "name": "memory-store",
@@ -289,7 +381,11 @@
         "memory",
         "persistence"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.500Z"
     },
     {
       "name": "conversation-store",
@@ -301,14 +397,22 @@
         "conversations",
         "persistence"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.501Z"
     },
     {
       "name": "core",
       "type": "kitn:package",
       "description": "Framework-agnostic AI agent engine — agents, tools, storage, streaming, events, voice",
       "registryDependencies": [],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.512Z"
     },
     {
       "name": "hono",
@@ -317,7 +421,11 @@
       "registryDependencies": [
         "core"
       ],
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "versions": [
+        "1.0.0"
+      ],
+      "updatedAt": "2026-02-25T18:59:36.520Z"
     }
   ]
 }

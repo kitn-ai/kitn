@@ -1,5 +1,5 @@
 import { registryItemSchema, typeToAliasKey } from "../src/schema.js";
-import type { RegistryItem, RegistryIndex, ComponentType } from "../src/schema.js";
+import type { RegistryItem, RegistryIndex, ComponentType, ChangelogEntry } from "../src/schema.js";
 
 interface ComponentManifest {
   name: string;
@@ -17,6 +17,7 @@ interface ComponentManifest {
   docs?: string;
   categories?: string[];
   version?: string;
+  changelog?: ChangelogEntry[];
 }
 
 const typeToDir: Record<ComponentType, string> = {
@@ -80,27 +81,34 @@ export function buildRegistryItem(
     version: manifest.version ?? "1.0.0",
     installDir: manifest.installDir,
     tsconfig: manifest.tsconfig,
+    updatedAt: new Date().toISOString(),
+    changelog: manifest.changelog,
   });
 }
 
-export function buildRegistryIndex(items: RegistryItem[]): RegistryIndex {
+export function buildRegistryIndex(
+  items: RegistryItem[],
+  existingVersions: Map<string, string[]> = new Map()
+): RegistryIndex {
   return {
     $schema: "https://kitn.dev/schema/registry.json",
     version: "1.0.0",
-    items: items.map(({ name, type, description, registryDependencies, categories, version }) => ({
+    items: items.map(({ name, type, description, registryDependencies, categories, version, updatedAt }) => ({
       name,
       type,
       description,
       registryDependencies,
       categories,
       version,
+      versions: existingVersions.get(name) ?? [version ?? "1.0.0"],
+      updatedAt,
     })),
   };
 }
 
 // CLI entry point — run with `bun run scripts/build-registry.ts`
 if (import.meta.main) {
-  const { readdir, readFile, writeFile, mkdir } = await import("fs/promises");
+  const { readdir, readFile, writeFile, mkdir, access } = await import("fs/promises");
   const { join } = await import("path");
 
   const ROOT = new URL("..", import.meta.url).pathname;
@@ -108,6 +116,7 @@ if (import.meta.main) {
   const OUTPUT_DIR = join(ROOT, "r");
 
   const allItems: RegistryItem[] = [];
+  const existingVersions = new Map<string, string[]>();
 
   for (const typeDir of ["agents", "tools", "skills", "storage", "package"]) {
     const dir = join(COMPONENTS_DIR, typeDir);
@@ -157,16 +166,40 @@ if (import.meta.main) {
       // Write individual item JSON
       const outDir = join(OUTPUT_DIR, typeDir);
       await mkdir(outDir, { recursive: true });
+
+      // Write latest (always overwritten)
       await writeFile(
         join(outDir, `${manifest.name}.json`),
         JSON.stringify(item, null, 2) + "\n"
       );
       console.log(`✓ Built ${typeDir}/${manifest.name}.json`);
+
+      // Write versioned file (immutable — skip if already exists)
+      const version = manifest.version ?? "1.0.0";
+      const versionedPath = join(outDir, `${manifest.name}@${version}.json`);
+      try {
+        await access(versionedPath);
+        // Already exists, skip
+      } catch {
+        await writeFile(versionedPath, JSON.stringify(item, null, 2) + "\n");
+        console.log(`  + ${typeDir}/${manifest.name}@${version}.json (versioned)`);
+      }
+
+      // Collect available versions by scanning existing @version files
+      const dirEntries = await readdir(outDir);
+      const versions: string[] = [];
+      const versionPattern = new RegExp(`^${manifest.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}@(.+)\\.json$`);
+      for (const f of dirEntries) {
+        const match = f.match(versionPattern);
+        if (match) versions.push(match[1]);
+      }
+      versions.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+      existingVersions.set(manifest.name, versions);
     }
   }
 
   // Write registry index
-  const index = buildRegistryIndex(allItems);
+  const index = buildRegistryIndex(allItems, existingVersions);
   await writeFile(join(OUTPUT_DIR, "registry.json"), JSON.stringify(index, null, 2) + "\n");
   console.log(`\n✓ Registry index: ${allItems.length} components`);
 }

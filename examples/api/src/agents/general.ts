@@ -1,4 +1,4 @@
-import type { AIPluginInstance } from "@kitnai/server";
+import type { AIPluginInstance } from "@kitnai/hono";
 import { echoTool } from "../tools/echo.js";
 import { weatherTool } from "../tools/weather.js";
 import { calculatorTool } from "../tools/calculator.js";

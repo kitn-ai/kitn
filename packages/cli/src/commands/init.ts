@@ -88,20 +88,20 @@ export async function initCommand() {
   const pm = await detectPackageManager(cwd);
   if (pm) {
     const shouldInstall = await p.confirm({
-      message: `Install @kitnai/server using ${pm}?`,
+      message: `Install @kitnai/hono using ${pm}?`,
       initialValue: true,
     });
     if (!p.isCancel(shouldInstall) && shouldInstall) {
-      s.start("Installing @kitnai/server...");
+      s.start("Installing @kitnai/hono...");
       try {
-        installDependencies(pm, ["@kitnai/server"], cwd);
-        s.stop("Installed @kitnai/server");
+        installDependencies(pm, ["@kitnai/hono"], cwd);
+        s.stop("Installed @kitnai/hono");
       } catch {
-        s.stop(pc.yellow("Failed to install @kitnai/server — you can install it manually"));
+        s.stop(pc.yellow("Failed to install @kitnai/hono — you can install it manually"));
       }
     }
   } else {
-    p.log.info("No package manager detected. Install @kitnai/server manually.");
+    p.log.info("No package manager detected. Install @kitnai/hono manually.");
   }
 
   p.outro(pc.green("Done! Run `kitn add <component>` to add your first component."));

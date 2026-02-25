@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.14.3",
-    "@kitnai/server": "workspace:*",
+    "@kitnai/hono": "workspace:*",
     "@openrouter/ai-sdk-provider": "^2.2.3",
     "ai": "^6.0.91",
     "hono": "^4.11.10",

@@ -302,6 +302,22 @@
         "persistence"
       ],
       "version": "1.0.0"
+    },
+    {
+      "name": "core",
+      "type": "kitn:package",
+      "description": "Framework-agnostic AI agent engine — agents, tools, storage, streaming, events, voice",
+      "registryDependencies": [],
+      "version": "1.0.0"
+    },
+    {
+      "name": "hono",
+      "type": "kitn:package",
+      "description": "Hono HTTP adapter with routes for kitn AI agents",
+      "registryDependencies": [
+        "core"
+      ],
+      "version": "1.0.0"
     }
   ]
 }

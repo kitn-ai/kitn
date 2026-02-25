@@ -1,0 +1,15 @@
+{
+  "name": "hono",
+  "type": "kitn:package",
+  "description": "Hono HTTP adapter with routes for kitn AI agents",
+  "sourceDir": "../../../../packages/hono/src",
+  "installDir": "routes",
+  "dependencies": ["hono", "@hono/zod-openapi", "@scalar/hono-api-reference"],
+  "registryDependencies": ["core"],
+  "exclude": ["lib/auth.ts"],
+  "tsconfig": {
+    "@kitnai/hono": ["./index.ts"]
+  },
+  "docs": "Routes installed to your project. Import with: import { ... } from '@kitnai/hono'",
+  "version": "1.0.0"
+}

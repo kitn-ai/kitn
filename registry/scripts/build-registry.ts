@@ -9,7 +9,11 @@ interface ComponentManifest {
   devDependencies?: string[];
   registryDependencies?: string[];
   envVars?: Record<string, string>;
-  files: string[];
+  files?: string[];           // for regular components
+  sourceDir?: string;         // for packages (relative path to source)
+  installDir?: string;        // target directory name
+  exclude?: string[];         // files to exclude from source
+  tsconfig?: Record<string, string[]>;  // tsconfig paths
   docs?: string;
   categories?: string[];
   version?: string;
@@ -23,17 +27,43 @@ const typeToDir: Record<ComponentType, string> = {
   "kitn:package": "package",
 };
 
+async function readDirRecursive(dir: string, base = ""): Promise<string[]> {
+  const { readdir, stat } = await import("fs/promises");
+  const { join } = await import("path");
+  const entries = await readdir(dir);
+  const files: string[] = [];
+  for (const entry of entries) {
+    const fullPath = join(dir, entry);
+    const s = await stat(fullPath);
+    if (s.isDirectory()) {
+      files.push(...await readDirRecursive(fullPath, join(base, entry)));
+    } else if (entry.endsWith(".ts")) {
+      files.push(join(base, entry));
+    }
+  }
+  return files;
+}
+
 export function buildRegistryItem(
   manifest: ComponentManifest,
   fileContents: Record<string, string>
 ): RegistryItem {
-  const dir = typeToDir[manifest.type];
-
-  const files = manifest.files.map((fileName) => ({
-    path: `${dir}/${fileName}`,
-    content: fileContents[fileName] ?? "",
-    type: manifest.type,
-  }));
+  let files;
+  if (manifest.type === "kitn:package") {
+    const installDir = manifest.installDir ?? manifest.name;
+    files = Object.entries(fileContents).map(([relPath, content]) => ({
+      path: `${installDir}/${relPath}`,
+      content,
+      type: manifest.type,
+    }));
+  } else {
+    const dir = typeToDir[manifest.type];
+    files = manifest.files!.map((fileName) => ({
+      path: `${dir}/${fileName}`,
+      content: fileContents[fileName] ?? "",
+      type: manifest.type,
+    }));
+  }
 
   return registryItemSchema.parse({
     $schema: "https://kitn.dev/schema/registry-item.json",
@@ -48,6 +78,8 @@ export function buildRegistryItem(
     docs: manifest.docs,
     categories: manifest.categories,
     version: manifest.version ?? "1.0.0",
+    installDir: manifest.installDir,
+    tsconfig: manifest.tsconfig,
   });
 }
 
@@ -77,7 +109,7 @@ if (import.meta.main) {
 
   const allItems: RegistryItem[] = [];
 
-  for (const typeDir of ["agents", "tools", "skills", "storage"]) {
+  for (const typeDir of ["agents", "tools", "skills", "storage", "package"]) {
     const dir = join(COMPONENTS_DIR, typeDir);
     let entries: string[];
     try {
@@ -100,10 +132,23 @@ if (import.meta.main) {
 
       const manifest: ComponentManifest = JSON.parse(manifestRaw);
 
-      // Read all source files listed in manifest
+      // Read source files
       const fileContents: Record<string, string> = {};
-      for (const fileName of manifest.files) {
-        fileContents[fileName] = await readFile(join(componentDir, fileName), "utf-8");
+
+      if (manifest.sourceDir) {
+        // Package: read all .ts files recursively from sourceDir
+        const srcDir = join(componentDir, manifest.sourceDir);
+        const exclude = new Set(manifest.exclude ?? []);
+        const tsFiles = await readDirRecursive(srcDir);
+        for (const relPath of tsFiles) {
+          if (exclude.has(relPath)) continue;
+          fileContents[relPath] = await readFile(join(srcDir, relPath), "utf-8");
+        }
+      } else {
+        // Regular component: read listed files
+        for (const fileName of manifest.files!) {
+          fileContents[fileName] = await readFile(join(componentDir, fileName), "utf-8");
+        }
       }
 
       const item = buildRegistryItem(manifest, fileContents);

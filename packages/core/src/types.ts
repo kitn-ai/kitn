@@ -1,4 +1,8 @@
 import type { LanguageModel } from "ai";
+import type { ToolRegistry } from "./registry/tool-registry.js";
+import type { StorageProvider } from "./storage/interfaces.js";
+import type { VoiceManager } from "./voice/voice-manager.js";
+import type { CardRegistry } from "./utils/card-registry.js";
 
 /**
  * Framework-agnostic request interface.
@@ -76,32 +80,9 @@ export interface PluginContext {
   config: CoreConfig;
 }
 
-// --- Forward type references ---
-// These interfaces are defined in their respective modules.
-// Once those modules are moved into core (Task 3), these imports
-// will be replaced with proper module imports.
-
+// AgentRegistry is defined in ./registry/agent-registry.ts (moved in Task 4).
+// Placeholder until that file arrives.
 /** @see ./registry/agent-registry.ts */
 export interface AgentRegistry {
-  [key: string]: any;
-}
-
-/** @see ./registry/tool-registry.ts */
-export interface ToolRegistry {
-  [key: string]: any;
-}
-
-/** @see ./storage/interfaces.ts */
-export interface StorageProvider {
-  [key: string]: any;
-}
-
-/** @see ./voice/voice-manager.ts */
-export interface VoiceManager {
-  [key: string]: any;
-}
-
-/** @see ./utils/card-registry.ts */
-export interface CardRegistry {
   [key: string]: any;
 }

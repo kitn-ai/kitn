@@ -13,23 +13,24 @@ export class RegistryFetcher {
     this.fetchFn = fetchFn ?? this.defaultFetch;
   }
 
-  resolveUrl(name: string, typeDir: TypeDir): string {
-    const template = this.registries["@kitn"];
-    if (!template) throw new Error("No @kitn registry configured");
-    return template.replace("{name}", name).replace("{type}", typeDir);
+  resolveUrl(name: string, typeDir: TypeDir, namespace = "@kitn", version?: string): string {
+    const template = this.registries[namespace];
+    if (!template) throw new Error(`No registry configured for ${namespace}`);
+    const fileName = version ? `${name}@${version}` : name;
+    return template.replace("{name}", fileName).replace("{type}", typeDir);
   }
 
-  async fetchItem(name: string, typeDir: TypeDir): Promise<RegistryItem> {
-    const url = this.resolveUrl(name, typeDir);
+  async fetchItem(name: string, typeDir: TypeDir, namespace = "@kitn", version?: string): Promise<RegistryItem> {
+    const url = this.resolveUrl(name, typeDir, namespace, version);
     if (!this.cache.has(url)) {
       this.cache.set(url, this.fetchFn(url));
     }
     return this.cache.get(url)!;
   }
 
-  async fetchIndex(): Promise<RegistryIndex> {
-    const template = this.registries["@kitn"];
-    if (!template) throw new Error("No @kitn registry configured");
+  async fetchIndex(namespace = "@kitn"): Promise<RegistryIndex> {
+    const template = this.registries[namespace];
+    if (!template) throw new Error(`No registry configured for ${namespace}`);
     const baseUrl = template.replace("{type}/{name}.json", "registry.json");
     const res = await fetch(baseUrl);
     if (!res.ok) throw new Error(`Failed to fetch registry index: ${res.statusText}`);

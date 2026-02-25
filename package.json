@@ -16,7 +16,8 @@
     "build": "bun run --filter '*' build",
     "test": "bun run --filter '*' test",
     "typecheck": "bun run --filter '*' typecheck",
-    "build:registry": "bun run --cwd registry build"
+    "build:registry": "bun run --cwd registry build",
+    "validate:registry": "bun run --cwd registry validate"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

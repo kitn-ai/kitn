@@ -1,6 +1,6 @@
 import type { RegistryItem, RegistryIndex } from "./schema.js";
 
-type TypeDir = "agents" | "tools" | "skills" | "storage";
+type TypeDir = "agents" | "tools" | "skills" | "storage" | "package";
 type FetchFn = (url: string) => Promise<RegistryItem>;
 
 export class RegistryFetcher {

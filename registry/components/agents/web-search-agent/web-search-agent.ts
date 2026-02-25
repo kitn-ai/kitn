@@ -1,5 +1,5 @@
-import { searchWebTool } from "../tools/web-search.js";
-import { fetchPageTool, getPageMetaTool } from "../tools/web-fetch.js";
+import { searchWebTool } from "@kitn/tools/web-search.js";
+import { fetchPageTool, getPageMetaTool } from "@kitn/tools/web-fetch.js";
 
 const SYSTEM_PROMPT = `You are a web search specialist agent. Your job is to find information on the internet and provide accurate, well-sourced answers.
 

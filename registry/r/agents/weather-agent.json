@@ -13,7 +13,7 @@
   "files": [
     {
       "path": "agents/weather-agent.ts",
-      "content": "import { weatherTool } from \"../tools/weather.js\";\n\nconst SYSTEM_PROMPT = `You are a weather specialist agent. Your job is to provide accurate, helpful weather information.\n\nWhen asked about weather:\n1. Use the getWeather tool to fetch current conditions\n2. Present the data in a clear, conversational format\n3. Include temperature, conditions, humidity, and wind info\n4. Offer practical advice based on conditions (e.g., \"bring an umbrella\")\n\nAlways use the tool to get real data rather than guessing.`;\n\nexport const WEATHER_AGENT_CONFIG = {\n  system: SYSTEM_PROMPT,\n  tools: { getWeather: weatherTool },\n};\n",
+      "content": "import { weatherTool } from \"@kitn/tools/weather.js\";\n\nconst SYSTEM_PROMPT = `You are a weather specialist agent. Your job is to provide accurate, helpful weather information.\n\nWhen asked about weather:\n1. Use the getWeather tool to fetch current conditions\n2. Present the data in a clear, conversational format\n3. Include temperature, conditions, humidity, and wind info\n4. Offer practical advice based on conditions (e.g., \"bring an umbrella\")\n\nAlways use the tool to get real data rather than guessing.`;\n\nexport const WEATHER_AGENT_CONFIG = {\n  system: SYSTEM_PROMPT,\n  tools: { getWeather: weatherTool },\n};\n",
       "type": "kitn:agent"
     }
   ],

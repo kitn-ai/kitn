@@ -1,4 +1,4 @@
-import { movieSearchTool, movieDetailTool } from "../tools/movies.js";
+import { movieSearchTool, movieDetailTool } from "@kitn/tools/movies.js";
 
 const SYSTEM_PROMPT = `You are a movie knowledge and recommendation agent. Your job is to help users discover movies, get details, and receive personalized recommendations.
 

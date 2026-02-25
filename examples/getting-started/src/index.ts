@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { serve } from "@hono/node-server";
 import { z } from "zod";
 import { createAIPlugin } from "@kitnai/server";
 import { openrouter } from "@openrouter/ai-sdk-provider";
@@ -61,7 +62,4 @@ await plugin.initialize();
 console.log(`kitn getting-started server running on http://localhost:${PORT}`);
 console.log(`API docs: http://localhost:${PORT}/api/doc`);
 
-export default {
-  port: PORT,
-  fetch: app.fetch,
-};
+serve({ fetch: app.fetch, port: PORT });

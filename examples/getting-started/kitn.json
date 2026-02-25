@@ -1,6 +1,6 @@
 {
   "$schema": "https://kitn.dev/schema/config.json",
-  "runtime": "bun",
+  "runtime": "node",
   "aliases": {
     "agents": "src/agents",
     "tools": "src/tools",

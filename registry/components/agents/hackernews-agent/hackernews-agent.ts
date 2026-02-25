@@ -1,7 +1,7 @@
 import {
   hackernewsTopStoriesTool,
   hackernewsStoryDetailTool,
-} from "../tools/hackernews.js";
+} from "@kitn/tools/hackernews.js";
 
 const SYSTEM_PROMPT = `You are a Hacker News analyst agent. Your job is to help users discover and understand trending tech stories.
 

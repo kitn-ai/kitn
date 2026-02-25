@@ -1,0 +1,790 @@
+/* ── Voice Agent — Dark terminal studio aesthetic ── */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=DM+Sans:wght@400;500;600&display=swap');
+
+:root {
+  --bg-deep: #0a0a0f;
+  --bg-surface: #12121a;
+  --bg-elevated: #1a1a26;
+  --bg-hover: #22222e;
+  --border: #2a2a3a;
+  --border-subtle: #1e1e2e;
+  --text-primary: #e8e8f0;
+  --text-secondary: #8888a0;
+  --text-dim: #555570;
+  --accent: #00d4aa;
+  --accent-glow: rgba(0, 212, 170, 0.15);
+  --accent-glow-strong: rgba(0, 212, 170, 0.3);
+  --user-bubble: #1a1a2e;
+  --agent-bubble: #0f1f1a;
+  --agent-border: #1a3a2e;
+  --error: #ff4466;
+  --error-bg: rgba(255, 68, 102, 0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+/* ── Root layout ── */
+
+.vc-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 680px;
+  margin: 0 auto;
+  background: var(--bg-deep);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--text-primary);
+  position: relative;
+}
+
+/* ── Header ── */
+
+.vc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  backdrop-filter: blur(12px);
+  z-index: 10;
+}
+
+.vc-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vc-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-glow);
+  color: var(--accent);
+}
+
+.vc-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.vc-settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.vc-settings-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-dim);
+}
+
+/* ── Settings panel ── */
+
+.vc-settings {
+  padding: 12px 20px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  gap: 20px;
+  animation: slideDown 0.15s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.vc-setting-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vc-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.vc-select {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+}
+
+.vc-select:focus {
+  border-color: var(--accent);
+}
+
+.vc-toggle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vc-toggle.active {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Conversation history ── */
+
+.vc-history {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  scroll-behavior: smooth;
+}
+
+.vc-history::-webkit-scrollbar {
+  width: 4px;
+}
+
+.vc-history::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.vc-history::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* ── Empty state ── */
+
+.vc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 40px;
+}
+
+.vc-empty-icon {
+  color: var(--text-dim);
+  margin-bottom: 24px;
+  opacity: 0.5;
+}
+
+.vc-empty-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin: 0 0 8px;
+}
+
+.vc-empty-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0;
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+/* ── Exchange bubbles ── */
+
+.vc-exchange {
+  margin-bottom: 24px;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.vc-bubble {
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+}
+
+.vc-bubble p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.vc-bubble-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.vc-bubble-role {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.vc-bubble-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.vc-user {
+  background: var(--user-bubble);
+  border: 1px solid var(--border-subtle);
+}
+
+.vc-user .vc-bubble-role {
+  color: var(--text-secondary);
+}
+
+.vc-agent {
+  background: var(--agent-bubble);
+  border: 1px solid var(--agent-border);
+}
+
+.vc-agent .vc-bubble-role {
+  color: var(--accent);
+}
+
+/* ── Error ── */
+
+.vc-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: var(--error-bg);
+  border-top: 1px solid rgba(255, 68, 102, 0.2);
+  font-size: 13px;
+  color: var(--error);
+  animation: fadeInUp 0.2s ease-out;
+}
+
+.vc-error-dismiss {
+  background: none;
+  border: none;
+  color: var(--error);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  opacity: 0.7;
+}
+
+.vc-error-dismiss:hover {
+  opacity: 1;
+}
+
+/* ── Bottom controls ── */
+
+.vc-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 20px 32px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+  gap: 16px;
+}
+
+.vc-status {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+/* ── Mic button ── */
+
+.vc-mic-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  padding: 0;
+}
+
+.vc-mic-btn::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  transition: all 0.3s;
+}
+
+.vc-mic-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.vc-mic-btn:hover:not(:disabled)::before {
+  border-color: var(--accent-glow-strong);
+}
+
+/* Recording state */
+.vc-mic-btn.recording {
+  border-color: var(--error);
+  background: var(--error-bg);
+  color: var(--error);
+  animation: pulse-recording 1.5s ease-in-out infinite;
+}
+
+.vc-mic-btn.recording::before {
+  border-color: rgba(255, 68, 102, 0.2);
+  animation: ring-expand 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-recording {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 68, 102, 0.3); }
+  50% { box-shadow: 0 0 24px 4px rgba(255, 68, 102, 0.15); }
+}
+
+@keyframes ring-expand {
+  0%, 100% { inset: -6px; opacity: 1; }
+  50% { inset: -12px; opacity: 0.5; }
+}
+
+/* Processing state */
+.vc-mic-btn.processing {
+  border-color: var(--accent);
+  color: var(--accent);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vc-mic-btn.processing::before {
+  border-color: var(--accent);
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+  inset: -6px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.vc-mic-btn:disabled {
+  cursor: not-allowed;
+}
+
+/* ── Stop playback button ── */
+
+.vc-stop-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vc-stop-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--text-dim);
+  color: var(--text-primary);
+}
+
+/* ── Activity log ── */
+
+.vc-activity-log {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  border-left: 2px solid var(--border);
+  margin: 4px 0 8px 12px;
+  padding: 6px 0 6px 12px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.vc-activity-log::-webkit-scrollbar {
+  width: 3px;
+}
+
+.vc-activity-log::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.vc-activity-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--text-dim);
+  animation: fadeInUp 0.15s ease-out;
+}
+
+.vc-activity-icon {
+  flex-shrink: 0;
+  width: 14px;
+  text-align: center;
+}
+
+.vc-activity-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Activity type color variants */
+.vc-activity-delegate-start,
+.vc-activity-delegate-end {
+  color: var(--accent);
+}
+
+.vc-activity-tool-call {
+  color: var(--text-secondary);
+}
+
+.vc-activity-tool-result {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.vc-activity-agent-think {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.vc-activity-agent-plan {
+  color: var(--accent);
+  opacity: 0.8;
+}
+
+.vc-activity-agent-start,
+.vc-activity-agent-end {
+  color: var(--text-dim);
+  opacity: 0.6;
+}
+
+/* ── Review area ── */
+
+.vc-review {
+  padding: 12px 20px;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+  animation: slideDown 0.15s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vc-review-input {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  resize: none;
+  overflow-y: auto;
+}
+
+.vc-review-input:focus {
+  border-color: var(--accent);
+}
+
+.vc-review-input::placeholder {
+  color: var(--text-dim);
+}
+
+.vc-review-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.vc-send-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 20px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent-glow);
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vc-send-btn:hover:not(:disabled) {
+  background: var(--accent-glow-strong);
+  box-shadow: 0 0 12px rgba(0, 212, 170, 0.2);
+}
+
+.vc-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.vc-cancel-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vc-cancel-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--text-dim);
+  color: var(--text-primary);
+}
+
+/* ── Card action bar ── */
+
+.vc-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* Shared base for inline action buttons */
+.vc-play-btn,
+.vc-pause-btn,
+.vc-resume-btn,
+.vc-stop-inline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vc-play-btn:hover:not(:disabled),
+.vc-pause-btn:hover,
+.vc-resume-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-glow);
+  box-shadow: 0 0 8px rgba(0, 212, 170, 0.15);
+}
+
+.vc-play-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.vc-stop-inline-btn:hover {
+  border-color: var(--error);
+  color: var(--error);
+  background: var(--error-bg);
+  box-shadow: 0 0 8px rgba(255, 68, 102, 0.15);
+}
+
+/* Icon-only utility buttons */
+.vc-download-btn,
+.vc-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.vc-download-btn:hover:not(:disabled),
+.vc-copy-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.vc-download-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Dim pipe divider */
+.vc-action-sep {
+  color: var(--text-dim);
+  font-size: 11px;
+  user-select: none;
+  opacity: 0.4;
+}
+
+/* ── Streaming typing dots ── */
+
+.vc-agent-streaming {
+  min-height: 48px;
+}
+
+.vc-typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.vc-typing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.4;
+  animation: typing-bounce 1.4s ease-in-out infinite;
+}
+
+.vc-typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.vc-typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing-bounce {
+  0%, 60%, 100% { opacity: 0.4; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
+
+/* ── Markdown rendering ── */
+
+.md-root {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.md-heading {
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 0.3em;
+}
+
+.md-bold {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.md-italic {
+  color: var(--accent);
+  font-style: italic;
+}
+
+.md-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.md-list-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.md-bullet {
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 0.55em;
+}
+
+.md-list-num {
+  flex-shrink: 0;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.md-gap {
+  height: 0.4em;
+}
+
+/* ── Keyboard shortcut badge ── */
+
+.vc-kbd {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  vertical-align: baseline;
+}

@@ -7,5 +7,8 @@
   "envVars": {},
   "files": ["README.md"],
   "docs": "Inject this skill when the user asks for simple explanations. Phase: response (applied during synthesis).",
-  "categories": ["explanation", "beginner", "simplification"]
+  "categories": ["explanation", "beginner", "simplification"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-02-25", "type": "initial", "note": "Initial release" }
+  ]
 }

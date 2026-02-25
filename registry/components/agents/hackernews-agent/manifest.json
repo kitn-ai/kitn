@@ -7,5 +7,8 @@
   "envVars": {},
   "files": ["hackernews-agent.ts"],
   "docs": "Uses hackernews-tool to fetch top stories and story details. Presents information in an engaging tech-news style.",
-  "categories": ["hackernews", "news"]
+  "categories": ["hackernews", "news"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-02-25", "type": "initial", "note": "Initial release" }
+  ]
 }

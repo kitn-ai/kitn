@@ -9,5 +9,8 @@
   },
   "files": ["web-search.ts"],
   "docs": "Requires a BRAVE_API_KEY environment variable. Get one at https://brave.com/search/api/. The tool searches the web and returns titles, URLs, and descriptions.",
-  "categories": ["web", "search", "api"]
+  "categories": ["web", "search", "api"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-02-25", "type": "initial", "note": "Initial release" }
+  ]
 }

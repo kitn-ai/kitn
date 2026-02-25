@@ -20,5 +20,13 @@
     "research"
   ],
   "version": "1.0.0",
-  "updatedAt": "2026-02-25T18:59:36.497Z"
+  "updatedAt": "2026-02-25T19:01:41.291Z",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-25",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
 }

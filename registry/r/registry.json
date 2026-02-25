@@ -15,7 +15,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.475Z"
+      "updatedAt": "2026-02-25T19:01:41.275Z"
     },
     {
       "name": "recipe-agent",
@@ -30,7 +30,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.478Z"
+      "updatedAt": "2026-02-25T19:01:41.277Z"
     },
     {
       "name": "supervisor-agent",
@@ -48,7 +48,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.479Z"
+      "updatedAt": "2026-02-25T19:01:41.278Z"
     },
     {
       "name": "human-in-loop-agent",
@@ -64,7 +64,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.481Z"
+      "updatedAt": "2026-02-25T19:01:41.279Z"
     },
     {
       "name": "taskboard-agent",
@@ -80,7 +80,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.482Z"
+      "updatedAt": "2026-02-25T19:01:41.279Z"
     },
     {
       "name": "knowledge-agent",
@@ -97,7 +97,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.483Z"
+      "updatedAt": "2026-02-25T19:01:41.282Z"
     },
     {
       "name": "skills-agent",
@@ -112,7 +112,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.484Z"
+      "updatedAt": "2026-02-25T19:01:41.283Z"
     },
     {
       "name": "weather-agent",
@@ -129,7 +129,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.485Z"
+      "updatedAt": "2026-02-25T19:01:41.284Z"
     },
     {
       "name": "memory-agent",
@@ -144,7 +144,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.486Z"
+      "updatedAt": "2026-02-25T19:01:41.284Z"
     },
     {
       "name": "guardrails-agent",
@@ -160,7 +160,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.487Z"
+      "updatedAt": "2026-02-25T19:01:41.285Z"
     },
     {
       "name": "compact-agent",
@@ -175,7 +175,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.487Z"
+      "updatedAt": "2026-02-25T19:01:41.286Z"
     },
     {
       "name": "hackernews-agent",
@@ -192,7 +192,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.488Z"
+      "updatedAt": "2026-02-25T19:01:41.286Z"
     },
     {
       "name": "web-search-agent",
@@ -210,7 +210,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.489Z"
+      "updatedAt": "2026-02-25T19:01:41.287Z"
     },
     {
       "name": "hackernews-tool",
@@ -226,7 +226,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.490Z"
+      "updatedAt": "2026-02-25T19:01:41.288Z"
     },
     {
       "name": "movies-tool",
@@ -242,7 +242,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.491Z"
+      "updatedAt": "2026-02-25T19:01:41.288Z"
     },
     {
       "name": "web-search-tool",
@@ -258,7 +258,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.492Z"
+      "updatedAt": "2026-02-25T19:01:41.289Z"
     },
     {
       "name": "weather-tool",
@@ -273,7 +273,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.493Z"
+      "updatedAt": "2026-02-25T19:01:41.289Z"
     },
     {
       "name": "web-fetch-tool",
@@ -289,7 +289,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.494Z"
+      "updatedAt": "2026-02-25T19:01:41.290Z"
     },
     {
       "name": "step-by-step-reasoning",
@@ -305,7 +305,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.495Z"
+      "updatedAt": "2026-02-25T19:01:41.290Z"
     },
     {
       "name": "concise-summarizer",
@@ -321,7 +321,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.497Z"
+      "updatedAt": "2026-02-25T19:01:41.291Z"
     },
     {
       "name": "fact-check",
@@ -337,7 +337,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.497Z"
+      "updatedAt": "2026-02-25T19:01:41.291Z"
     },
     {
       "name": "eli5",
@@ -353,7 +353,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.498Z"
+      "updatedAt": "2026-02-25T19:01:41.292Z"
     },
     {
       "name": "pros-and-cons",
@@ -369,7 +369,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.499Z"
+      "updatedAt": "2026-02-25T19:01:41.292Z"
     },
     {
       "name": "memory-store",
@@ -385,7 +385,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.500Z"
+      "updatedAt": "2026-02-25T19:01:41.292Z"
     },
     {
       "name": "conversation-store",
@@ -401,7 +401,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.501Z"
+      "updatedAt": "2026-02-25T19:01:41.293Z"
     },
     {
       "name": "core",
@@ -412,7 +412,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.512Z"
+      "updatedAt": "2026-02-25T19:01:41.298Z"
     },
     {
       "name": "hono",
@@ -425,7 +425,7 @@
       "versions": [
         "1.0.0"
       ],
-      "updatedAt": "2026-02-25T18:59:36.520Z"
+      "updatedAt": "2026-02-25T19:01:41.301Z"
     }
   ]
 }

@@ -236,5 +236,13 @@
   },
   "docs": "Engine installed to your project. Import with: import { ... } from '@kitnai/core'",
   "version": "1.0.0",
-  "updatedAt": "2026-02-25T18:59:36.512Z"
+  "updatedAt": "2026-02-25T19:01:41.298Z",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-25",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
 }

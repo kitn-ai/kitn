@@ -13,7 +13,7 @@
       "name": "@kitnai/example-api",
       "version": "1.0.0",
       "dependencies": {
-        "@kitnai/server": "workspace:*",
+        "@kitnai/hono": "workspace:*",
         "@openrouter/ai-sdk-provider": "^2.2.3",
         "@t3-oss/env-core": "^0.13.10",
         "ai": "^6.0.91",
@@ -47,7 +47,7 @@
       "version": "1.0.0",
       "dependencies": {
         "@hono/node-server": "^1.14.3",
-        "@kitnai/server": "workspace:*",
+        "@kitnai/hono": "workspace:*",
         "@openrouter/ai-sdk-provider": "^2.2.3",
         "ai": "^6.0.91",
         "hono": "^4.11.10",
@@ -102,10 +102,26 @@
         "typescript": "^5.9.3",
       },
     },
-    "packages/server": {
-      "name": "@kitnai/server",
+    "packages/core": {
+      "name": "@kitnai/core",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@asteasolutions/zod-to-openapi": "^8.4.1",
+        "@types/bun": "^1.3.9",
+        "ai": "^6.0.91",
+        "typescript": "^5.9.3",
+        "zod": "^4.3.6",
+      },
+      "peerDependencies": {
+        "ai": "^6.0.91",
+        "zod": "^4.3.6",
+      },
+    },
+    "packages/hono": {
+      "name": "@kitnai/hono",
       "version": "0.1.0",
       "dependencies": {
+        "@kitnai/core": "workspace:*",
         "@scalar/hono-api-reference": "^0.9.41",
       },
       "devDependencies": {
@@ -252,6 +268,8 @@
 
     "@kitnai/client": ["@kitnai/client@workspace:packages/client"],
 
+    "@kitnai/core": ["@kitnai/core@workspace:packages/core"],
+
     "@kitnai/example-api": ["@kitnai/example-api@workspace:examples/api"],
 
     "@kitnai/example-app": ["@kitnai/example-app@workspace:examples/app"],
@@ -260,7 +278,7 @@
 
     "@kitnai/example-voice": ["@kitnai/example-voice@workspace:examples/voice"],
 
-    "@kitnai/server": ["@kitnai/server@workspace:packages/server"],
+    "@kitnai/hono": ["@kitnai/hono@workspace:packages/hono"],
 
     "@openrouter/ai-sdk-provider": ["@openrouter/ai-sdk-provider@2.2.3", "", { "peerDependencies": { "ai": "^6.0.0", "zod": "^3.25.0 || ^4.0.0" } }, "sha512-NovC+BaCfEeJwhToDrs8JeDYXXlJdEyz7lcxkjtyePSE4eoAKik872SyDK0MzXKcz8MRkv7XlNhPI6zz4TQp0g=="],
 
@@ -602,13 +620,15 @@
 
     "@hono/zod-openapi/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
 
+    "@kitnai/core/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
+
     "@kitnai/example-api/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
 
     "@kitnai/example-getting-started/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
 
     "@kitnai/example-voice/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
 
-    "@kitnai/server/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
+    "@kitnai/hono/zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
 
     "@scalar/types/nanoid": ["nanoid@5.1.6", "", { "bin": { "nanoid": "bin/nanoid.js" } }, "sha512-c7+7RQ+dMB5dPwwCp4ee1/iV/q2P6aK1mTZcfr1BTuVlyW9hJYiMPybJCcnBlQtuSmTIWNeazm/zqNoZSSElBg=="],
 

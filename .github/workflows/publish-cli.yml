@@ -24,7 +24,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: https://registry.npmjs.org
 
       - run: bun install --frozen-lockfile
 
@@ -37,11 +36,9 @@ jobs:
           echo "remote=$REMOTE" >> "$GITHUB_OUTPUT"
 
           if [ "$LOCAL" != "$REMOTE" ]; then
-            # You bumped the version manually — use it as-is
             echo "version=$LOCAL" >> "$GITHUB_OUTPUT"
             echo "bumped=false" >> "$GITHUB_OUTPUT"
           else
-            # Auto-bump patch version
             IFS='.' read -r MAJOR MINOR PATCH <<< "$REMOTE"
             NEXT="$MAJOR.$MINOR.$((PATCH + 1))"
             echo "version=$NEXT" >> "$GITHUB_OUTPUT"
@@ -61,8 +58,8 @@ jobs:
       - name: Build CLI
         run: bun run --cwd packages/cli build
 
-      - name: Publish to npm
-        run: npm publish --access public --provenance
+      - name: Publish to npm with provenance
+        run: npm publish --provenance --access public
         working-directory: packages/cli
 
       - name: Commit version bump

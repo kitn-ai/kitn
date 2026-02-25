@@ -4,6 +4,7 @@ import { join } from "path";
 import { readConfig } from "../utils/config.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
 import { readExistingFile, generateDiff } from "../installers/file-writer.js";
+import { parseComponentRef } from "../utils/parse-ref.js";
 import { typeToDir } from "../registry/schema.js";
 
 export async function diffCommand(componentName: string) {
@@ -15,25 +16,28 @@ export async function diffCommand(componentName: string) {
   }
 
   // Resolve "routes" alias to framework-specific package name
-  const resolvedName =
-    componentName === "routes" ? (config.framework ?? "hono") : componentName;
+  const input = componentName === "routes" ? (config.framework ?? "hono") : componentName;
+  const ref = parseComponentRef(input);
 
-  const installed = config.installed?.[resolvedName];
+  // Look up in installed — @kitn uses plain name, third-party uses @namespace/name
+  const installedKey = ref.namespace === "@kitn" ? ref.name : `${ref.namespace}/${ref.name}`;
+  const installed = config.installed?.[installedKey];
   if (!installed) {
-    p.log.error(`Component '${resolvedName}' is not installed.`);
+    p.log.error(`Component '${ref.name}' is not installed.`);
     process.exit(1);
   }
 
+  const namespace = installed.registry ?? ref.namespace;
   const fetcher = new RegistryFetcher(config.registries);
-  const index = await fetcher.fetchIndex();
-  const indexItem = index.items.find((i) => i.name === resolvedName);
+  const index = await fetcher.fetchIndex(namespace);
+  const indexItem = index.items.find((i) => i.name === ref.name);
   if (!indexItem) {
-    p.log.error(`Component '${resolvedName}' not found in registry.`);
+    p.log.error(`Component '${ref.name}' not found in ${namespace} registry.`);
     process.exit(1);
   }
 
   const dir = typeToDir[indexItem.type] as any;
-  const registryItem = await fetcher.fetchItem(resolvedName, dir);
+  const registryItem = await fetcher.fetchItem(ref.name, dir, namespace, ref.version);
 
   let hasDiff = false;
   for (const file of registryItem.files) {
@@ -78,6 +82,6 @@ export async function diffCommand(componentName: string) {
   }
 
   if (!hasDiff) {
-    p.log.success(`${resolvedName}: up to date, no differences.`);
+    p.log.success(`${ref.name}: up to date, no differences.`);
   }
 }

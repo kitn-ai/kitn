@@ -29,6 +29,7 @@ program
   .description("List available and installed components")
   .option("-i, --installed", "only show installed components")
   .option("-t, --type <type>", "filter by type (agent, tool, skill, storage, package)")
+  .option("-r, --registry <namespace>", "only show components from this registry")
   .action(async (opts) => {
     const { listCommand } = await import("./commands/list.js");
     await listCommand(opts);
@@ -68,6 +69,39 @@ program
   .action(async (component: string) => {
     const { infoCommand } = await import("./commands/info.js");
     await infoCommand(component);
+  });
+
+const registry = program
+  .command("registry")
+  .description("Manage component registries");
+
+registry
+  .command("add")
+  .description("Add a component registry")
+  .argument("<namespace>", "registry namespace (e.g. @myteam)")
+  .argument("<url>", "URL template with {type} and {name} placeholders")
+  .option("-o, --overwrite", "overwrite if namespace already exists")
+  .action(async (namespace: string, url: string, opts) => {
+    const { registryAddCommand } = await import("./commands/registry.js");
+    await registryAddCommand(namespace, url, opts);
+  });
+
+registry
+  .command("remove")
+  .description("Remove a component registry")
+  .argument("<namespace>", "registry namespace to remove (e.g. @myteam)")
+  .option("-f, --force", "allow removing the default @kitn registry")
+  .action(async (namespace: string, opts) => {
+    const { registryRemoveCommand } = await import("./commands/registry.js");
+    await registryRemoveCommand(namespace, opts);
+  });
+
+registry
+  .command("list")
+  .description("List all configured registries")
+  .action(async () => {
+    const { registryListCommand } = await import("./commands/registry.js");
+    await registryListCommand();
   });
 
 program.parse();

@@ -4,8 +4,7 @@
   "type": "module",
   "workspaces": [
     "packages/*",
-    "examples/*",
-    "registry"
+    "examples/*"
   ],
   "scripts": {
     "install:all": "bun install",
@@ -15,9 +14,7 @@
     "dev:voice": "bun run --cwd examples/voice dev",
     "build": "bun run --filter '*' build",
     "test": "bun run --filter '*' test",
-    "typecheck": "bun run --filter '*' typecheck",
-    "build:registry": "bun run --cwd registry build",
-    "validate:registry": "bun run --cwd registry validate"
+    "typecheck": "bun run --filter '*' typecheck"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

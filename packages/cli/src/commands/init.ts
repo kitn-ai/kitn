@@ -70,7 +70,7 @@ export async function initCommand() {
       storage: `${baseDir}/storage`,
     },
     registries: {
-      "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
+      "@kitn": "https://kitn-ai.github.io/registry/r/{type}/{name}.json",
     },
   };
 

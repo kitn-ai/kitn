@@ -141,7 +141,7 @@ Created by `kitn init`. Controls where components are installed and which regist
     "storage": "src/storage"
   },
   "registries": {
-    "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json"
+    "@kitn": "https://kitn-ai.github.io/registry/r/{type}/{name}.json"
   }
 }
 ```
@@ -160,7 +160,7 @@ Add custom registries alongside or instead of the default:
 ```json
 {
   "registries": {
-    "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
+    "@kitn": "https://kitn-ai.github.io/registry/r/{type}/{name}.json",
     "@myteam": "https://registry.myteam.dev/r/{type}/{name}.json"
   }
 }

@@ -14,6 +14,7 @@ import {
 } from "../installers/file-writer.js";
 import { installDependencies } from "../installers/dep-installer.js";
 import { checkEnvVars } from "../installers/env-checker.js";
+import { rewriteKitnImports } from "../installers/import-rewriter.js";
 import { contentHash } from "../utils/hash.js";
 import { typeToDir, type RegistryItem, type ComponentType } from "../registry/schema.js";
 
@@ -91,12 +92,13 @@ export async function addCommand(components: string[], opts: AddOptions) {
       const fileName = file.path.split("/").pop()!;
       const targetPath = join(cwd, config.aliases[aliasKey], fileName);
       const relativePath = join(config.aliases[aliasKey], fileName);
+      const content = rewriteKitnImports(file.content, item.type, fileName, config.aliases);
 
-      const status = await checkFileStatus(targetPath, file.content);
+      const status = await checkFileStatus(targetPath, content);
 
       switch (status) {
         case FileStatus.New:
-          await writeComponentFile(targetPath, file.content);
+          await writeComponentFile(targetPath, content);
           created.push(relativePath);
           break;
 
@@ -106,11 +108,11 @@ export async function addCommand(components: string[], opts: AddOptions) {
 
         case FileStatus.Different:
           if (opts.overwrite) {
-            await writeComponentFile(targetPath, file.content);
+            await writeComponentFile(targetPath, content);
             updated.push(relativePath);
           } else {
             const existing = await readExistingFile(targetPath);
-            const diff = generateDiff(relativePath, existing ?? "", file.content);
+            const diff = generateDiff(relativePath, existing ?? "", content);
             p.log.message(pc.dim(diff));
 
             const action = await p.select({
@@ -122,7 +124,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
             });
 
             if (!p.isCancel(action) && action === "overwrite") {
-              await writeComponentFile(targetPath, file.content);
+              await writeComponentFile(targetPath, content);
               updated.push(relativePath);
             } else {
               skipped.push(relativePath);
@@ -133,7 +135,10 @@ export async function addCommand(components: string[], opts: AddOptions) {
     }
 
     const installed = config._installed ?? {};
-    const allContent = item.files.map((f) => f.content).join("\n");
+    const allContent = item.files.map((f) => {
+      const fn = f.path.split("/").pop()!;
+      return rewriteKitnImports(f.content, item.type, fn, config.aliases);
+    }).join("\n");
     installed[item.name] = {
       version: item.version ?? "1.0.0",
       installedAt: new Date().toISOString(),

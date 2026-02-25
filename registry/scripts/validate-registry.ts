@@ -32,13 +32,31 @@ const typeToDir: Record<string, string> = {
 // Matches: import ... from "./path" and export ... from "./path"
 function extractRelativeImports(source: string): string[] {
   const imports: string[] = [];
-  const pattern = /(?:import|export)\s+.*?\s+from\s+["'](\.[^"']+)["']/g;
+  const pattern = /(?:import|export)\s+[\s\S]*?\s+from\s+["'](\.[^"']+)["']/g;
   let match;
   while ((match = pattern.exec(source)) !== null) {
     imports.push(match[1]);
   }
   return imports;
 }
+
+// Extract @kitn/<type>/<path> alias imports.
+// Returns array of { type, path } for known types.
+function extractKitnAliasImports(source: string): Array<{ type: string; path: string }> {
+  const imports: Array<{ type: string; path: string }> = [];
+  const pattern = /(?:import|export)\s+[\s\S]*?\s+from\s+["']@kitn\/([\w-]+)\/([^"']+)["']/g;
+  let match;
+  while ((match = pattern.exec(source)) !== null) {
+    if (knownAliasTypes.has(match[1])) {
+      // Reverse lookup: alias name → type directory
+      imports.push({ type: match[1], path: match[2] });
+    }
+  }
+  return imports;
+}
+
+// Invert typeToDir for alias lookups: "agents" → "agents", etc.
+const knownAliasTypes = new Set(Object.values(typeToDir));
 
 // Given a .js import specifier, find the corresponding .ts file path
 // e.g. "../tools/weather.js" → "tools/weather.ts"
@@ -108,12 +126,54 @@ async function main() {
     if (extname(installedPath) !== ".ts") continue;
 
     const source = fileContents.get(installedPath)!;
-    const imports = extractRelativeImports(source);
     filesChecked++;
 
-    for (const importPath of imports) {
+    // Validate @kitn/<type>/<path> alias imports (the canonical form)
+    const aliasImports = extractKitnAliasImports(source);
+    for (const { type, path: importedPath } of aliasImports) {
+      importsChecked++;
+      let resolvedTarget = `${type}/${importedPath}`;
+      // Replace .js extension with .ts for resolution
+      if (resolvedTarget.endsWith(".js")) {
+        resolvedTarget = resolvedTarget.slice(0, -3) + ".ts";
+      }
+
+      if (!installedFiles.has(resolvedTarget)) {
+        errors++;
+        console.error(
+          `\x1b[31m✗\x1b[0m ${componentName} → ${installedPath}`,
+        );
+        console.error(
+          `  import "@kitn/${type}/${importedPath}" resolves to "${resolvedTarget}" which is not in the registry`,
+        );
+        console.error();
+      }
+    }
+
+    // Validate relative imports
+    const relativeImports = extractRelativeImports(source);
+    const fromDir = dirname(installedPath);
+
+    for (const importPath of relativeImports) {
       importsChecked++;
       const resolvedTarget = resolveImportToFile(importPath, installedPath);
+      const targetDir = dirname(resolvedTarget);
+
+      // Flag relative cross-type imports — these should be @kitn/ aliases
+      if (targetDir !== fromDir && knownAliasTypes.has(targetDir)) {
+        errors++;
+        console.error(
+          `\x1b[31m✗\x1b[0m ${componentName} → ${installedPath}`,
+        );
+        console.error(
+          `  relative cross-type import "${importPath}" should use @kitn/ alias instead`,
+        );
+        console.error(
+          `  \x1b[33mhint\x1b[0m: use "@kitn/${targetDir}/${resolvedTarget.split("/").pop()?.replace(".ts", ".js")}" instead`,
+        );
+        console.error();
+        continue;
+      }
 
       if (!installedFiles.has(resolvedTarget)) {
         errors++;

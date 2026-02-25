@@ -1,4 +1,4 @@
-import { weatherTool } from "../tools/weather.js";
+import { weatherTool } from "@kitn/tools/weather.js";
 
 const SYSTEM_PROMPT = `You are a weather specialist agent. Your job is to provide accurate, helpful weather information.
 

@@ -80,7 +80,7 @@ Agents export a configuration object with a system prompt and tool bindings.
 
 **`weather-agent.ts`**:
 ```ts
-import { weatherTool } from "../tools/weather.js";
+import { weatherTool } from "@kitn/tools/weather.js";
 
 const SYSTEM_PROMPT = `You are a weather specialist agent...`;
 
@@ -90,7 +90,7 @@ export const WEATHER_AGENT_CONFIG = {
 };
 ```
 
-Agents reference their tools via relative imports. The `registryDependencies` field ensures the tool gets installed first.
+Agents reference tools using `@kitn/` alias imports. The CLI rewrites these to relative paths during `kitn add`. The `registryDependencies` field ensures the tool gets installed first.
 
 ### Tool
 
@@ -237,29 +237,39 @@ After installation, the CLI checks for missing env vars and displays a warning w
 
 ## Import Paths
 
-**This is the most common source of confusion when writing registry components.**
-
-Source files in the registry are authored with import paths that target the **installed layout**, not their location in the registry. For example:
-
-```
-# In the registry, these files are far apart:
-registry/components/agents/weather-agent/weather-agent.ts
-registry/components/tools/weather-tool/weather.ts
-
-# But after `kitn add`, they're adjacent:
-src/agents/weather-agent.ts
-src/tools/weather.ts
-```
-
-So the weather agent imports its tool like this:
+When a component imports from a different component type (e.g., an agent importing a tool), use the `@kitn/` alias:
 
 ```ts
+// In registry/components/agents/weather-agent/weather-agent.ts:
+import { weatherTool } from "@kitn/tools/weather.js";
+```
+
+The `@kitn/<type>/<path>` convention tells the CLI where the file lives. During `kitn add`, the CLI rewrites these to relative paths based on the user's `kitn.json` aliases:
+
+```ts
+// After installation in the user's project:
 import { weatherTool } from "../tools/weather.js";
 ```
 
-This path is **wrong** for the registry layout but **correct** after installation. Your IDE's auto-import will suggest the registry-relative path, which is NOT what you want. You must write the path as it will resolve in the user's project.
+### Available alias types
 
-The `.js` extension is correct — TypeScript ESM resolves `weather.js` to `weather.ts` at compile time.
+| Alias | Resolves to |
+|-------|-------------|
+| `@kitn/agents/<file>` | `config.aliases.agents/<file>` |
+| `@kitn/tools/<file>` | `config.aliases.tools/<file>` |
+| `@kitn/skills/<file>` | `config.aliases.skills/<file>` |
+| `@kitn/storage/<file>` | `config.aliases.storage/<file>` |
+
+### Rules
+
+- **Cross-type imports** must use `@kitn/` aliases. Relative cross-type imports (`../tools/...`) are flagged as errors by `bun run validate`.
+- **Same-directory imports** (e.g., a helper file within the same component) use relative paths (`./helper.js`).
+- The `.js` extension is correct — TypeScript ESM resolves `weather.js` to `weather.ts` at compile time.
+- Non-component `@kitn/` imports (e.g., `@kitn/server`) are left untouched by the rewriter.
+
+### IDE support
+
+Run `bun run stage` in the `registry/` directory to build a `_staging/` directory with symlinks. The `registry/tsconfig.json` maps `@kitn/*` paths to these staged files, giving your IDE full resolution and type-checking.
 
 ## Local Testing
 
@@ -284,9 +294,10 @@ cd registry
 bun run validate
 ```
 
-This runs `scripts/validate-registry.ts`, which simulates the installed directory layout and verifies that every relative import in every `.ts` file resolves to an actual file in the registry. It catches:
+This runs `scripts/validate-registry.ts`, which simulates the installed directory layout and verifies that every import in every `.ts` file resolves correctly. It catches:
 
-- **Broken import paths** — typos, wrong directory depth, missing extensions
+- **Broken `@kitn/` imports** — typos or paths that don't resolve to a registry component
+- **Relative cross-type imports** — `../tools/...` should be `@kitn/tools/...` instead
 - **Missing registryDependencies** — importing a file from a component that isn't declared as a dependency
 - **Nonexistent registryDependencies** — declaring a dependency on a component that doesn't exist
 
@@ -294,12 +305,20 @@ Example error output:
 
 ```
 ✗ weather-agent → agents/weather-agent.ts
-  import "../tools/nonexistent.js" resolves to "tools/nonexistent.ts" which is not in the registry
-  hint: did you mean "tools/weather.ts" from component "weather-tool"?
-  hint: "weather-tool" is not in registryDependencies — add it to manifest.json
+  relative cross-type import "../tools/bar.js" should use @kitn/ alias instead
+  hint: use "@kitn/tools/bar.js" instead
 ```
 
 Always run `bun run validate` after writing or modifying component source files.
+
+### Type-check the registry
+
+```bash
+cd registry
+bun run typecheck
+```
+
+This stages symlinks (via `bun run stage`) and runs `tsc --noEmit` against the staged layout. The `tsconfig.json` maps `@kitn/*` paths to the staged files, so the TypeScript compiler can resolve all alias imports.
 
 ### Validate manifests
 

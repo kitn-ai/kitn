@@ -23,7 +23,7 @@
       "type": "object",
       "additionalProperties": { "type": "string" }
     },
-    "_installed": {
+    "installed": {
       "type": "object",
       "additionalProperties": {
         "type": "object",

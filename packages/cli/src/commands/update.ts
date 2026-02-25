@@ -12,7 +12,7 @@ export async function updateCommand(components: string[]) {
       process.exit(1);
     }
 
-    const installed = config._installed;
+    const installed = config.installed;
     if (!installed || Object.keys(installed).length === 0) {
       p.log.info("No installed components to update.");
       return;

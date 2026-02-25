@@ -94,7 +94,7 @@ describe("configSchema", () => {
     expect(configSchema.parse(config)).toBeDefined();
   });
 
-  it("validates config with _installed section", () => {
+  it("validates config with installed section", () => {
     const config: KitnConfig = {
       runtime: "node",
       aliases: {
@@ -104,7 +104,7 @@ describe("configSchema", () => {
         storage: "src/storage",
       },
       registries: {},
-      _installed: {
+      installed: {
         "weather-agent": {
           version: "1.0.0",
           installedAt: "2026-02-24T10:30:00Z",

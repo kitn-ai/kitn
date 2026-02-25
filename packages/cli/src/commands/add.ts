@@ -148,8 +148,8 @@ export async function addCommand(components: string[], opts: AddOptions) {
         p.log.info(`Patched tsconfig.json with paths: ${Object.keys(resolvedPaths).join(", ")}`);
       }
 
-      // Track in _installed
-      const installed = config._installed ?? {};
+      // Track in installed
+      const installed = config.installed ?? {};
       const allContent = item.files.map((f) => f.content).join("\n");
       installed[item.name] = {
         version: item.version ?? "1.0.0",
@@ -157,7 +157,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
         files: item.files.map((f) => join(baseDir, f.path)),
         hash: contentHash(allContent),
       };
-      config._installed = installed;
+      config.installed = installed;
 
     } else {
       // Regular component install — single file, import rewriting
@@ -216,8 +216,8 @@ export async function addCommand(components: string[], opts: AddOptions) {
         }
       }
 
-      // Track in _installed
-      const installed = config._installed ?? {};
+      // Track in installed
+      const installed = config.installed ?? {};
       const allContent = item.files.map((f) => {
         const fn = f.path.split("/").pop()!;
         return rewriteKitnImports(f.content, item.type, fn, config.aliases);
@@ -239,7 +239,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
         }),
         hash: contentHash(allContent),
       };
-      config._installed = installed;
+      config.installed = installed;
     }
   }
 

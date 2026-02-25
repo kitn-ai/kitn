@@ -10,7 +10,7 @@
   "registries": {
     "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json"
   },
-  "_installed": {
+  "installed": {
     "weather-tool": {
       "version": "1.0.0",
       "installedAt": "2026-02-25T00:00:00.000Z",

@@ -151,7 +151,7 @@ Created by `kitn init`. Controls where components are installed and which regist
 | `runtime` | `bun`, `node`, or `deno` |
 | `aliases` | Directory paths for each component type |
 | `registries` | Named registries with URL templates |
-| `_installed` | Auto-managed tracking of installed components (don't edit manually) |
+| `installed` | Auto-managed tracking of installed components (don't edit manually) |
 
 ### Custom Registries
 
@@ -183,4 +183,4 @@ The CLI automatically detects your package manager by checking for lockfiles in 
 
 Components are **source code**, not packages. `kitn add` copies TypeScript files directly into your project. You own the code and can modify it freely.
 
-The CLI tracks what it installed in `kitn.json` under `_installed`, storing file paths and content hashes. This enables `kitn diff` to detect local changes and `kitn update` to apply registry updates.
+The CLI tracks what it installed in `kitn.json` under `installed`, storing file paths and content hashes. This enables `kitn diff` to detect local changes and `kitn update` to apply registry updates.

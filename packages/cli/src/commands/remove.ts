@@ -16,7 +16,7 @@ export async function removeCommand(componentName: string) {
   const resolvedName =
     componentName === "routes" ? (config.framework ?? "hono") : componentName;
 
-  const installed = config._installed?.[resolvedName];
+  const installed = config.installed?.[resolvedName];
   if (!installed) {
     p.log.error(`Component '${resolvedName}' is not installed.`);
     process.exit(1);
@@ -41,9 +41,9 @@ export async function removeCommand(componentName: string) {
     }
   }
 
-  delete config._installed![resolvedName];
-  if (Object.keys(config._installed!).length === 0) {
-    delete config._installed;
+  delete config.installed![resolvedName];
+  if (Object.keys(config.installed!).length === 0) {
+    delete config.installed;
   }
   await writeConfig(cwd, config);
 

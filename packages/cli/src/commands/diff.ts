@@ -18,7 +18,7 @@ export async function diffCommand(componentName: string) {
   const resolvedName =
     componentName === "routes" ? (config.framework ?? "hono") : componentName;
 
-  const installed = config._installed?.[resolvedName];
+  const installed = config.installed?.[resolvedName];
   if (!installed) {
     p.log.error(`Component '${resolvedName}' is not installed.`);
     process.exit(1);

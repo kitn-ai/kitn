@@ -24,7 +24,7 @@ export const configSchema = z.object({
     storage: z.string(),
   }),
   registries: z.record(z.string(), z.string()),
-  _installed: z.record(z.string(), installedComponentSchema).optional(),
+  installed: z.record(z.string(), installedComponentSchema).optional(),
 });
 
 export type KitnConfig = z.infer<typeof configSchema>;

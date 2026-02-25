@@ -11,7 +11,7 @@ When you run `kitn add weather-agent`, the CLI:
 3. **Copies source files** directly into your project under the configured alias directories
 4. **Installs npm packages** listed in `dependencies`/`devDependencies`
 5. **Checks environment variables** and warns about any that are missing
-6. **Tracks** installed files in `kitn.json` under `_installed`
+6. **Tracks** installed files in `kitn.json` under `installed`
 
 The key concept: **you own the code**. Components are copied as source files, not imported as packages. You can modify them freely.
 

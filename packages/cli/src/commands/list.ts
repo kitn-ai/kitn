@@ -31,7 +31,7 @@ export async function listCommand(opts: ListOptions) {
   }
   s.stop(`Found ${index.items.length} components`);
 
-  const installed = config._installed ?? {};
+  const installed = config.installed ?? {};
   const typeGroups = new Map<string, typeof index.items>();
 
   for (const item of index.items) {

@@ -2,14 +2,30 @@
   "name": "@kitnai/client",
   "version": "0.1.0",
   "type": "module",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "description": "Client utilities for kitn AI agents — SSE parser, audio recorder, chunked TTS",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kitn-ai/kitn",
+    "directory": "packages/client"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
+    "build": "tsc",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run build"
   },
   "devDependencies": {
     "@types/bun": "^1.3.9",

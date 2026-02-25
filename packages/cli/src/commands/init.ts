@@ -1,8 +1,6 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { readConfig, writeConfig } from "../utils/config.js";
-import { detectPackageManager } from "../utils/detect.js";
-import { installDependencies } from "../installers/dep-installer.js";
 
 export async function initCommand() {
   p.intro(pc.bgCyan(pc.black(" kitn ")));
@@ -35,44 +33,41 @@ export async function initCommand() {
     process.exit(0);
   }
 
-  const aliases = await p.group({
-    agents: () =>
-      p.text({
-        message: "Where should agents be installed?",
-        initialValue: "src/agents",
-        placeholder: "src/agents",
-      }),
-    tools: () =>
-      p.text({
-        message: "Where should tools be installed?",
-        initialValue: "src/tools",
-        placeholder: "src/tools",
-      }),
-    skills: () =>
-      p.text({
-        message: "Where should skills be installed?",
-        initialValue: "src/skills",
-        placeholder: "src/skills",
-      }),
-    storage: () =>
-      p.text({
-        message: "Where should storage adapters be installed?",
-        initialValue: "src/storage",
-        placeholder: "src/storage",
-      }),
+  const framework = await p.select({
+    message: "Which framework are you using?",
+    options: [
+      { value: "hono", label: "Hono", hint: "recommended" },
+      { value: "cloudflare", label: "Cloudflare Workers", hint: "coming soon" },
+      { value: "elysia", label: "Elysia", hint: "coming soon" },
+      { value: "fastify", label: "Fastify", hint: "coming soon" },
+      { value: "express", label: "Express", hint: "coming soon" },
+    ],
   });
-  if (p.isCancel(aliases)) {
+  if (p.isCancel(framework)) {
     p.cancel("Init cancelled.");
     process.exit(0);
   }
 
+  const base = await p.text({
+    message: "Where should kitn packages be installed?",
+    initialValue: "src/ai",
+    placeholder: "src/ai",
+  });
+  if (p.isCancel(base)) {
+    p.cancel("Init cancelled.");
+    process.exit(0);
+  }
+
+  const baseDir = base as string;
   const config = {
     runtime: runtime as "bun" | "node" | "deno",
+    framework: framework as "hono" | "cloudflare" | "elysia" | "fastify" | "express",
     aliases: {
-      agents: aliases.agents as string,
-      tools: aliases.tools as string,
-      skills: aliases.skills as string,
-      storage: aliases.storage as string,
+      base: baseDir,
+      agents: `${baseDir}/agents`,
+      tools: `${baseDir}/tools`,
+      skills: `${baseDir}/skills`,
+      storage: `${baseDir}/storage`,
     },
     registries: {
       "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
@@ -80,29 +75,9 @@ export async function initCommand() {
   };
 
   const s = p.spinner();
-
   s.start("Writing kitn.json");
   await writeConfig(cwd, config);
   s.stop("Created kitn.json");
 
-  const pm = await detectPackageManager(cwd);
-  if (pm) {
-    const shouldInstall = await p.confirm({
-      message: `Install @kitnai/hono using ${pm}?`,
-      initialValue: true,
-    });
-    if (!p.isCancel(shouldInstall) && shouldInstall) {
-      s.start("Installing @kitnai/hono...");
-      try {
-        installDependencies(pm, ["@kitnai/hono"], cwd);
-        s.stop("Installed @kitnai/hono");
-      } catch {
-        s.stop(pc.yellow("Failed to install @kitnai/hono — you can install it manually"));
-      }
-    }
-  } else {
-    p.log.info("No package manager detected. Install @kitnai/hono manually.");
-  }
-
-  p.outro(pc.green("Done! Run `kitn add <component>` to add your first component."));
+  p.outro(pc.green("Done! Run `kitn add core` to install the engine, then `kitn add routes` for HTTP routes."));
 }

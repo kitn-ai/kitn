@@ -61,4 +61,13 @@ program
     await updateCommand(components);
   });
 
+program
+  .command("info")
+  .description("Show details about a component")
+  .argument("<component>", "component name (e.g. weather-agent, @acme/tool@1.0.0)")
+  .action(async (component: string) => {
+    const { infoCommand } = await import("./commands/info.js");
+    await infoCommand(component);
+  });
+
 program.parse();

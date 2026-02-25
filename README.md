@@ -22,6 +22,7 @@ A TypeScript framework for building multi-agent AI systems. Kitn gives you agent
 | `@kitnai/core` | Framework-agnostic engine — agents, tools, storage, memory, events, voice |
 | `@kitnai/hono` | Hono adapter — plugin factory, OpenAPI routes, Scalar docs |
 | `@kitnai/client` | Browser utilities — SSE parsing, audio recording, chunked TTS playback |
+| `@kitnai/cli` | CLI for the component registry — add, list, diff, update components |
 
 ## Getting Started
 
@@ -165,17 +166,18 @@ kitn/
     core/           # @kitnai/core — framework-agnostic engine
     hono/           # @kitnai/hono — Hono adapter
     client/         # @kitnai/client — browser utilities
+    cli/            # @kitnai/cli — component registry CLI
   examples/
     api/            # Example REST API server
     app/            # Example Solid.js frontend
     voice/          # Example voice client
-  registry/         # Component registry (agents, tools, skills)
+    getting-started/ # Minimal getting-started example
 ```
 
 ## Development
 
 ```bash
-# Install all dependencies (packages, examples, registry)
+# Install all dependencies
 bun install
 
 # Run all three examples concurrently (api + app + voice)
@@ -195,8 +197,6 @@ bun run test
 # Build all packages
 bun run build
 
-# Build the component registry
-bun run build:registry
 ```
 
 ## License

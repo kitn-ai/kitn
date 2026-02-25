@@ -1,9 +1,9 @@
 /**
  * In-memory MemoryStore tests.
- * Run with: bun test packages/ai/test/memory-store.test.ts
+ * Run with: bun test packages/core/test/memory-store.test.ts
  */
 import { describe, test, expect, beforeEach } from "bun:test";
-import { createInMemoryMemoryStore } from "../src/index.js";
+import { createInMemoryMemoryStore } from "../src/storage/in-memory/memory-store.js";
 
 describe("createInMemoryMemoryStore", () => {
   let store: ReturnType<typeof createInMemoryMemoryStore>;

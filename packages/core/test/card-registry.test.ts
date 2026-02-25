@@ -1,9 +1,9 @@
 /**
  * CardRegistry tests.
- * Run with: bun test packages/ai/test/card-registry.test.ts
+ * Run with: bun test packages/core/test/card-registry.test.ts
  */
 import { describe, test, expect } from "bun:test";
-import { CardRegistry } from "../src/index.js";
+import { CardRegistry } from "../src/utils/card-registry.js";
 
 describe("CardRegistry", () => {
   test("extracts a card from matching tool result", () => {

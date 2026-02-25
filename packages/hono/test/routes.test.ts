@@ -3,7 +3,8 @@
  * Run with: bun test packages/ai/test/routes.test.ts
  */
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
-import { createAIPlugin, createFileStorage } from "../src/index.js";
+import { createAIPlugin } from "@kitnai/hono";
+import { createFileStorage } from "@kitnai/core";
 import { makeMockModel } from "./helpers.js";
 import { Hono } from "hono";
 import { tool } from "ai";

@@ -1,22 +1,15 @@
 /**
  * Orchestrator delegation flow tests.
- * Run with: bun test packages/ai/test/orchestrator.test.ts
+ * Run with: bun test packages/core/test/orchestrator.test.ts
  */
 import { describe, test, expect } from "bun:test";
-import {
-  AgentRegistry,
-  AgentEventBus,
-  BUS_EVENTS,
-  TOOL_NAMES,
-  DEFAULTS,
-  delegationStore,
-} from "../src/index.js";
+import { AgentRegistry } from "../src/registry/agent-registry.js";
+import { AgentEventBus } from "../src/events/agent-events.js";
+import { BUS_EVENTS } from "../src/events/events.js";
+import { TOOL_NAMES, DEFAULTS } from "../src/utils/constants.js";
+import { delegationStore, getEventBus, getOrchestratorAgents } from "../src/utils/delegation-context.js";
 import { createOrchestratorAgent } from "../src/agents/orchestrator.js";
 import { executeTask } from "../src/agents/execute-task.js";
-import {
-  getOrchestratorAgents,
-  getEventBus,
-} from "../src/lib/delegation-context.js";
 import { makeCtx, helloTool, registerSpecialist } from "./helpers.js";
 
 // ── 1. Orchestrator registration ──────────────────────────────────────────────

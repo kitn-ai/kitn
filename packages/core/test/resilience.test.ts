@@ -1,9 +1,9 @@
 /**
  * Resilience utility tests (isRetryableError, withResilience).
- * Run with: bun test packages/ai/test/resilience.test.ts
+ * Run with: bun test packages/core/test/resilience.test.ts
  */
 import { describe, test, expect } from "bun:test";
-import { isRetryableError, withResilience } from "../src/index.js";
+import { isRetryableError, withResilience } from "../src/utils/resilience.js";
 
 describe("isRetryableError", () => {
   test("retries on 429 (rate limit)", () => {

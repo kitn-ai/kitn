@@ -1,10 +1,11 @@
 /**
  * Utility function tests (buildToolDescription, needsCompaction).
- * Run with: bun test packages/ai/test/utils.test.ts
+ * Run with: bun test packages/core/test/utils.test.ts
  */
 import { describe, test, expect } from "bun:test";
-import { buildToolDescription, needsCompaction } from "../src/index.js";
-import type { Conversation } from "../src/index.js";
+import { buildToolDescription } from "../src/utils/tool-examples.js";
+import { needsCompaction } from "../src/utils/compaction.js";
+import type { Conversation } from "../src/storage/interfaces.js";
 
 describe("buildToolDescription", () => {
   test("returns base description when no examples", () => {

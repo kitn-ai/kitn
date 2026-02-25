@@ -1,17 +1,15 @@
 /**
- * Shared test helpers for @kitnai/hono test suite.
+ * Shared test helpers for @kitnai/core test suite.
  */
 import { tool } from "ai";
 import { z } from "zod";
-import {
-  AgentRegistry,
-  CardRegistry,
-  DEFAULTS,
-  ToolRegistry,
-} from "@kitnai/core";
-import type { PluginContext } from "@kitnai/core";
-import type { AgentRegistration } from "@kitnai/core";
-import type { StorageProvider } from "@kitnai/core";
+import { AgentRegistry } from "../src/registry/agent-registry.js";
+import { ToolRegistry } from "../src/registry/tool-registry.js";
+import { CardRegistry } from "../src/utils/card-registry.js";
+import { DEFAULTS } from "../src/utils/constants.js";
+import type { PluginContext } from "../src/types.js";
+import type { AgentRegistration } from "../src/registry/agent-registry.js";
+import type { StorageProvider } from "../src/storage/interfaces.js";
 
 /** Minimal LanguageModel mock that resolves without network calls. */
 export function makeMockModel(textResponse = "mock response") {

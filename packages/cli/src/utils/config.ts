@@ -2,7 +2,7 @@ import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { z } from "zod";
 
-const componentType = z.enum(["kitn:agent", "kitn:tool", "kitn:skill", "kitn:storage"]);
+const componentType = z.enum(["kitn:agent", "kitn:tool", "kitn:skill", "kitn:storage", "kitn:package"]);
 type ComponentType = z.infer<typeof componentType>;
 
 const installedComponentSchema = z.object({
@@ -12,10 +12,12 @@ const installedComponentSchema = z.object({
   hash: z.string(),
 });
 
-const configSchema = z.object({
+export const configSchema = z.object({
   $schema: z.string().optional(),
   runtime: z.enum(["bun", "node", "deno"]),
+  framework: z.enum(["hono", "cloudflare", "elysia", "fastify", "express"]).optional(),
   aliases: z.object({
+    base: z.string().optional(),
     agents: z.string(),
     tools: z.string(),
     skills: z.string(),
@@ -43,7 +45,9 @@ export async function writeConfig(projectDir: string, config: KitnConfig): Promi
   await writeFile(join(projectDir, CONFIG_FILE), JSON.stringify(data, null, 2) + "\n");
 }
 
-const typeToAliasKey: Record<ComponentType, keyof KitnConfig["aliases"]> = {
+type RequiredAliasKey = "agents" | "tools" | "skills" | "storage";
+
+const typeToAliasKey: Record<ComponentType, RequiredAliasKey> = {
   "kitn:agent": "agents",
   "kitn:tool": "tools",
   "kitn:skill": "skills",

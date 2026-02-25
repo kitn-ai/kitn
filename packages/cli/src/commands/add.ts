@@ -87,7 +87,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
           case "kitn:skill": return "skills";
           case "kitn:storage": return "storage";
         }
-      })() as keyof typeof config.aliases;
+      })() as "agents" | "tools" | "skills" | "storage";
 
       const fileName = file.path.split("/").pop()!;
       const targetPath = join(cwd, config.aliases[aliasKey], fileName);
@@ -150,7 +150,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
             case "kitn:skill": return "skills";
             case "kitn:storage": return "storage";
           }
-        })() as keyof typeof config.aliases;
+        })() as "agents" | "tools" | "skills" | "storage";
         const fileName = f.path.split("/").pop()!;
         return join(config.aliases[aliasKey], fileName);
       }),

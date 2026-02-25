@@ -20,6 +20,7 @@ const typeToDir: Record<ComponentType, string> = {
   "kitn:tool": "tools",
   "kitn:skill": "skills",
   "kitn:storage": "storage",
+  "kitn:package": "package",
 };
 
 export function buildRegistryItem(

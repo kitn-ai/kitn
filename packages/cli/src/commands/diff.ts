@@ -41,7 +41,7 @@ export async function diffCommand(componentName: string) {
         case "kitn:skill": return "skills";
         case "kitn:storage": return "storage";
       }
-    })() as keyof typeof config.aliases;
+    })() as "agents" | "tools" | "skills" | "storage";
     const localPath = join(cwd, config.aliases[aliasKey], fileName);
     const localContent = await readExistingFile(localPath);
 

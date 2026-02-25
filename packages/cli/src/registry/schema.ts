@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const componentType = z.enum(["kitn:agent", "kitn:tool", "kitn:skill", "kitn:storage"]);
+export const componentType = z.enum(["kitn:agent", "kitn:tool", "kitn:skill", "kitn:storage", "kitn:package"]);
 export type ComponentType = z.infer<typeof componentType>;
 
 export const registryFileSchema = z.object({
@@ -19,6 +19,8 @@ export const registryItemSchema = z.object({
   registryDependencies: z.array(z.string()).optional(),
   envVars: z.record(z.string(), z.string()).optional(),
   files: z.array(registryFileSchema),
+  installDir: z.string().optional(),
+  tsconfig: z.record(z.string(), z.array(z.string())).optional(),
   docs: z.string().optional(),
   categories: z.array(z.string()).optional(),
   version: z.string().optional(),
@@ -46,4 +48,5 @@ export const typeToDir: Record<ComponentType, string> = {
   "kitn:tool": "tools",
   "kitn:skill": "skills",
   "kitn:storage": "storage",
+  "kitn:package": "package",
 };

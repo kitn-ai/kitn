@@ -6,6 +6,7 @@ export const componentType = z.enum([
   "kitn:tool",
   "kitn:skill",
   "kitn:storage",
+  "kitn:package",
 ]);
 export type ComponentType = z.infer<typeof componentType>;
 
@@ -28,6 +29,8 @@ export const registryItemSchema = z.object({
   registryDependencies: z.array(z.string()).optional().describe("Other kitn components this depends on"),
   envVars: z.record(z.string(), z.string()).optional().describe("Required env vars with descriptions"),
   files: z.array(registryFileSchema),
+  installDir: z.string().optional().describe("Target directory for package installation"),
+  tsconfig: z.record(z.string(), z.array(z.string())).optional().describe("TSConfig path aliases to add"),
   docs: z.string().optional().describe("Post-install instructions shown in terminal"),
   categories: z.array(z.string()).optional(),
   version: z.string().optional().default("1.0.0"),
@@ -65,11 +68,16 @@ export type InstalledComponent = z.infer<typeof installedComponentSchema>;
 // Runtime type
 export const runtimeType = z.enum(["bun", "node", "deno"]);
 
+// Framework type
+export const frameworkType = z.enum(["hono", "cloudflare", "elysia", "fastify", "express"]);
+
 // kitn.json config
 export const configSchema = z.object({
   $schema: z.string().optional(),
   runtime: runtimeType,
+  framework: frameworkType.optional(),
   aliases: z.object({
+    base: z.string().optional(),
     agents: z.string(),
     tools: z.string(),
     skills: z.string(),
@@ -80,8 +88,8 @@ export const configSchema = z.object({
 });
 export type KitnConfig = z.infer<typeof configSchema>;
 
-// Map component type to alias key
-export const typeToAliasKey: Record<ComponentType, keyof KitnConfig["aliases"]> = {
+// Map component type to alias key (excludes kitn:package which uses installDir)
+export const typeToAliasKey: Partial<Record<ComponentType, keyof KitnConfig["aliases"]>> = {
   "kitn:agent": "agents",
   "kitn:tool": "tools",
   "kitn:skill": "skills",

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { createAIPlugin, createFileStorage, createApiKeyAuth, OpenAIVoiceProvider } from "@kitnai/hono";
+import { createAIPlugin, createFileStorage, OpenAIVoiceProvider } from "@kitnai/hono";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { env, printConfig, voiceEnabled } from "./env.js";
 import { registerEchoTool } from "./tools/echo.js";
@@ -12,7 +12,6 @@ import { registerGuardedAgent } from "./agents/guarded.js";
 const plugin = createAIPlugin({
   getModel: (id) => openrouter(id ?? env.DEFAULT_MODEL),
   storage: createFileStorage({ dataDir: "./data" }),
-  authMiddleware: createApiKeyAuth(env.API_KEY),
   resilience: { maxRetries: 2, baseDelayMs: 500 },
   compaction: { threshold: 20, preserveRecent: 4 },
   ...(voiceEnabled && {

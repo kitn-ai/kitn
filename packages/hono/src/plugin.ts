@@ -67,13 +67,8 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
     return c.json({ error: "Not Found" }, 404);
   });
 
-  // Health check (no auth)
+  // Health check
   app.route("/health", createHealthRoutes(ctx));
-
-  // Apply auth middleware if provided
-  if (config.authMiddleware) {
-    app.use("/*", config.authMiddleware);
-  }
 
   // Mount API routes
   app.route("/generate", createGenerateRoutes(ctx));

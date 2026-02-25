@@ -1,4 +1,3 @@
-import type { MiddlewareHandler } from "hono";
 import type { OpenAPIHono } from "@hono/zod-openapi";
 import type {
   CoreConfig,
@@ -14,7 +13,6 @@ import type {
 } from "@kitnai/core";
 
 export interface AIPluginConfig extends CoreConfig {
-  authMiddleware?: MiddlewareHandler;
   voice?: VoiceConfig;
   memoryStore?: MemoryStore;
   openapi?: { title?: string; version?: string; description?: string; serverUrl?: string };

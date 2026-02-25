@@ -18,7 +18,7 @@ bun add hono @hono/zod-openapi ai zod
 
 ```ts
 import { Hono } from "hono";
-import { createAIPlugin, createFileStorage, createApiKeyAuth } from "@kitnai/hono";
+import { createAIPlugin, createFileStorage } from "@kitnai/hono";
 import { tool } from "ai";
 import { z } from "zod";
 import { openai } from "@ai-sdk/openai";
@@ -28,7 +28,6 @@ const app = new Hono();
 const plugin = createAIPlugin({
   getModel: (id) => openai(id ?? "gpt-4o-mini"),
   storage: createFileStorage({ dataDir: "./data" }),
-  authMiddleware: createApiKeyAuth(process.env.API_KEY!),
 });
 
 // Register a tool
@@ -93,7 +92,6 @@ curl -H "X-API-Key: $KEY" \
 |---|---|---|---|
 | `getModel` | `(id?: string) => LanguageModel` | **required** | Returns an AI SDK `LanguageModel` for the given model ID. |
 | `storage` | `StorageProvider` | In-memory (ephemeral) | Persistence backend. Use `createFileStorage()` or implement your own. |
-| `authMiddleware` | `MiddlewareHandler` | none | Hono middleware applied to all routes (except `/health`). `createApiKeyAuth()` is provided as a convenience. |
 | `voice` | `VoiceConfig` | disabled | Enables voice routes. Set `{ retainAudio: true }` to persist audio files. |
 | `resilience` | `ResilienceConfig` | `{ maxRetries: 3 }` | Retry + fallback config for LLM calls. Supports exponential backoff with jitter and a fallback model hook. |
 | `compaction` | `CompactionConfig` | `{ threshold: 20, preserveRecent: 4 }` | Auto-summarizes old messages when a conversation exceeds the threshold. |
@@ -167,7 +165,7 @@ Each sub-store interface is exported from `@kitnai/hono` and documented with JSD
 
 ## API Routes
 
-All routes are mounted under the prefix you choose (e.g., `/ai`). The `/health` endpoint is unauthenticated; all others go through the configured `authMiddleware`.
+All routes are mounted under the prefix you choose (e.g., `/ai`).
 
 | Method | Path | Description |
 |---|---|---|

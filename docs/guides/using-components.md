@@ -47,14 +47,13 @@ All components are registered with an `AIPluginInstance` created by `createAIPlu
 ```ts
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { createAIPlugin, createFileStorage, createApiKeyAuth } from "@kitnai/hono";
+import { createAIPlugin, createFileStorage } from "@kitnai/hono";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 
 // 1. Create the plugin
 const plugin = createAIPlugin({
   getModel: (id) => openrouter(id ?? "openai/gpt-4o-mini"),
   storage: createFileStorage({ dataDir: "./data" }),
-  authMiddleware: createApiKeyAuth("your-api-key"),
   resilience: { maxRetries: 2, baseDelayMs: 500 },
   compaction: { threshold: 20, preserveRecent: 4 },
 });
@@ -78,7 +77,6 @@ The `createAIPlugin` config options:
 |-------|----------|-------------|
 | `getModel` | Yes | Factory function returning a Vercel AI SDK `LanguageModel` |
 | `storage` | No | Storage provider. Defaults to ephemeral in-memory storage. |
-| `authMiddleware` | No | Hono middleware applied to all routes except `/health` |
 | `resilience` | No | Retry config: `maxRetries`, `baseDelayMs`, `maxDelayMs`, `jitterFactor`, `onFallback` |
 | `compaction` | No | Auto-summarize long conversations: `threshold` (default 20), `preserveRecent` (default 4) |
 | `maxDelegationDepth` | No | Max depth for orchestrator delegation chains (default 3) |

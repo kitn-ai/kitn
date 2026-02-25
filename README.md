@@ -84,13 +84,12 @@ Create a server with `createAIPlugin`, register your agents and tools, and mount
 
 ```ts
 import { Hono } from "hono";
-import { createAIPlugin, createFileStorage, createApiKeyAuth } from "@kitnai/hono";
+import { createAIPlugin, createFileStorage } from "@kitnai/hono";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 
 const plugin = createAIPlugin({
   getModel: (id) => openrouter(id ?? "openai/gpt-4o-mini"),
   storage: createFileStorage({ dataDir: "./data" }),
-  authMiddleware: createApiKeyAuth(process.env.API_KEY!),
 });
 
 // Register a tool

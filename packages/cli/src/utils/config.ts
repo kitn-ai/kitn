@@ -6,6 +6,7 @@ const componentType = z.enum(["kitn:agent", "kitn:tool", "kitn:skill", "kitn:sto
 type ComponentType = z.infer<typeof componentType>;
 
 const installedComponentSchema = z.object({
+  registry: z.string().optional(),
   version: z.string(),
   installedAt: z.string(),
   files: z.array(z.string()),

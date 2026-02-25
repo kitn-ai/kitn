@@ -79,6 +79,46 @@ describe("config schema", () => {
   });
 });
 
+describe("installed tracking", () => {
+  test("installed entry accepts registry field", () => {
+    const { configSchema } = require("../src/utils/config.js");
+    const config = {
+      runtime: "bun",
+      framework: "hono",
+      aliases: { base: "src/ai", agents: "src/ai/agents", tools: "src/ai/tools", skills: "src/ai/skills", storage: "src/ai/storage" },
+      registries: { "@kitn": "https://example.com/r/{type}/{name}.json" },
+      installed: {
+        "weather-agent": {
+          registry: "@kitn",
+          version: "1.0.0",
+          installedAt: "2026-02-25T00:00:00Z",
+          files: ["src/ai/agents/weather-agent.ts"],
+          hash: "abc12345",
+        },
+      },
+    };
+    expect(() => configSchema.parse(config)).not.toThrow();
+  });
+
+  test("registry field is optional for backwards compat", () => {
+    const { configSchema } = require("../src/utils/config.js");
+    const config = {
+      runtime: "bun",
+      aliases: { agents: "src/agents", tools: "src/tools", skills: "src/skills", storage: "src/storage" },
+      registries: { "@kitn": "https://example.com/r/{type}/{name}.json" },
+      installed: {
+        "weather-agent": {
+          version: "1.0.0",
+          installedAt: "2026-02-25T00:00:00Z",
+          files: ["src/agents/weather-agent.ts"],
+          hash: "abc12345",
+        },
+      },
+    };
+    expect(() => configSchema.parse(config)).not.toThrow();
+  });
+});
+
 describe("changelog schema", () => {
   test("accepts changelog on registry item", () => {
     const { registryItemSchema } = require("../src/registry/schema.js");

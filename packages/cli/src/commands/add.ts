@@ -152,6 +152,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
       const installed = config.installed ?? {};
       const allContent = item.files.map((f) => f.content).join("\n");
       installed[item.name] = {
+        registry: "@kitn",
         version: item.version ?? "1.0.0",
         installedAt: new Date().toISOString(),
         files: item.files.map((f) => join(baseDir, f.path)),
@@ -223,6 +224,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
         return rewriteKitnImports(f.content, item.type, fn, config.aliases);
       }).join("\n");
       installed[item.name] = {
+        registry: "@kitn",
         version: item.version ?? "1.0.0",
         installedAt: new Date().toISOString(),
         files: item.files.map((f) => {

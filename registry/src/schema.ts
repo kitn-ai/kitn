@@ -71,6 +71,7 @@ export type RegistryIndex = z.infer<typeof registryIndexSchema>;
 
 // Installed component tracking
 export const installedComponentSchema = z.object({
+  registry: z.string().optional(),
   version: z.string(),
   installedAt: z.string(),
   files: z.array(z.string()),

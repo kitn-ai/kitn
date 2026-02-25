@@ -1,11 +1,11 @@
-# @kitnai/server
+# @kitnai/hono
 
 Drop-in AI agent backend for Hono. Register agents, tools, and skills, then mount a single plugin to get a full REST + SSE API with conversations, memory, orchestration, and voice.
 
 ## Installation
 
 ```bash
-bun add @kitnai/server
+bun add @kitnai/hono
 ```
 
 Peer dependencies:
@@ -18,7 +18,7 @@ bun add hono @hono/zod-openapi ai zod
 
 ```ts
 import { Hono } from "hono";
-import { createAIPlugin, createFileStorage, createApiKeyAuth } from "@kitnai/server";
+import { createAIPlugin, createFileStorage, createApiKeyAuth } from "@kitnai/hono";
 import { tool } from "ai";
 import { z } from "zod";
 import { openai } from "@ai-sdk/openai";
@@ -141,7 +141,7 @@ Structured data extractors that run on tool results. Register extractors on `plu
 Two built-in storage implementations are included:
 
 ```ts
-import { createFileStorage, createMemoryStorage } from "@kitnai/server";
+import { createFileStorage, createMemoryStorage } from "@kitnai/hono";
 
 // File-based (JSON files in a directory)
 const storage = createFileStorage({ dataDir: "./data" });
@@ -163,7 +163,7 @@ interface StorageProvider {
 }
 ```
 
-Each sub-store interface is exported from `@kitnai/server` and documented with JSDoc including usage contracts (e.g., return `null` on not-found, auto-create on first write).
+Each sub-store interface is exported from `@kitnai/hono` and documented with JSDoc including usage contracts (e.g., return `null` on not-found, auto-create on first write).
 
 ## API Routes
 

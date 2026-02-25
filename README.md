@@ -19,7 +19,8 @@ A TypeScript framework for building multi-agent AI systems. Kitn gives you agent
 
 | Package | Description |
 |---------|-------------|
-| `@kitnai/server` | Core framework — plugin factory, agents, tools, routes, storage |
+| `@kitnai/core` | Framework-agnostic engine — agents, tools, storage, memory, events, voice |
+| `@kitnai/hono` | Hono adapter — plugin factory, OpenAPI routes, Scalar docs |
 | `@kitnai/client` | Browser utilities — SSE parsing, audio recording, chunked TTS playback |
 
 ## Getting Started
@@ -83,7 +84,7 @@ Create a server with `createAIPlugin`, register your agents and tools, and mount
 
 ```ts
 import { Hono } from "hono";
-import { createAIPlugin, createFileStorage, createApiKeyAuth } from "@kitnai/server";
+import { createAIPlugin, createFileStorage, createApiKeyAuth } from "@kitnai/hono";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 
 const plugin = createAIPlugin({
@@ -162,7 +163,8 @@ All routes require an `X-API-Key` header unless noted.
 ```
 kitn/
   packages/
-    server/         # @kitnai/server — core framework
+    core/           # @kitnai/core — framework-agnostic engine
+    hono/           # @kitnai/hono — Hono adapter
     client/         # @kitnai/client — browser utilities
   examples/
     api/            # Example REST API server

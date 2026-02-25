@@ -34,7 +34,7 @@ Prompts for:
 - **Runtime**: bun, node, or deno
 - **Alias directories**: Where each component type gets installed (defaults to `src/agents`, `src/tools`, `src/skills`, `src/storage`)
 
-Also offers to install `@kitnai/server` as a dependency.
+Also offers to install `@kitnai/hono` as a dependency.
 
 ### `kitn add [components...]`
 

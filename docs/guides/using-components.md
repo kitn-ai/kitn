@@ -47,7 +47,7 @@ All components are registered with an `AIPluginInstance` created by `createAIPlu
 ```ts
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { createAIPlugin, createFileStorage, createApiKeyAuth } from "@kitnai/server";
+import { createAIPlugin, createFileStorage, createApiKeyAuth } from "@kitnai/hono";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 
 // 1. Create the plugin
@@ -117,7 +117,7 @@ interface ToolExample {
 ```ts
 import { tool } from "ai";
 import { z } from "zod";
-import type { AIPluginInstance } from "@kitnai/server";
+import type { AIPluginInstance } from "@kitnai/hono";
 
 // The AI SDK tool (used by agents during generation)
 export const weatherTool = tool({
@@ -204,7 +204,7 @@ interface GuardResult {
 Registry agents export a config object. You wire them into the server by creating handlers and registering:
 
 ```ts
-import type { AIPluginInstance } from "@kitnai/server";
+import type { AIPluginInstance } from "@kitnai/hono";
 import { WEATHER_AGENT_CONFIG } from "./agents/weather-agent.js";
 
 export function registerWeatherAgent(plugin: AIPluginInstance) {
@@ -440,7 +440,7 @@ interface StorageProvider {
 ### Built-in storage options
 
 ```ts
-import { createFileStorage, createMemoryStorage } from "@kitnai/server";
+import { createFileStorage, createMemoryStorage } from "@kitnai/hono";
 
 // File-based (persistent) — stores JSON files under dataDir/
 const storage = createFileStorage({ dataDir: "./data" });
@@ -520,7 +520,7 @@ The memory store is also exposed as a built-in tool that agents can call. Each a
 Card extractors transform tool results into structured UI data. They're optional and used by frontends to render rich cards (e.g., weather cards, recipe cards).
 
 ```ts
-import type { AIPluginInstance } from "@kitnai/server";
+import type { AIPluginInstance } from "@kitnai/hono";
 
 plugin.cards.register((toolName, result) => {
   if (toolName === "getWeather" && result?.temperature) {

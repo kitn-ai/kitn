@@ -12,14 +12,18 @@ export async function removeCommand(componentName: string) {
     process.exit(1);
   }
 
-  const installed = config._installed?.[componentName];
+  // Resolve "routes" alias to framework-specific package name
+  const resolvedName =
+    componentName === "routes" ? (config.framework ?? "hono") : componentName;
+
+  const installed = config._installed?.[resolvedName];
   if (!installed) {
-    p.log.error(`Component '${componentName}' is not installed.`);
+    p.log.error(`Component '${resolvedName}' is not installed.`);
     process.exit(1);
   }
 
   const shouldRemove = await p.confirm({
-    message: `Remove ${componentName}? This will delete ${installed.files.length} file(s).`,
+    message: `Remove ${resolvedName}? This will delete ${installed.files.length} file(s).`,
     initialValue: false,
   });
   if (p.isCancel(shouldRemove) || !shouldRemove) {
@@ -37,14 +41,14 @@ export async function removeCommand(componentName: string) {
     }
   }
 
-  delete config._installed![componentName];
+  delete config._installed![resolvedName];
   if (Object.keys(config._installed!).length === 0) {
     delete config._installed;
   }
   await writeConfig(cwd, config);
 
   if (deleted.length > 0) {
-    p.log.success(`Removed ${componentName}:`);
+    p.log.success(`Removed ${resolvedName}:`);
     for (const f of deleted) p.log.message(`  ${pc.red("-")} ${f}`);
   }
 }

@@ -28,7 +28,7 @@ program
   .command("list")
   .description("List available and installed components")
   .option("-i, --installed", "only show installed components")
-  .option("-t, --type <type>", "filter by type (agent, tool, skill, storage)")
+  .option("-t, --type <type>", "filter by type (agent, tool, skill, storage, package)")
   .action(async (opts) => {
     const { listCommand } = await import("./commands/list.js");
     await listCommand(opts);

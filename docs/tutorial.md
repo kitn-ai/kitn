@@ -71,7 +71,7 @@ You'll need an AI provider SDK. OpenRouter is recommended since it gives access 
 bun add @openrouter/ai-sdk-provider
 ```
 
-## 7. Set up TypeScript
+## 6. Set up TypeScript
 
 Create `tsconfig.json`:
 
@@ -94,7 +94,7 @@ Create `tsconfig.json`:
 
 > Note: `kitn add core` and `kitn add routes` may patch your tsconfig with path aliases automatically. If you already have a tsconfig, the CLI will merge into it.
 
-## 8. Create the server
+## 7. Create the server
 
 Create `src/index.ts`:
 
@@ -170,9 +170,11 @@ export default {
 };
 ```
 
-## 9. Add environment variables
+## 8. Add environment variables
 
-Create a `.env` file:
+If components you installed declare required environment variables, the CLI will have prompted you during `kitn add` and generated a `.env.example` file. Check it for any variables you still need to set.
+
+For this tutorial, you need an OpenRouter API key. If you didn't enter it during install, add it to `.env`:
 
 ```env
 OPENROUTER_API_KEY=sk-or-v1-your-key-here
@@ -182,7 +184,7 @@ PORT=4000
 
 Get your key at [openrouter.ai/keys](https://openrouter.ai/keys).
 
-## 10. Run it
+## 9. Run it
 
 ```bash
 bun --watch src/index.ts
@@ -195,7 +197,7 @@ Server running on http://localhost:4000
 API Reference: http://localhost:4000/api/reference
 ```
 
-## 11. Try it out
+## 10. Try it out
 
 ### Browse the API docs
 
@@ -269,7 +271,7 @@ curl http://localhost:4000/api/conversations/conv_1234_abc
 curl http://localhost:4000/api/health
 ```
 
-## 12. Add more components
+## 11. Add more components
 
 Browse what's available and install more:
 

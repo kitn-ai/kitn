@@ -79,6 +79,16 @@ program
   });
 
 program
+  .command("create")
+  .description("Scaffold a new kitn component")
+  .argument("<type>", "component type (agent, tool, skill, storage)")
+  .argument("<name>", "component name")
+  .action(async (type: string, name: string) => {
+    const { createCommand } = await import("./commands/create.js");
+    await createCommand(type, name);
+  });
+
+program
   .command("info")
   .description("Show details about a component")
   .argument("<component>", "component name (e.g. weather-agent, @acme/tool@1.0.0)")

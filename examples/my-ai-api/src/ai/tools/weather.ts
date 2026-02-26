@@ -41,7 +41,7 @@ export const weatherTool = tool({
     if (!geoRes.ok) {
       throw new Error(`Geocoding failed: ${geoRes.statusText}`);
     }
-    const geoData = await geoRes.json();
+    const geoData = await geoRes.json() as any;
     const place = geoData.results?.[0];
     if (!place) {
       throw new Error(`Location not found: "${location}"`);
@@ -71,7 +71,7 @@ export const weatherTool = tool({
     if (!weatherRes.ok) {
       throw new Error(`Weather API failed: ${weatherRes.statusText}`);
     }
-    const weatherData = await weatherRes.json();
+    const weatherData = await weatherRes.json() as any;
     const c = weatherData.current;
 
     const tempC = c.temperature_2m;

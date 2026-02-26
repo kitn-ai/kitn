@@ -28,8 +28,8 @@ async function executeTasksSettled(
   return settled.map((s, i) => {
     if (s.status === "fulfilled") return s.value;
     return {
-      agent: tasks[i].agent,
-      query: tasks[i].query,
+      agent: tasks[i]!.agent,
+      query: tasks[i]!.query,
       result: { response: `Task failed: ${(s.reason as Error)?.message ?? "Unknown error"}`, toolsUsed: [] },
     };
   });

@@ -73,7 +73,7 @@ export async function compactConversation(
   const result = await withResilience({
     fn: (overrideModel) =>
       generateText({
-        model: ctx.getModel(overrideModel ?? model),
+        model: ctx.model(overrideModel ?? model),
         prompt: fullPrompt,
       }),
     ctx,

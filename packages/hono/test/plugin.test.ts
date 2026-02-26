@@ -20,7 +20,7 @@ describe("createAIPlugin", () => {
     tmpDir = await mkdtemp(join(tmpdir(), "ai-test-"));
 
     ai = createAIPlugin({
-      getModel: makeMockModel as any,
+      model: makeMockModel as any,
       storage: createFileStorage({ dataDir: tmpDir }),
     });
 

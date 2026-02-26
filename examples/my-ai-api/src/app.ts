@@ -78,7 +78,7 @@ export function createApp(env: Env) {
   });
 
   const plugin = createAIPlugin({
-    getModel: (id) => openrouter(id ?? "openai/gpt-4o-mini"),
+    model: (id) => openrouter(id ?? "openai/gpt-4o-mini"),
   });
 
   registerWithPlugin(plugin);

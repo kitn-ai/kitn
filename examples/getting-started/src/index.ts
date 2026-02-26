@@ -20,7 +20,7 @@ if (!process.env.OPENROUTER_API_KEY) {
 // --- Plugin setup ---
 
 const plugin = createAIPlugin({
-  getModel: (id) => openrouter(id ?? MODEL),
+  model: (id) => openrouter(id ?? MODEL),
 });
 
 // --- Register tools ---

@@ -27,7 +27,7 @@ export async function runAgent(
   const abortSignal = getAbortSignal();
   const result = await withResilience({
     fn: (overrideModel) => generateText({
-      model: ctx.getModel(overrideModel ?? model),
+      model: ctx.model(overrideModel ?? model),
       system: config.system,
       prompt: message,
       tools: config.tools,

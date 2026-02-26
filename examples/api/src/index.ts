@@ -10,7 +10,7 @@ import { registerGeneralAgent } from "./agents/general.js";
 import { registerGuardedAgent } from "./agents/guarded.js";
 
 const plugin = createAIPlugin({
-  getModel: (id) => openrouter(id ?? env.DEFAULT_MODEL),
+  model: (id) => openrouter(id ?? env.DEFAULT_MODEL),
   storage: createFileStorage({ dataDir: "./data" }),
   resilience: { maxRetries: 2, baseDelayMs: 500 },
   compaction: { threshold: 20, preserveRecent: 4 },

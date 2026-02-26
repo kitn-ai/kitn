@@ -304,7 +304,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
       hints.push(pc.dim(`  import { yourProvider } from "your-ai-provider";`));
       hints.push(pc.dim(``));
       hints.push(pc.dim(`  const plugin = createAIPlugin({`));
-      hints.push(pc.dim(`    getModel: (id) => yourProvider(id ?? "default-model"),`));
+      hints.push(pc.dim(`    model: (model) => yourProvider(model ?? "default-model"),`));
       hints.push(pc.dim(`  });`));
       hints.push(pc.dim(``));
       hints.push(pc.dim(`  const app = new Hono();`));

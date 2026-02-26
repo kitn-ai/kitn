@@ -36,7 +36,7 @@ export function createGenerateHandlers(ctx: PluginContext) {
     const startTime = performance.now();
     const result = await withResilience({
       fn: (overrideModel) => generateText({
-        model: ctx.getModel(overrideModel ?? model),
+        model: ctx.model(overrideModel ?? model),
         system: systemPrompt,
         prompt,
         tools,
@@ -73,7 +73,7 @@ export function createGenerateHandlers(ctx: PluginContext) {
 
     const startTime = performance.now();
     const result = streamText({
-      model: ctx.getModel(model),
+      model: ctx.model(model),
       system: systemPrompt,
       prompt,
       tools,

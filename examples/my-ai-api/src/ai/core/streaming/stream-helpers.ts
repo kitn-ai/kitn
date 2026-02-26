@@ -32,7 +32,7 @@ export function streamAgentResponse(ctx: PluginContext, config: AgentStreamConfi
     : { system: config.system, prompt: config.prompt! };
 
   const result = streamText({
-    model: ctx.getModel(config.model),
+    model: ctx.model(config.model),
     ...promptOrMessages,
     tools: config.tools,
     stopWhen: stepCountIs(config.maxSteps ?? ctx.defaultMaxSteps),

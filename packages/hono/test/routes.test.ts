@@ -20,7 +20,7 @@ beforeAll(async () => {
   tmpDir = await mkdtemp(join(tmpdir(), "ai-routes-test-"));
 
   const ai = createAIPlugin({
-    getModel: makeMockModel as any,
+    model: makeMockModel as any,
     storage: createFileStorage({ dataDir: tmpDir }),
   });
 

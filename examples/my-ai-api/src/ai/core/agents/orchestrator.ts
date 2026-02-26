@@ -135,7 +135,7 @@ async function synthesizeStreaming(opts: {
   await writer.write(SSE_EVENTS.AGENT_THINK, { text: DEFAULTS.SYNTHESIS_MESSAGE });
   const prompt = buildSynthesisPrompt(sources, userMessage);
   const synthesisStart = performance.now();
-  const synthesisResult = streamText({ model: ctx.getModel(model), ...(synthesisSystem && { system: synthesisSystem }), prompt, abortSignal });
+  const synthesisResult = streamText({ model: ctx.model(model), ...(synthesisSystem && { system: synthesisSystem }), prompt, abortSignal });
   let fullText = "";
   for await (const text of synthesisResult.textStream) { fullText += text; await writer.write(SSE_EVENTS.TEXT_DELTA, { text }); }
   const synthesisUsage = await synthesisResult.usage;
@@ -152,7 +152,7 @@ async function synthesizeJson(opts: {
   const prompt = buildSynthesisPrompt(sources, userMessage);
   const synthesisStart = performance.now();
   const synthesisResult = await withResilience({
-    fn: (overrideModel) => generateText({ model: ctx.getModel(overrideModel ?? model), ...(synthesisSystem && { system: synthesisSystem }), prompt }),
+    fn: (overrideModel) => generateText({ model: ctx.model(overrideModel ?? model), ...(synthesisSystem && { system: synthesisSystem }), prompt }),
     ctx, agent: agentName, modelId: model,
   });
   return { text: synthesisResult.text, usage: extractUsage(synthesisResult, synthesisStart) };
@@ -332,7 +332,7 @@ function buildSseHandler(ctx: PluginContext, agentName: string, allowedAgents?: 
           const planStart = performance.now();
           const planResult = await withResilience({
             fn: (overrideModel) => generateText({
-              model: ctx.getModel(overrideModel ?? model), system,
+              model: ctx.model(overrideModel ?? model), system,
               ...(historyMessages ? { messages: historyMessages.map(m => ({ role: m.role, content: m.content })) } : { prompt: message }),
               tools, stopWhen: stepCountIs(ctx.defaultMaxSteps), abortSignal,
             }),
@@ -467,7 +467,7 @@ function buildJsonHandler(ctx: PluginContext, agentName: string, allowedAgents?:
 
     const result = await withResilience({
       fn: (overrideModel) => generateText({
-        model: ctx.getModel(overrideModel ?? model), system, prompt: message,
+        model: ctx.model(overrideModel ?? model), system, prompt: message,
         tools: { [TOOL_NAMES.ROUTE_TO_AGENT]: routeToAgentTool, [TOOL_NAMES.CREATE_TASK]: createTaskTool },
         stopWhen: stepCountIs(ctx.defaultMaxSteps), abortSignal: getAbortSignal(),
       }),

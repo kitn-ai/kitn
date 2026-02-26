@@ -56,7 +56,7 @@ export interface CompactionConfig {
 /** Core configuration — framework-agnostic. */
 export interface CoreConfig {
   /** Returns a LanguageModel for the given model ID (or default) */
-  getModel: (id?: string) => LanguageModel;
+  model: (model?: string) => LanguageModel;
   /** Storage provider. Defaults to in-memory (ephemeral) if omitted. */
   storage?: StorageProvider;
   /** Maximum delegation nesting depth (default: 3) */
@@ -74,7 +74,7 @@ export interface PluginContext {
   agents: AgentRegistry;
   tools: ToolRegistry;
   storage: StorageProvider;
-  getModel: (id?: string) => LanguageModel;
+  model: (model?: string) => LanguageModel;
   voice?: VoiceManager;
   cards: CardRegistry;
   maxDelegationDepth: number;

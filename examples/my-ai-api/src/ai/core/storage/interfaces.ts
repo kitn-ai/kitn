@@ -239,7 +239,7 @@ export interface AudioStore {
  *   prompts: new PostgresPromptStore(db),
  *   audio: new S3AudioStore(bucket),
  * };
- * const plugin = createAIPlugin({ getModel, storage });
+ * const plugin = createAIPlugin({ model, storage });
  * ```
  */
 export interface StorageProvider {

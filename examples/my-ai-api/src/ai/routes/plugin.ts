@@ -44,7 +44,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
     agents,
     tools,
     storage,
-    getModel: config.getModel,
+    model: config.model,
     voice,
     cards,
     maxDelegationDepth: config.maxDelegationDepth ?? DEFAULTS.MAX_DELEGATION_DEPTH,

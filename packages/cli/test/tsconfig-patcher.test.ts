@@ -50,4 +50,21 @@ describe("tsconfig patcher", () => {
     expect(parsed.compilerOptions.paths["@kitnai/core"]).toEqual(["./src/ai/core/index.ts"]);
     expect(parsed.compilerOptions.paths["@kitnai/hono"]).toEqual(["./src/ai/routes/index.ts"]);
   });
+
+  test("handles JSONC with comments and trailing commas", () => {
+    const input = `{
+  // Environment setup & latest features
+  "compilerOptions": {
+    "strict": true,
+    /* multi-line
+       comment */
+    "target": "ES2022",
+  }
+}`;
+    const result = patchTsconfig(input, { "@kitnai/core": ["./src/ai/core/index.ts"] });
+    const parsed = JSON.parse(result);
+    expect(parsed.compilerOptions.paths["@kitnai/core"]).toEqual(["./src/ai/core/index.ts"]);
+    expect(parsed.compilerOptions.strict).toBe(true);
+    expect(parsed.compilerOptions.target).toBe("ES2022");
+  });
 });

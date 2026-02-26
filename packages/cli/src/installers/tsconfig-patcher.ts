@@ -2,6 +2,17 @@ import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
 
 /**
+ * Strip single-line (//) and multi-line comments from JSONC,
+ * and remove trailing commas before } or ], so JSON.parse succeeds.
+ */
+function stripJsonc(text: string): string {
+  return text
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/,\s*([}\]])/g, "$1");
+}
+
+/**
  * Patches a tsconfig JSON string with additional paths entries.
  * Returns the updated JSON string.
  */
@@ -9,7 +20,7 @@ export function patchTsconfig(
   tsconfigContent: string,
   paths: Record<string, string[]>,
 ): string {
-  const config = JSON.parse(tsconfigContent);
+  const config = JSON.parse(stripJsonc(tsconfigContent));
 
   if (!config.compilerOptions) {
     config.compilerOptions = {};

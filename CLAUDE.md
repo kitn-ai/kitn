@@ -42,7 +42,7 @@ examples/
 - **`@kitnai/core`** is framework-agnostic — no HTTP types, pure TypeScript
 - **`@kitnai/hono`** is a thin adapter that mounts OpenAPI routes onto a Hono app
 - **`PluginContext`** is the central context object passed to all route factories. It holds registries (agents, tools, cards), storage, voice manager, model getter, and config.
-- **`StorageProvider`** aggregates 6 sub-stores: `conversations`, `memory`, `skills`, `tasks`, `prompts`, `audio`
+- **`StorageProvider`** aggregates 7 sub-stores: `conversations`, `memory`, `skills`, `tasks`, `prompts`, `audio`, `commands`
 - Implementations: `createFileStorage()` for file-based JSON, `createMemoryStorage()` for in-memory
 
 ## Import Conventions
@@ -88,9 +88,13 @@ Reference: `packages/cli/src/commands/list.ts` (simple), `packages/cli/src/comma
 ## Key Types
 
 - `PluginContext` — central context (registries, storage, model getter)
-- `AIPluginConfig` — plugin configuration (getModel, storage, voice, etc.)
+- `AIPluginConfig` — plugin configuration (model, storage, voice, etc.)
 - `StorageProvider` — aggregates 6 sub-stores (see `packages/core/src/storage/interfaces.ts`)
 - `AgentRegistration` / `ToolRegistration` — registered agent/tool definitions
+
+## Lockfile
+
+CI uses `bun install --frozen-lockfile`, which fails if `bun.lock` is stale. A pre-commit hook auto-runs `bun install` and stages `bun.lock` whenever a `package.json` is committed. If you're not using the hook (e.g. in CI or a fresh clone), run `bun install` manually and commit the lockfile before pushing.
 
 ## Recommended MCP Plugins
 

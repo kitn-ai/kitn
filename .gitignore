@@ -57,6 +57,3 @@ tmp/
 .cache/
 .parcel-cache/
 docs/plans
-
-# Local test projects
-examples/my-ai-api/

@@ -76,7 +76,7 @@ export class OpenAIVoiceProvider implements VoiceProvider {
       throw new Error(`OpenAI STT failed (${res.status}): ${error}`);
     }
 
-    const data = await res.json() as any;
+    const data = await res.json();
     return { text: data.text, language: data.language, duration: data.duration };
   }
 

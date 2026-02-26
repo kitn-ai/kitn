@@ -13,20 +13,20 @@ export function parseFrontmatter(raw: string): {
   if (!match) return { meta: {}, body: raw };
 
   const meta: Record<string, string | string[]> = {};
-  for (const line of match[1]!.split("\n")) {
+  for (const line of match[1].split("\n")) {
     const idx = line.indexOf(":");
     if (idx === -1) continue;
     const key = line.slice(0, idx).trim();
     const value = line.slice(idx + 1).trim();
     const arrMatch = value.match(/^\[(.*)\]$/);
     if (arrMatch) {
-      meta[key] = arrMatch[1]!.split(",").map((s) => s.trim()).filter(Boolean);
+      meta[key] = arrMatch[1].split(",").map((s) => s.trim()).filter(Boolean);
     } else {
       meta[key] = value;
     }
   }
 
-  return { meta, body: match[2]! };
+  return { meta, body: match[2] };
 }
 
 export function parsePhase(value: unknown): SkillPhase {

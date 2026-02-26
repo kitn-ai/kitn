@@ -1,6 +1,6 @@
 {
   "name": "@kitnai/cli",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "type": "module",
   "description": "CLI for installing AI agent components from the kitn registry",
   "bin": {

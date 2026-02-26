@@ -26,7 +26,7 @@ import { openai } from "@ai-sdk/openai";
 const app = new Hono();
 
 const plugin = createAIPlugin({
-  getModel: (id) => openai(id ?? "gpt-4o-mini"),
+  model: (model) => openai(model ?? "gpt-4o-mini"),
   storage: createFileStorage({ dataDir: "./data" }),
 });
 
@@ -90,7 +90,7 @@ curl -H "X-API-Key: $KEY" \
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `getModel` | `(id?: string) => LanguageModel` | **required** | Returns an AI SDK `LanguageModel` for the given model ID. |
+| `model` | `(model?: string) => LanguageModel` | **required** | Returns an AI SDK `LanguageModel` for the given model name. |
 | `storage` | `StorageProvider` | In-memory (ephemeral) | Persistence backend. Use `createFileStorage()` or implement your own. |
 | `voice` | `VoiceConfig` | disabled | Enables voice routes. Set `{ retainAudio: true }` to persist audio files. |
 | `resilience` | `ResilienceConfig` | `{ maxRetries: 3 }` | Retry + fallback config for LLM calls. Supports exponential backoff with jitter and a fallback model hook. |

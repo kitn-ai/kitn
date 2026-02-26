@@ -73,7 +73,7 @@ export function registerSkill(config: SkillSelfRegConfig): void {
  * 3. Commands are saved to storage (when CommandStore is available)
  * 4. All maps are cleared after flush (idempotent)
  */
-export function registerWithPlugin(ctx: PluginContext): void {
+export async function registerWithPlugin(ctx: PluginContext): Promise<void> {
   // 1. Register tools first
   for (const config of toolConfigs.values()) {
     ctx.tools.register({
@@ -108,10 +108,13 @@ export function registerWithPlugin(ctx: PluginContext): void {
 
   // 3. Save commands to storage
   for (const config of commandConfigs.values()) {
-    ctx.storage.commands.save(config);
+    await ctx.storage.commands.save(config);
   }
 
-  // 4. Clear all maps (idempotent)
+  // 4. Skills — collected for future use (skill storage uses a different model)
+  // skillConfigs are cleared below but not persisted here
+
+  // 5. Clear all maps (idempotent)
   agentConfigs.clear();
   toolConfigs.clear();
   commandConfigs.clear();

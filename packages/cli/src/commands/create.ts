@@ -43,31 +43,41 @@ function generateRegistryJson(
 
 function generateAgentSource(name: string): string {
   const camel = toCamelCase(name);
-  return `import type { AgentConfig } from "@kitnai/core";
+  return `import { registerAgent } from "@kitnai/core";
 
-export const ${camel}Config: AgentConfig = {
+const SYSTEM_PROMPT = "You are a helpful assistant.";
+
+registerAgent({
   name: "${name}",
   description: "",
-  system: "You are a helpful assistant.",
-  tools: [],
-};
+  system: SYSTEM_PROMPT,
+  tools: {},
+});
 `;
 }
 
 function generateToolSource(name: string): string {
   const camel = toCamelCase(name);
-  return `import { tool } from "ai";
+  return `import { registerTool } from "@kitnai/core";
+import { tool } from "ai";
 import { z } from "zod";
 
 export const ${camel} = tool({
   description: "",
-  inputSchema: z.object({
+  parameters: z.object({
     input: z.string().describe("Input parameter"),
   }),
   execute: async ({ input }) => {
     // TODO: implement
     return { result: input };
   },
+});
+
+registerTool({
+  name: "${name}",
+  description: "",
+  inputSchema: z.object({ input: z.string() }),
+  tool: ${camel},
 });
 `;
 }

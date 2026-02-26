@@ -29,9 +29,9 @@ describe("createComponent", () => {
     expect(registry.files).toEqual(["weather-agent.ts"]);
 
     const source = await readFile(join(dir, "weather-agent.ts"), "utf-8");
-    expect(source).toContain("AgentConfig");
+    expect(source).toContain("registerAgent");
     expect(source).toContain('name: "weather-agent"');
-    expect(source).toContain("weatherAgentConfig");
+    expect(source).toContain("@kitnai/core");
   });
 
   test("creates a tool component", async () => {
@@ -48,6 +48,7 @@ describe("createComponent", () => {
 
     const source = await readFile(join(dir, "fetch-url.ts"), "utf-8");
     expect(source).toContain("tool(");
+    expect(source).toContain("registerTool");
     expect(source).toContain("fetchUrl");
   });
 

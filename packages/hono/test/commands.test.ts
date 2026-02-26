@@ -59,6 +59,17 @@ describe("command routes", () => {
     expect(res.status).toBe(404);
   });
 
+  test("POST /commands/:name/run returns 404 for missing command", async () => {
+    const plugin = createTestPlugin();
+    await plugin.initialize();
+    const res = await plugin.app.request("/commands/missing/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "hello" }),
+    });
+    expect(res.status).toBe(404);
+  });
+
   test("DELETE /commands/:name removes command", async () => {
     const plugin = createTestPlugin();
     await plugin.initialize();

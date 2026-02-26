@@ -197,10 +197,7 @@ export function createCommandsRoutes(ctx: PluginContext) {
         body.message,
         body.model ?? cmd.model,
       );
-      return new Response(JSON.stringify(result), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return c.json(result);
     }) as any,
   );
 

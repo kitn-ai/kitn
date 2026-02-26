@@ -1,12 +1,14 @@
 {
   "name": "@kitnai/cli",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "description": "CLI for installing AI agent components from the kitn registry",
   "bin": {
     "kitn": "./dist/index.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "publishConfig": {
     "access": "public"
   },
@@ -30,7 +32,13 @@
     "tsup": "^8.4.0",
     "typescript": "^5.9.3"
   },
-  "keywords": ["ai", "agents", "cli", "registry", "kitn"],
+  "keywords": [
+    "ai",
+    "agents",
+    "cli",
+    "registry",
+    "kitn"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

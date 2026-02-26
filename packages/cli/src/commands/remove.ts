@@ -1,9 +1,11 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { join } from "path";
-import { unlink } from "fs/promises";
+import { join, relative, dirname } from "path";
+import { unlink, readFile, writeFile } from "fs/promises";
+import { existsSync } from "fs";
 import { readConfig, writeConfig } from "../utils/config.js";
 import { parseComponentRef } from "../utils/parse-ref.js";
+import { removeImportFromBarrel } from "../installers/barrel-manager.js";
 
 export async function removeCommand(componentName: string) {
   const cwd = process.cwd();
@@ -41,6 +43,39 @@ export async function removeCommand(componentName: string) {
       deleted.push(filePath);
     } catch {
       p.log.warn(`Could not delete ${filePath} (may have been moved or renamed)`);
+    }
+  }
+
+  // Remove barrel imports for deleted files
+  const baseDir = config.aliases.base ?? "src/ai";
+  const barrelPath = join(cwd, baseDir, "index.ts");
+  const barrelDir = join(cwd, baseDir);
+  const barrelEligibleDirs = new Set([
+    config.aliases.agents,
+    config.aliases.tools,
+    config.aliases.skills,
+  ]);
+
+  if (existsSync(barrelPath) && deleted.length > 0) {
+    let barrelContent = await readFile(barrelPath, "utf-8");
+    let barrelChanged = false;
+
+    for (const filePath of deleted) {
+      // Check if the file is in a barrel-eligible directory
+      const fileDir = dirname(filePath);
+      if (!barrelEligibleDirs.has(fileDir)) continue;
+
+      const importPath = "./" + relative(barrelDir, join(cwd, filePath)).replace(/\\/g, "/");
+      const updated = removeImportFromBarrel(barrelContent, importPath);
+      if (updated !== barrelContent) {
+        barrelContent = updated;
+        barrelChanged = true;
+      }
+    }
+
+    if (barrelChanged) {
+      await writeFile(barrelPath, barrelContent);
+      p.log.info(`Updated barrel file: ${join(baseDir, "index.ts")}`);
     }
   }
 

@@ -16,9 +16,13 @@ import { installDependencies } from "../installers/dep-installer.js";
 import { collectEnvVars, handleEnvVars } from "../installers/env-writer.js";
 import { rewriteKitnImports } from "../installers/import-rewriter.js";
 import { patchProjectTsconfig } from "../installers/tsconfig-patcher.js";
+import { createBarrelFile, addImportToBarrel } from "../installers/barrel-manager.js";
 import { contentHash } from "../utils/hash.js";
 import { parseComponentRef, type ComponentRef } from "../utils/parse-ref.js";
 import { typeToDir, type RegistryItem, type ComponentType } from "../registry/schema.js";
+import { existsSync } from "fs";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { relative } from "path";
 
 interface AddOptions {
   overwrite?: boolean;
@@ -244,6 +248,68 @@ export async function addCommand(components: string[], opts: AddOptions) {
         hash: contentHash(allContent),
       };
       config.installed = installed;
+    }
+  }
+
+  // Barrel management — auto-wire imports for barrel-eligible components
+  const BARREL_ELIGIBLE: Set<string> = new Set(["kitn:agent", "kitn:tool", "kitn:skill"]);
+  const baseDir = config.aliases.base ?? "src/ai";
+  const barrelPath = join(cwd, baseDir, "index.ts");
+  const barrelDir = join(cwd, baseDir);
+
+  const barrelImports: string[] = [];
+  for (const item of resolved) {
+    if (!BARREL_ELIGIBLE.has(item.type)) continue;
+
+    for (const file of item.files) {
+      const aliasKey = (() => {
+        switch (item.type) {
+          case "kitn:agent": return "agents";
+          case "kitn:tool": return "tools";
+          case "kitn:skill": return "skills";
+        }
+      })() as "agents" | "tools" | "skills";
+
+      const fileName = file.path.split("/").pop()!;
+      const filePath = join(cwd, config.aliases[aliasKey], fileName);
+      const importPath = "./" + relative(barrelDir, filePath).replace(/\\/g, "/");
+      barrelImports.push(importPath);
+    }
+  }
+
+  if (barrelImports.length > 0) {
+    const barrelExisted = existsSync(barrelPath);
+    let barrelContent: string;
+
+    if (barrelExisted) {
+      barrelContent = await readFile(barrelPath, "utf-8");
+    } else {
+      await mkdir(barrelDir, { recursive: true });
+      barrelContent = createBarrelFile();
+    }
+
+    for (const importPath of barrelImports) {
+      barrelContent = addImportToBarrel(barrelContent, importPath);
+    }
+
+    await writeFile(barrelPath, barrelContent);
+    p.log.info(`Updated barrel file: ${join(baseDir, "index.ts")}`);
+
+    if (!barrelExisted) {
+      p.note(
+        [
+          `import { createAIPlugin } from "@kitnai/hono";`,
+          `import { registerWithPlugin } from "./ai";`,
+          ``,
+          `const plugin = createAIPlugin({`,
+          `  model: (model) => yourProvider(model ?? "default-model"),`,
+          `});`,
+          ``,
+          `registerWithPlugin(plugin);`,
+          `app.route("/api", plugin.app);`,
+        ].join("\n"),
+        "Add this to your app setup",
+      );
     }
   }
 

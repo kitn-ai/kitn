@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Check if any package.json was staged for commit
+STAGED_PACKAGE_JSON=$(git diff --cached --name-only | grep 'package.json$')
+
+if [ -n "$STAGED_PACKAGE_JSON" ]; then
+  echo "[pre-commit] package.json changed — running bun install to update lockfile..."
+  bun install --silent
+
+  # Check if bun.lock was modified
+  if ! git diff --quiet bun.lock 2>/dev/null; then
+    git add bun.lock
+    echo "[pre-commit] bun.lock updated and staged."
+  fi
+fi

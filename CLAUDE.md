@@ -94,7 +94,11 @@ Reference: `packages/cli/src/commands/list.ts` (simple), `packages/cli/src/comma
 
 ## Lockfile
 
-CI uses `bun install --frozen-lockfile`, which fails if `bun.lock` is stale. A pre-commit hook auto-runs `bun install` and stages `bun.lock` whenever a `package.json` is committed. If you're not using the hook (e.g. in CI or a fresh clone), run `bun install` manually and commit the lockfile before pushing.
+CI uses `bun install --frozen-lockfile`, which fails if `bun.lock` is stale. A pre-commit hook in `.hooks/` auto-runs `bun install` and stages `bun.lock` whenever a `package.json` is committed. On a fresh clone, enable the hooks:
+
+```bash
+git config core.hooksPath .hooks
+```
 
 ## Recommended MCP Plugins
 

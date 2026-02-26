@@ -292,5 +292,38 @@ export async function addCommand(components: string[], opts: AddOptions) {
     }
   }
 
+  // Show next-step hints for well-known packages
+  const installedNames = new Set(resolved.map((r) => r.name));
+  const hints: string[] = [];
+
+  if (installedNames.has("core") && !installedNames.has(config.framework ?? "hono")) {
+    hints.push(`Run ${pc.cyan(`kitn add routes`)} to install the HTTP adapter.`);
+  }
+
+  const fw = config.framework ?? "hono";
+  if (installedNames.has(fw) || (installedNames.has("core") && installedNames.has(fw))) {
+    hints.push(`Add this to your server entry point:`);
+    if (fw === "hono") {
+      hints.push("");
+      hints.push(pc.dim(`  import { Hono } from "hono";`));
+      hints.push(pc.dim(`  import { createAIPlugin } from "@kitnai/hono";`));
+      hints.push(pc.dim(`  import { yourProvider } from "your-ai-provider";`));
+      hints.push(pc.dim(``));
+      hints.push(pc.dim(`  const plugin = createAIPlugin({`));
+      hints.push(pc.dim(`    getModel: (id) => yourProvider(id ?? "default-model"),`));
+      hints.push(pc.dim(`  });`));
+      hints.push(pc.dim(``));
+      hints.push(pc.dim(`  const app = new Hono();`));
+      hints.push(pc.dim(`  app.route("/api", plugin.app);`));
+      hints.push(pc.dim(`  await plugin.initialize();`));
+      hints.push("");
+    }
+  }
+
+  if (hints.length > 0) {
+    p.log.message(pc.bold("\nNext steps:"));
+    for (const hint of hints) p.log.message(hint);
+  }
+
   p.outro(pc.green("Done!"));
 }

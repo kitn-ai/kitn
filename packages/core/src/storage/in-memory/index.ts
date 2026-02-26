@@ -20,53 +20,96 @@ import { parseFrontmatter, parsePhase, buildSkill, KEBAB_CASE } from "../skill-h
 
 function createConversationStore(): ConversationStore {
   const store = new Map<string, Conversation>();
+  /** Maps scopeId -> Set of store keys that belong to that scope */
+  const scopeIndex = new Map<string, Set<string>>();
+
+  function storeKey(id: string, scopeId?: string): string {
+    return scopeId ? `${scopeId}:${id}` : id;
+  }
+
+  function trackScope(key: string, scopeId?: string): void {
+    if (!scopeId) return;
+    let set = scopeIndex.get(scopeId);
+    if (!set) { set = new Set(); scopeIndex.set(scopeId, set); }
+    set.add(key);
+  }
+
+  function untrackScope(key: string, scopeId?: string): void {
+    if (!scopeId) return;
+    scopeIndex.get(scopeId)?.delete(key);
+  }
 
   return {
-    async get(id) {
-      return store.get(id) ?? null;
+    async get(id, scopeId?) {
+      if (scopeId) {
+        return store.get(storeKey(id, scopeId)) ?? null;
+      }
+      // Without scopeId, check the unscoped key first, then search all entries
+      const direct = store.get(id);
+      if (direct) return direct;
+      for (const conv of store.values()) {
+        if (conv.id === id) return conv;
+      }
+      return null;
     },
 
-    async list() {
+    async list(scopeId?) {
       const summaries: ConversationSummary[] = [];
-      for (const conv of store.values()) {
-        summaries.push({
-          id: conv.id,
-          messageCount: conv.messages.length,
-          updatedAt: conv.updatedAt,
-        });
+      if (scopeId) {
+        const keys = scopeIndex.get(scopeId);
+        if (keys) {
+          for (const key of keys) {
+            const conv = store.get(key);
+            if (conv) {
+              summaries.push({ id: conv.id, messageCount: conv.messages.length, updatedAt: conv.updatedAt });
+            }
+          }
+        }
+      } else {
+        for (const conv of store.values()) {
+          summaries.push({ id: conv.id, messageCount: conv.messages.length, updatedAt: conv.updatedAt });
+        }
       }
       return summaries;
     },
 
-    async create(id) {
+    async create(id, scopeId?) {
       const now = new Date().toISOString();
       const conv: Conversation = { id, messages: [], createdAt: now, updatedAt: now };
-      store.set(id, conv);
+      const key = storeKey(id, scopeId);
+      store.set(key, conv);
+      trackScope(key, scopeId);
       return conv;
     },
 
-    async append(id, message) {
-      let conv = store.get(id);
+    async append(id, message, scopeId?) {
+      const key = storeKey(id, scopeId);
+      let conv = store.get(key);
       if (!conv) {
         const now = new Date().toISOString();
         conv = { id, messages: [], createdAt: now, updatedAt: now };
-        store.set(id, conv);
+        store.set(key, conv);
+        trackScope(key, scopeId);
       }
       conv.messages.push(message);
       conv.updatedAt = new Date().toISOString();
       return conv;
     },
 
-    async delete(id) {
-      return store.delete(id);
+    async delete(id, scopeId?) {
+      const key = storeKey(id, scopeId);
+      untrackScope(key, scopeId);
+      return store.delete(key);
     },
 
-    async clear(id) {
-      const conv = store.get(id);
+    async clear(id, scopeId?) {
+      const key = storeKey(id, scopeId);
+      const conv = store.get(key);
       if (!conv) {
         const now = new Date().toISOString();
         const fresh: Conversation = { id, messages: [], createdAt: now, updatedAt: now };
-        store.set(id, fresh);
+        store.set(key, fresh);
+        trackScope(key, scopeId);
         return fresh;
       }
       conv.messages = [];
@@ -192,10 +235,28 @@ function createPromptStore(): PromptStore {
 
 function createAudioStore(): AudioStore {
   const entries = new Map<string, { entry: AudioEntry; data: Buffer }>();
+  /** Maps scopeId -> Set of store keys that belong to that scope */
+  const scopeIndex = new Map<string, Set<string>>();
   let nextId = 1;
 
+  function storeKey(id: string, scopeId?: string): string {
+    return scopeId ? `${scopeId}:${id}` : id;
+  }
+
+  function trackScope(key: string, scopeId?: string): void {
+    if (!scopeId) return;
+    let set = scopeIndex.get(scopeId);
+    if (!set) { set = new Set(); scopeIndex.set(scopeId, set); }
+    set.add(key);
+  }
+
+  function untrackScope(key: string, scopeId?: string): void {
+    if (!scopeId) return;
+    scopeIndex.get(scopeId)?.delete(key);
+  }
+
   return {
-    async saveAudio(buffer, mimeType, metadata) {
+    async saveAudio(buffer, mimeType, metadata?, scopeId?) {
       const id = `audio_${nextId++}_${Date.now()}`;
       const entry: AudioEntry = {
         id,
@@ -204,28 +265,51 @@ function createAudioStore(): AudioStore {
         createdAt: new Date().toISOString(),
         ...(metadata && { metadata }),
       };
-      entries.set(id, { entry, data: Buffer.from(buffer) });
+      const key = storeKey(id, scopeId);
+      entries.set(key, { entry, data: Buffer.from(buffer) });
+      trackScope(key, scopeId);
       return entry;
     },
 
-    async getAudio(id) {
-      return entries.get(id) ?? null;
+    async getAudio(id, scopeId?) {
+      return entries.get(storeKey(id, scopeId)) ?? null;
     },
 
-    async deleteAudio(id) {
-      return entries.delete(id);
+    async deleteAudio(id, scopeId?) {
+      const key = storeKey(id, scopeId);
+      untrackScope(key, scopeId);
+      return entries.delete(key);
     },
 
-    async listAudio() {
+    async listAudio(scopeId?) {
+      if (scopeId) {
+        const keys = scopeIndex.get(scopeId);
+        if (!keys) return [];
+        const result: AudioEntry[] = [];
+        for (const key of keys) {
+          const item = entries.get(key);
+          if (item) result.push(item.entry);
+        }
+        return result;
+      }
       return [...entries.values()].map((e) => e.entry);
     },
 
-    async cleanupOlderThan(maxAgeMs) {
+    async cleanupOlderThan(maxAgeMs, scopeId?) {
       const cutoff = Date.now() - maxAgeMs;
       let deleted = 0;
-      for (const [id, { entry }] of entries) {
-        if (new Date(entry.createdAt).getTime() < cutoff) {
-          entries.delete(id);
+      const iterableEntries = scopeId
+        ? [...(scopeIndex.get(scopeId) ?? [])].map((key) => [key, entries.get(key)] as const).filter(([, v]) => v != null)
+        : [...entries.entries()];
+
+      for (const [key, item] of iterableEntries) {
+        if (!item) continue;
+        if (new Date(item.entry.createdAt).getTime() < cutoff) {
+          entries.delete(key);
+          // Also remove from scope index
+          for (const [, set] of scopeIndex) {
+            set.delete(key);
+          }
           deleted++;
         }
       }

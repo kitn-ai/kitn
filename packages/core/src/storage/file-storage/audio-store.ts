@@ -21,15 +21,36 @@ function extension(mimeType: string): string {
 }
 
 export function createAudioStore(dataDir: string): AudioStore {
-  const dir = join(dataDir, "audio");
+  const baseDir = join(dataDir, "audio");
 
-  async function ensureDir() {
+  /** Resolve the directory for a given scope (or the base dir for global). */
+  function scopeDir(scopeId?: string): string {
+    return scopeId ? join(baseDir, scopeId) : baseDir;
+  }
+
+  async function ensureDir(dir: string) {
     if (!existsSync(dir)) await mkdir(dir, { recursive: true });
   }
 
+  /** List meta entries from a single directory. */
+  async function listMetaInDir(dir: string): Promise<AudioEntry[]> {
+    if (!existsSync(dir)) return [];
+    const files = await readdir(dir);
+    const metaFiles = files.filter((f) => f.endsWith(META_SUFFIX));
+    const entries: AudioEntry[] = [];
+    for (const metaFile of metaFiles) {
+      try {
+        const raw = await readFile(join(dir, metaFile), "utf-8");
+        entries.push(JSON.parse(raw));
+      } catch { /* skip corrupted */ }
+    }
+    return entries;
+  }
+
   return {
-    async saveAudio(buffer, mimeType, metadata?) {
-      await ensureDir();
+    async saveAudio(buffer, mimeType, metadata?, scopeId?) {
+      const dir = scopeDir(scopeId);
+      await ensureDir(dir);
       const id = generateId();
       const ext = extension(mimeType);
       const audioPath = join(dir, `${id}.${ext}`);
@@ -39,8 +60,9 @@ export function createAudioStore(dataDir: string): AudioStore {
       return entry;
     },
 
-    async getAudio(id) {
-      await ensureDir();
+    async getAudio(id, scopeId?) {
+      const dir = scopeDir(scopeId);
+      await ensureDir(dir);
       const files = await readdir(dir);
       const metaFile = files.find((f) => f.startsWith(id) && f.endsWith(META_SUFFIX));
       if (!metaFile) return null;
@@ -53,8 +75,9 @@ export function createAudioStore(dataDir: string): AudioStore {
       return { entry, data };
     },
 
-    async deleteAudio(id) {
-      await ensureDir();
+    async deleteAudio(id, scopeId?) {
+      const dir = scopeDir(scopeId);
+      await ensureDir(dir);
       const files = await readdir(dir);
       const matching = files.filter((f) => f.startsWith(id));
       if (matching.length === 0) return false;
@@ -62,28 +85,32 @@ export function createAudioStore(dataDir: string): AudioStore {
       return true;
     },
 
-    async listAudio() {
-      await ensureDir();
-      const files = await readdir(dir);
-      const metaFiles = files.filter((f) => f.endsWith(META_SUFFIX));
-      const entries: AudioEntry[] = [];
-      for (const metaFile of metaFiles) {
-        try {
-          const raw = await readFile(join(dir, metaFile), "utf-8");
-          entries.push(JSON.parse(raw));
-        } catch { /* skip corrupted */ }
+    async listAudio(scopeId?) {
+      if (scopeId) {
+        const dir = scopeDir(scopeId);
+        await ensureDir(dir);
+        const entries = await listMetaInDir(dir);
+        return entries.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      }
+      // Without scopeId: list from base dir + all subdirectories
+      await ensureDir(baseDir);
+      const entries = await listMetaInDir(baseDir);
+      const dirEntries = await readdir(baseDir, { withFileTypes: true });
+      for (const dirEntry of dirEntries) {
+        if (!dirEntry.isDirectory()) continue;
+        const subEntries = await listMetaInDir(join(baseDir, dirEntry.name));
+        entries.push(...subEntries);
       }
       return entries.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     },
 
-    async cleanupOlderThan(maxAgeMs) {
-      await ensureDir();
+    async cleanupOlderThan(maxAgeMs, scopeId?) {
       const cutoff = Date.now() - maxAgeMs;
-      const entries = await this.listAudio();
+      const entries = await this.listAudio(scopeId);
       let deleted = 0;
       for (const entry of entries) {
         if (new Date(entry.createdAt).getTime() < cutoff) {
-          await this.deleteAudio(entry.id);
+          await this.deleteAudio(entry.id, scopeId);
           deleted++;
         }
       }

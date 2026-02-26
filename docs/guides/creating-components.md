@@ -1,355 +1,706 @@
-# Creating Components for the kitn Registry
+# Creating & Publishing kitn Components
 
-This guide covers how to create and contribute components to the kitn registry.
+This guide covers the full workflow: creating components, building registry JSON, testing locally, deploying your own registry, and publishing updates.
+
+## Quickstart
+
+Create, build, and deploy a tool in under a minute:
+
+```bash
+# 1. Scaffold a new tool
+kitn create tool my-api-tool
+cd my-api-tool
+
+# 2. Edit the source and metadata
+#    - Implement your tool in my-api-tool.ts
+#    - Fill in description, dependencies, envVars in registry.json
+
+# 3. Build registry JSON
+kitn build .
+
+# 4. Deploy the output (dist/r/) to any static host
+#    GitHub Pages, Vercel, Netlify, S3 — anything that serves JSON
+```
+
+Consumers install it by pointing at your registry:
+
+```bash
+kitn registry add @yourname https://yourname.github.io/registry/r/{type}/{name}.json
+kitn add @yourname/my-api-tool
+```
+
+---
 
 ## Component Types
 
-kitn supports four component types:
+| Type | Use case | Source file |
+|------|----------|-------------|
+| `kitn:agent` | AI agent with system prompt and tool bindings | `.ts` |
+| `kitn:tool` | Vercel AI SDK tool with zod schema | `.ts` |
+| `kitn:skill` | Markdown instruction document injected into prompts | `.md` |
+| `kitn:storage` | Persistence adapter (conversations, memory, etc.) | `.ts` |
+| `kitn:package` | Multi-file package (full `src/` directory with `package.json`) | `src/**/*.ts` |
 
-| Type | Alias | Description |
-|------|-------|-------------|
-| `kitn:agent` | `agents` | AI agent configurations with system prompts and tool bindings |
-| `kitn:tool` | `tools` | AI SDK tools that agents can call |
-| `kitn:skill` | `skills` | Markdown instruction documents injected into agent prompts |
-| `kitn:storage` | `storage` | Persistence adapters (conversations, memory, etc.) |
+Use `kitn:agent`, `kitn:tool`, `kitn:skill`, or `kitn:storage` for standalone components (one or a few files). Use `kitn:package` for larger libraries like `@kitnai/core` or `@kitnai/hono` that have their own `package.json`.
 
-## Component Anatomy
+---
 
-Every component lives in `registry/components/<type>/<name>/` and contains:
+## `kitn create` — Scaffolding
 
-```
-registry/components/agents/weather-agent/
-  manifest.json       # Component metadata
-  weather-agent.ts    # Source file(s)
-```
-
-The `manifest.json` declares everything the CLI needs to install the component. Source files contain the actual implementation.
-
-## Manifest Reference
-
-```jsonc
-{
-  "name": "weather-agent",           // Unique identifier (kebab-case)
-  "type": "kitn:agent",              // One of the 4 component types
-  "description": "Weather specialist agent using Open-Meteo API data",
-  "dependencies": ["ai"],            // npm packages to install
-  "devDependencies": [],             // npm devDependencies (optional)
-  "registryDependencies": ["weather-tool"],  // Other kitn components this needs
-  "envVars": {},                     // Required environment variables (key: description)
-  "files": ["weather-agent.ts"],     // Source files to install
-  "docs": "Post-install instructions shown in the terminal.",
-  "categories": ["weather", "api"]   // Tags for filtering/discovery
-}
+```bash
+kitn create <type> <name>
 ```
 
-### Field Details
+Where `type` is one of: `agent`, `tool`, `skill`, `storage`.
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `name` | Yes | Unique kebab-case identifier. Must match the directory name. |
-| `type` | Yes | `kitn:agent`, `kitn:tool`, `kitn:skill`, or `kitn:storage` |
-| `description` | Yes | Short one-line description |
-| `dependencies` | No | npm packages the component needs at runtime |
-| `devDependencies` | No | npm packages needed only for development |
-| `registryDependencies` | No | Names of other kitn components this depends on. The CLI resolves these transitively. |
-| `envVars` | No | Map of `ENV_VAR_NAME` to description string. The CLI warns if these are missing after install. |
-| `files` | Yes | Array of filenames (relative to the component directory) |
-| `docs` | No | Post-install message shown in terminal after adding the component |
-| `categories` | No | Tags for filtering and discovery in `kitn list` |
+### Examples
 
-## Examples by Type
-
-### Agent
-
-Agents export a configuration object with a system prompt and tool bindings.
-
-**`manifest.json`**:
-```json
-{
-  "name": "weather-agent",
-  "type": "kitn:agent",
-  "description": "Weather specialist agent using Open-Meteo API data",
-  "dependencies": ["ai"],
-  "registryDependencies": ["weather-tool"],
-  "envVars": {},
-  "files": ["weather-agent.ts"],
-  "docs": "The weather agent uses the weather tool to fetch and present weather data.",
-  "categories": ["weather", "api"]
-}
+```bash
+kitn create agent weather-agent
+kitn create tool sentiment-analyzer
+kitn create skill eli5
+kitn create storage redis-store
 ```
 
-**`weather-agent.ts`**:
+Each command creates a directory with a `registry.json` and a starter source file:
+
+```
+weather-agent/
+  registry.json        # Component metadata
+  weather-agent.ts     # Starter source (agent config template)
+```
+
+### Generated templates
+
+**Agent** — exports an `AgentConfig` with system prompt and empty tools array:
+
 ```ts
-import { weatherTool } from "@kitn/tools/weather.js";
+import type { AgentConfig } from "@kitnai/core";
 
-const SYSTEM_PROMPT = `You are a weather specialist agent...`;
-
-export const WEATHER_AGENT_CONFIG = {
-  system: SYSTEM_PROMPT,
-  tools: { getWeather: weatherTool },
+export const weatherAgentConfig: AgentConfig = {
+  name: "weather-agent",
+  description: "",
+  system: "You are a helpful assistant.",
+  tools: [],
 };
 ```
 
-Agents reference tools using `@kitn/` alias imports. The CLI rewrites these to relative paths during `kitn add`. The `registryDependencies` field ensures the tool gets installed first.
+**Tool** — exports a Vercel AI SDK `tool()` with zod schema and execute stub:
 
-### Tool
-
-Tools use the [Vercel AI SDK `tool()` function](https://sdk.vercel.ai/docs/ai-sdk-core/tools-and-tool-calling) with a Zod input schema.
-
-**`manifest.json`**:
-```json
-{
-  "name": "weather-tool",
-  "type": "kitn:tool",
-  "description": "Get current weather for any location using Open-Meteo API",
-  "dependencies": ["ai", "zod"],
-  "registryDependencies": [],
-  "envVars": {},
-  "files": ["weather.ts"],
-  "docs": "The weather tool auto-registers on import.",
-  "categories": ["weather", "api"]
-}
-```
-
-**`weather.ts`**:
 ```ts
 import { tool } from "ai";
 import { z } from "zod";
 
-export const weatherTool = tool({
-  description: "Get current weather information for a location.",
+export const sentimentAnalyzer = tool({
+  description: "",
   inputSchema: z.object({
-    location: z.string().describe("City name or location"),
+    input: z.string().describe("Input parameter"),
   }),
-  execute: async ({ location }) => {
-    // Fetch weather data...
-    return { location, temperature: { celsius: 22 } };
+  execute: async ({ input }) => {
+    // TODO: implement
+    return { result: input };
   },
 });
 ```
 
-### Skill
+**Skill** — Markdown with YAML frontmatter:
 
-Skills are Markdown documents with YAML frontmatter. They get injected into agent system prompts at runtime.
-
-**`manifest.json`**:
-```json
-{
-  "name": "eli5",
-  "type": "kitn:skill",
-  "description": "Simplifies complex topics using everyday analogies",
-  "dependencies": [],
-  "registryDependencies": [],
-  "envVars": {},
-  "files": ["README.md"],
-  "docs": "Inject this skill when the user asks for simple explanations.",
-  "categories": ["explanation", "beginner"]
-}
-```
-
-**`README.md`**:
 ```markdown
 ---
 name: eli5
-description: Use when the user asks to explain something simply
-tags: [simple, explanation, beginner, analogy]
-phase: response
+description: ""
 ---
 
-# Explain Like I'm 5
+# Eli5
 
-## When to Use
-- User says "explain simply", "in plain English", "ELI5"
-
-## Instructions
-1. **Use everyday analogies**
-2. **Avoid jargon completely**
-3. **Start with the big picture**
+Describe what this skill does and how to use it.
 ```
 
-The `phase` field controls when the skill is applied:
-- `query` — injected before the agent processes the user's message
-- `response` — applied during synthesis/formatting of the response
-- `both` — injected at both stages
-
-### Storage
-
-Storage adapters implement persistence interfaces (conversations, memory, etc.).
-
-**`manifest.json`**:
-```json
-{
-  "name": "conversation-store",
-  "type": "kitn:storage",
-  "description": "File-based JSON conversation storage",
-  "dependencies": [],
-  "registryDependencies": [],
-  "envVars": {},
-  "files": ["conversation-store.ts"],
-  "docs": "Call createConversationStore(dataDir) with a path to your data directory.",
-  "categories": ["storage", "conversations", "persistence"]
-}
-```
-
-Storage components export a factory function that creates the store instance:
+**Storage** — exports a factory function returning a `StorageProvider`:
 
 ```ts
-export function createConversationStore(dataDir: string): ConversationStore {
-  // Implementation...
+import type { StorageProvider } from "@kitnai/core";
+
+export function createRedisStore(config?: Record<string, unknown>): StorageProvider {
+  // TODO: implement storage provider
+  throw new Error("Not implemented");
 }
 ```
 
-## Naming Conventions
+After scaffolding, edit the source file and `registry.json`, then run `kitn build`.
 
-- **Component name**: `kebab-case`, must match directory name (e.g., `weather-agent`)
-- **Directory**: `registry/components/<type>/<name>/` (e.g., `registry/components/agents/weather-agent/`)
-- **Source files**: Use descriptive names matching the component (e.g., `weather-agent.ts`, `weather.ts`)
-- **Agent suffix**: Agent names should end with `-agent` (e.g., `weather-agent`, not `weather`)
-- **Tool names**: Tool names describe their function (e.g., `weather-tool`, `web-search-tool`)
+---
 
-## Registry Dependencies
+## `registry.json` Reference
 
-When your component depends on another kitn component, use `registryDependencies`:
+A `registry.json` file marks a directory as a kitn component. It contains metadata that `kitn build` uses to produce deployable JSON.
+
+### Standalone component (no `package.json`)
 
 ```json
 {
-  "registryDependencies": ["weather-tool"]
+  "$schema": "https://kitn.dev/schema/registry.json",
+  "name": "weather-tool",
+  "type": "kitn:tool",
+  "version": "1.0.0",
+  "description": "Get current weather info using Open-Meteo API",
+  "dependencies": ["ai", "zod"],
+  "files": ["weather.ts"],
+  "envVars": {
+    "WEATHER_API_KEY": {
+      "description": "API key for the weather service",
+      "required": true,
+      "secret": true,
+      "url": "https://openweathermap.org/api"
+    }
+  },
+  "categories": ["weather", "api"],
+  "docs": "Assign to an agent or use directly via plugin.tools.register()."
 }
 ```
 
-The CLI resolves these transitively and installs them in topological order using Kahn's algorithm. If `weather-agent` depends on `weather-tool`, running `kitn add weather-agent` automatically installs `weather-tool` first.
+When there is no `package.json`, the `name`, `version`, and `description` fields are required.
 
-Circular dependencies are detected and rejected at install time.
+### Package component (has `package.json` alongside)
 
-## Environment Variables
+```json
+{
+  "$schema": "https://kitn.dev/schema/registry.json",
+  "type": "kitn:package",
+  "installDir": "routes",
+  "registryDependencies": ["core"],
+  "tsconfig": {
+    "@kitnai/hono": ["./index.ts"]
+  },
+  "exclude": ["lib/auth.ts"],
+  "categories": ["http", "hono"],
+  "docs": "Import with: import { ... } from '@kitnai/hono'"
+}
+```
 
-If your component requires environment variables (e.g., API keys), declare them in `envVars`:
+When `package.json` exists in the same directory, these fields are derived automatically:
+
+| Field | Derived from |
+|-------|-------------|
+| `name` | `package.json` name (strips `@scope/` prefix) |
+| `version` | `package.json` version |
+| `description` | `package.json` description |
+| `dependencies` | `package.json` dependencies + peerDependencies (names only) |
+| `devDependencies` | `package.json` devDependencies (names only, excludes build tooling) |
+
+Source files are read recursively from `src/` by default (override with `sourceDir`).
+
+### Full field reference
+
+| Field | Required | Derived from pkg.json | Description |
+|-------|----------|----------------------|-------------|
+| `$schema` | no | — | JSON schema URL for editor support |
+| `type` | **yes** | — | `kitn:agent`, `kitn:tool`, `kitn:skill`, `kitn:storage`, `kitn:package` |
+| `name` | if no pkg.json | yes | Component identifier (kebab-case) |
+| `version` | if no pkg.json | yes | Semver version string |
+| `description` | if no pkg.json | yes | Short one-line description |
+| `dependencies` | no | yes | npm runtime dependencies |
+| `devDependencies` | no | yes | npm dev dependencies |
+| `registryDependencies` | no | — | Other kitn components this depends on |
+| `files` | if not package | — | Source files to include (relative to directory) |
+| `sourceDir` | no | — | Source directory override (default: `src/` for packages) |
+| `installDir` | no | — | Target directory name when installed by consumers |
+| `tsconfig` | no | — | TSConfig path aliases to add on install |
+| `exclude` | no | — | Glob patterns to exclude from source scan (packages only) |
+| `envVars` | no | — | Required environment variables (see below) |
+| `categories` | no | — | Tags for filtering and discovery |
+| `docs` | no | — | Post-install instructions shown in terminal |
+| `changelog` | no | — | Array of `{ version, date, type, note }` entries |
+
+### `envVars` — Environment Variables
+
+Declare API keys and configuration that your component needs. Each entry is a key-value pair where the key is the environment variable name and the value describes it:
 
 ```json
 {
   "envVars": {
-    "OPENROUTER_API_KEY": "API key for OpenRouter (https://openrouter.ai)"
+    "WEATHER_API_KEY": {
+      "description": "API key for the weather service",
+      "required": true,
+      "secret": true,
+      "url": "https://openweathermap.org/api"
+    },
+    "WEATHER_BASE_URL": {
+      "description": "Base URL for the weather API",
+      "required": false,
+      "secret": false
+    }
   }
 }
 ```
 
-After installation, the CLI checks for missing env vars and displays a warning with the description.
+| Field | Default | Description |
+|-------|---------|-------------|
+| `description` | — | **Required.** Human-readable description of the variable |
+| `required` | `true` | Whether the component fails without this variable |
+| `secret` | `true` | Whether the value is sensitive (affects prompt behavior during install) |
+| `url` | — | Link where users can obtain the value (shown during install) |
 
-## Import Paths
+When a consumer runs `kitn add`, the CLI:
+
+1. Writes missing variables to `.env.example` with descriptions (always safe to commit)
+2. Prompts the user to enter values interactively
+3. Writes entered values to `.env` (gitignored, actual secrets)
+
+Secret variables use password-style input (hidden). Non-secret variables use normal text input.
+
+### `changelog` — Version History
+
+Track changes across versions:
+
+```json
+{
+  "changelog": [
+    { "version": "1.1.0", "date": "2026-02-25", "type": "feature", "note": "Added streaming support" },
+    { "version": "1.0.0", "date": "2026-02-15", "type": "initial", "note": "Initial release" }
+  ]
+}
+```
+
+Valid `type` values: `initial`, `feature`, `fix`, `breaking`.
+
+### Import paths in component source
 
 When a component imports from a different component type (e.g., an agent importing a tool), use the `@kitn/` alias:
 
 ```ts
-// In registry/components/agents/weather-agent/weather-agent.ts:
+// In an agent's source file:
 import { weatherTool } from "@kitn/tools/weather.js";
 ```
 
-The `@kitn/<type>/<path>` convention tells the CLI where the file lives. During `kitn add`, the CLI rewrites these to relative paths based on the user's `kitn.json` aliases:
-
-```ts
-// After installation in the user's project:
-import { weatherTool } from "../tools/weather.js";
-```
-
-### Available alias types
+During `kitn add`, the CLI rewrites these to relative paths based on the consumer's `kitn.json` aliases. Always use `.js` extensions — TypeScript ESM resolves them at compile time.
 
 | Alias | Resolves to |
 |-------|-------------|
-| `@kitn/agents/<file>` | `config.aliases.agents/<file>` |
-| `@kitn/tools/<file>` | `config.aliases.tools/<file>` |
-| `@kitn/skills/<file>` | `config.aliases.skills/<file>` |
-| `@kitn/storage/<file>` | `config.aliases.storage/<file>` |
+| `@kitn/agents/<file>` | Consumer's configured agents directory |
+| `@kitn/tools/<file>` | Consumer's configured tools directory |
+| `@kitn/skills/<file>` | Consumer's configured skills directory |
+| `@kitn/storage/<file>` | Consumer's configured storage directory |
 
-### Rules
+---
 
-- **Cross-type imports** must use `@kitn/` aliases. Relative cross-type imports (`../tools/...`) are flagged as errors by `bun run validate`.
-- **Same-directory imports** (e.g., a helper file within the same component) use relative paths (`./helper.js`).
-- The `.js` extension is correct — TypeScript ESM resolves `weather.js` to `weather.ts` at compile time.
-- Non-component `@kitn/` imports (e.g., `@kitn/server`) are left untouched by the rewriter.
-
-### IDE support
-
-Run `bun run stage` in the `registry/` directory to build a `_staging/` directory with symlinks. The `registry/tsconfig.json` maps `@kitn/*` paths to these staged files, giving your IDE full resolution and type-checking.
-
-## Local Testing
-
-### Build the registry
+## `kitn build` — Building Registry JSON
 
 ```bash
-cd registry
-bun run build
+kitn build [paths...] [--output <dir>]
 ```
 
-This runs `scripts/build-registry.ts`, which:
-1. Walks `components/{agents,tools,skills,storage}/`
-2. Reads each `manifest.json` and its listed source files
-3. Validates against the Zod schema
-4. Writes individual component JSON to `r/<type>/<name>.json`
-5. Writes the registry index to `r/registry.json`
+Scans for `registry.json` files, reads source code, and produces deployable registry JSON that `kitn add` can consume.
 
-### Validate imports
+### Arguments
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `paths...` | scan from cwd | Directories or glob patterns to build |
+| `--output`, `-o` | `dist/r` | Output directory |
+
+### Examples
 
 ```bash
-cd registry
-bun run validate
+kitn build                             # scan cwd for all registry.json files
+kitn build .                           # build the current directory
+kitn build packages/hono               # build one component
+kitn build packages/*                  # build all packages (glob)
+kitn build components/agents/*         # build all agents
+kitn build packages/hono packages/core # build specific list
+kitn build --output ./my-registry/r    # custom output directory
 ```
 
-This runs `scripts/validate-registry.ts`, which simulates the installed directory layout and verifies that every import in every `.ts` file resolves correctly. It catches:
+### What it does
 
-- **Broken `@kitn/` imports** — typos or paths that don't resolve to a registry component
-- **Relative cross-type imports** — `../tools/...` should be `@kitn/tools/...` instead
-- **Missing registryDependencies** — importing a file from a component that isn't declared as a dependency
-- **Nonexistent registryDependencies** — declaring a dependency on a component that doesn't exist
+1. **Discovers** components by finding `registry.json` files (skips `node_modules`, `dist`, `.git`)
+2. **Resolves metadata** — merges `package.json` fields when present, validates required fields
+3. **Reads source files** — recursively for packages (`src/`), from `files` array for standalone components
+4. **Produces JSON** — embeds source as strings, sets `updatedAt` timestamp, validates against schema
+5. **Writes output** — latest + versioned copies + registry index
 
-Example error output:
+### Output structure
 
 ```
-✗ weather-agent → agents/weather-agent.ts
-  relative cross-type import "../tools/bar.js" should use @kitn/ alias instead
-  hint: use "@kitn/tools/bar.js" instead
+dist/r/
+  registry.json                    # index of all components
+  agents/
+    weather-agent.json             # latest version (always overwritten)
+    weather-agent@1.0.0.json       # versioned copy (immutable, skipped if exists)
+  tools/
+    weather-tool.json
+    weather-tool@1.0.0.json
+  package/
+    core.json
+    core@1.0.0.json
 ```
 
-Always run `bun run validate` after writing or modifying component source files.
+This output directory is a complete, deployable registry. Serve it from any static host and point consumers at it.
 
-### Type-check the registry
+### Versioning behavior
+
+`kitn build` does **not** bump versions. It reads whatever version is in `package.json` or `registry.json` and builds with that. Version bumping is a deliberate decision made by the developer.
+
+Versioned files (`name@version.json`) are immutable — if the file already exists, it is skipped. The latest file (`name.json`) is always overwritten.
+
+---
+
+## Testing Locally
+
+Before deploying, test the full flow locally using a `file://` registry URL.
+
+### 1. Build your component
 
 ```bash
-cd registry
-bun run typecheck
+kitn build . --output ./dist/r
 ```
 
-This stages symlinks (via `bun run stage`) and runs `tsc --noEmit` against the staged layout. The `tsconfig.json` maps `@kitn/*` paths to the staged files, so the TypeScript compiler can resolve all alias imports.
+### 2. Create a test project
 
-### Validate manifests
+```bash
+mkdir test-project && cd test-project
+bun init -y
+kitn init
+```
 
-If your manifest has schema errors, `bun run build` will fail with a Zod validation error. Common issues:
-- Missing required fields (`name`, `type`, `description`, `files`)
-- Invalid `type` value (must be one of the 4 `kitn:*` types)
-- Files listed in `files` that don't exist on disk
+### 3. Point at your local build
 
-### Test installation locally
-
-You can point the CLI at a local registry for testing:
+Edit `kitn.json` in the test project to add a local registry:
 
 ```json
 {
   "registries": {
-    "@kitn": "file:///path/to/kitn/registry/r/{type}/{name}.json"
+    "@kitn": "https://registry.kitn.dev/r/{type}/{name}.json",
+    "@local": "file:///absolute/path/to/your/dist/r/{type}/{name}.json"
   }
 }
 ```
 
-Then run `kitn add your-component` to test the full install flow.
+### 4. Install and verify
 
-## Submitting a Component
+```bash
+kitn add @local/my-api-tool
+```
 
-1. Fork the repository and create a feature branch
-2. Create your component directory under `registry/components/<type>/<name>/`
-3. Add `manifest.json` and all source files
-4. Run `cd registry && bun run validate` to verify import paths
-5. Run `cd registry && bun run build` to validate manifests and build the registry
-6. Run `bun test` from the repo root to ensure nothing is broken
-7. Submit a pull request with:
-   - A description of what the component does
-   - Any external API dependencies or requirements
-   - Example usage showing how to wire it into a server
+This runs the full install flow: fetches the JSON, copies source files, installs npm dependencies, prompts for env vars, and tracks in `kitn.json`.
+
+### 5. Verify the installed files
+
+Check that the source landed correctly and imports resolve. If your component has `registryDependencies`, verify those were installed too.
+
+---
+
+## Updating & Versioning
+
+### Bumping a version
+
+1. Update the version in `package.json` (for packages) or `registry.json` (for standalone components)
+2. Optionally add a `changelog` entry
+3. Run `kitn build`
+
+The build creates both a new latest file and an immutable versioned copy.
+
+### How consumers get updates
+
+Consumers use existing CLI commands to check for and apply updates:
+
+```bash
+# See what changed between local files and the registry
+kitn diff weather-tool
+
+# Pull the latest version from the registry
+kitn update weather-tool
+```
+
+`kitn diff` compares the consumer's local source against the latest registry version. `kitn update` re-fetches and applies changes (prompts on conflicts since the consumer may have modified the code).
+
+### Version pinning
+
+Consumers can install a specific version:
+
+```bash
+kitn add weather-tool@1.0.0
+```
+
+This fetches `weather-tool@1.0.0.json` instead of `weather-tool.json`, giving them an exact version.
+
+---
+
+## Deploying Your Registry
+
+The `dist/r/` output from `kitn build` is a static directory. Deploy it anywhere that serves JSON files.
+
+### GitHub Pages
+
+```bash
+# In your registry repo
+cp -r dist/r/* ./r/
+git add r/
+git commit -m "update registry"
+git push
+# GitHub Pages serves from r/ directory
+```
+
+Consumers add it as:
+
+```bash
+kitn registry add @yourname https://yourname.github.io/your-repo/r/{type}/{name}.json
+```
+
+### Vercel / Netlify
+
+Deploy the `dist/r/` directory as a static site. The URL pattern is:
+
+```
+https://your-site.vercel.app/{type}/{name}.json
+```
+
+### S3 / CloudFront
+
+Upload `dist/r/` to an S3 bucket with static website hosting enabled:
+
+```bash
+aws s3 sync dist/r/ s3://your-bucket/r/ --content-type application/json
+```
+
+### Any static host
+
+The only requirement is that the URL template `{type}/{name}.json` resolves correctly. For example, if you host at `https://example.com/registry/`, consumers use:
+
+```bash
+kitn registry add @yourname https://example.com/registry/{type}/{name}.json
+```
+
+---
+
+## Registering with kitn
+
+Consumers add your registry with `kitn registry`:
+
+```bash
+# Add a third-party registry
+kitn registry add @yourname https://yourname.github.io/registry/r/{type}/{name}.json
+
+# List configured registries
+kitn registry list
+
+# Remove a registry
+kitn registry remove @yourname
+```
+
+After adding, consumers install components with the namespace prefix:
+
+```bash
+kitn add @yourname/my-api-tool
+```
+
+Components from the default `@kitn` registry don't need a prefix:
+
+```bash
+kitn add weather-agent    # from @kitn
+```
+
+### Optional: kitn directory listing
+
+Authors can submit a PR to `kitn-ai/registry` to list their registry URL in a public directory for discoverability. This is purely optional — components work whether listed or not.
+
+---
+
+## Working with Packages
+
+The `kitn:package` type is for multi-file libraries that have their own `package.json`. This is how `@kitnai/core` and `@kitnai/hono` are published to the kitn registry.
+
+### Package vs standalone
+
+| | Standalone | Package |
+|---|-----------|---------|
+| Files | Listed explicitly in `files` array | Auto-discovered from `src/` |
+| Metadata | All in `registry.json` | Derived from `package.json` |
+| Install | Single file per alias directory | Preserves directory structure under `base` alias |
+| TSConfig | Not applicable | Adds path aliases for `@kitnai/*` imports |
+
+### Example: Publishing a package
+
+Given this project structure:
+
+```
+my-framework/
+  package.json          # name, version, description, dependencies
+  registry.json         # kitn-specific metadata only
+  src/
+    index.ts
+    routes/
+      chat.ts
+      tools.ts
+    utils/
+      helpers.ts
+```
+
+The `registry.json` only needs kitn-specific fields:
+
+```json
+{
+  "$schema": "https://kitn.dev/schema/registry.json",
+  "type": "kitn:package",
+  "installDir": "my-framework",
+  "tsconfig": {
+    "@my/framework": ["./index.ts"]
+  },
+  "categories": ["framework"]
+}
+```
+
+Running `kitn build .` reads all `.ts` files from `src/`, merges metadata from `package.json`, and produces the registry JSON.
+
+---
+
+## Examples
+
+### Complete tool with API key
+
+```
+movie-tool/
+  registry.json
+  movie-tool.ts
+```
+
+**`registry.json`:**
+
+```json
+{
+  "$schema": "https://kitn.dev/schema/registry.json",
+  "name": "movie-tool",
+  "type": "kitn:tool",
+  "version": "1.0.0",
+  "description": "Search movies and TV shows using TMDB API",
+  "dependencies": ["ai", "zod"],
+  "files": ["movie-tool.ts"],
+  "envVars": {
+    "TMDB_API_KEY": {
+      "description": "TMDB API key for movie/TV data",
+      "required": true,
+      "secret": true,
+      "url": "https://www.themoviedb.org/settings/api"
+    }
+  },
+  "categories": ["entertainment", "api"],
+  "docs": "Get your free TMDB API key at https://www.themoviedb.org/settings/api"
+}
+```
+
+**`movie-tool.ts`:**
+
+```ts
+import { tool } from "ai";
+import { z } from "zod";
+
+export const movieTool = tool({
+  description: "Search for movies and TV shows",
+  inputSchema: z.object({
+    query: z.string().describe("Movie or TV show title to search for"),
+  }),
+  execute: async ({ query }) => {
+    const apiKey = process.env.TMDB_API_KEY;
+    if (!apiKey) throw new Error("TMDB_API_KEY is not set");
+
+    const res = await fetch(
+      `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}`
+    );
+    const data = await res.json();
+    return data.results?.slice(0, 5).map((m: any) => ({
+      title: m.title,
+      year: m.release_date?.slice(0, 4),
+      overview: m.overview,
+      rating: m.vote_average,
+    }));
+  },
+});
+```
+
+### Agent with tool dependency
+
+```
+movie-agent/
+  registry.json
+  movie-agent.ts
+```
+
+**`registry.json`:**
+
+```json
+{
+  "$schema": "https://kitn.dev/schema/registry.json",
+  "name": "movie-agent",
+  "type": "kitn:agent",
+  "version": "1.0.0",
+  "description": "Movie recommendation agent using TMDB data",
+  "registryDependencies": ["movie-tool"],
+  "files": ["movie-agent.ts"],
+  "categories": ["entertainment"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-02-25", "type": "initial", "note": "Initial release" }
+  ]
+}
+```
+
+**`movie-agent.ts`:**
+
+```ts
+import { movieTool } from "@kitn/tools/movie-tool.js";
+
+const SYSTEM_PROMPT = `You are a movie recommendation specialist. Use the movie search tool
+to find films and TV shows based on user preferences. Provide personalized recommendations
+with brief explanations of why each pick matches what the user is looking for.`;
+
+export const MOVIE_AGENT_CONFIG = {
+  system: SYSTEM_PROMPT,
+  tools: { searchMovies: movieTool },
+};
+```
+
+When a consumer runs `kitn add movie-agent`, the CLI automatically installs `movie-tool` first (via `registryDependencies`), prompts for the `TMDB_API_KEY`, writes `.env.example`, and copies both files.
+
+---
+
+## End-to-End Walkthrough
+
+Here's the complete flow from idea to published component:
+
+```bash
+# 1. Create
+kitn create tool sentiment-analyzer
+cd sentiment-analyzer
+
+# 2. Implement
+#    Edit sentiment-analyzer.ts with your logic
+#    Edit registry.json: add description, envVars, categories
+
+# 3. Build
+kitn build .
+#    Output: dist/r/tools/sentiment-analyzer.json
+#            dist/r/tools/sentiment-analyzer@0.1.0.json
+#            dist/r/registry.json
+
+# 4. Test locally
+mkdir /tmp/test-project && cd /tmp/test-project
+bun init -y && kitn init
+# Add to kitn.json registries:
+#   "@local": "file:///path/to/sentiment-analyzer/dist/r/{type}/{name}.json"
+kitn add @local/sentiment-analyzer
+# Verify files installed correctly
+
+# 5. Deploy
+cd /path/to/sentiment-analyzer
+# Push dist/r/ to your static host (GitHub Pages, Vercel, etc.)
+
+# 6. Share
+# Tell consumers:
+kitn registry add @yourname https://yourname.github.io/registry/r/{type}/{name}.json
+kitn add @yourname/sentiment-analyzer
+
+# 7. Update later
+#    Edit source, bump version in registry.json
+kitn build .
+#    Push updated dist/r/ to your host
+#    Consumers run: kitn diff sentiment-analyzer && kitn update sentiment-analyzer
+```

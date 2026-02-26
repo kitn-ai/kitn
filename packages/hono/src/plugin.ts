@@ -59,6 +59,23 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
     if (err instanceof HTTPException) {
       return c.json({ error: err.message }, err.status);
     }
+
+    // Surface AI SDK errors (auth failures, rate limits, bad requests, etc.)
+    if (err.name?.startsWith("AI_")) {
+      const aiErr = err as any;
+      const status = aiErr.statusCode ?? 500;
+      const upstream = aiErr.responseBody
+        ? (() => { try { return JSON.parse(aiErr.responseBody); } catch { return undefined; } })()
+        : undefined;
+      const code = status >= 400 && status < 500 ? status : 502;
+      console.error(`[ai-plugin] AI provider error (${status}):`, err.message);
+      return c.json({
+        error: err.message,
+        ...(aiErr.url && { url: aiErr.url }),
+        ...(upstream && { upstream }),
+      }, code as any);
+    }
+
     console.error(err);
     return c.json({ error: "Internal Server Error" }, 500);
   });

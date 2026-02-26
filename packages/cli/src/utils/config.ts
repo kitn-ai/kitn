@@ -48,16 +48,18 @@ export async function writeConfig(projectDir: string, config: KitnConfig): Promi
 
 type RequiredAliasKey = "agents" | "tools" | "skills" | "storage";
 
-const typeToAliasKey: Record<ComponentType, RequiredAliasKey> = {
+const typeToAliasKey: Record<Exclude<ComponentType, "kitn:package">, RequiredAliasKey> = {
   "kitn:agent": "agents",
   "kitn:tool": "tools",
   "kitn:skill": "skills",
   "kitn:storage": "storage",
 };
 
+type SingleFileComponentType = Exclude<ComponentType, "kitn:package">;
+
 export function getInstallPath(
   config: KitnConfig,
-  type: ComponentType,
+  type: SingleFileComponentType,
   fileName: string
 ): string {
   const aliasKey = typeToAliasKey[type];

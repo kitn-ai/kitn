@@ -69,6 +69,16 @@ program
   });
 
 program
+  .command("build")
+  .description("Build registry JSON from components with registry.json files")
+  .argument("[paths...]", "directories to build (default: scan from cwd)")
+  .option("-o, --output <dir>", "output directory", "dist/r")
+  .action(async (paths: string[], opts) => {
+    const { buildCommand } = await import("./commands/build.js");
+    await buildCommand(paths, opts);
+  });
+
+program
   .command("info")
   .description("Show details about a component")
   .argument("<component>", "component name (e.g. weather-agent, @acme/tool@1.0.0)")

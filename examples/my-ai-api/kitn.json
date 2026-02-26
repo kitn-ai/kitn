@@ -1,0 +1,110 @@
+{
+  "$schema": "https://kitn.dev/schema/config.json",
+  "runtime": "bun",
+  "framework": "hono",
+  "aliases": {
+    "base": "src/ai",
+    "agents": "src/ai/agents",
+    "tools": "src/ai/tools",
+    "skills": "src/ai/skills",
+    "storage": "src/ai/storage"
+  },
+  "registries": {
+    "@kitn": "https://kitn-ai.github.io/registry/r/{type}/{name}.json"
+  },
+  "installed": {
+    "core": {
+      "registry": "@kitn",
+      "version": "1.0.0",
+      "installedAt": "2026-02-26T01:53:09.832Z",
+      "files": [
+        "src/ai/core/schemas/voice.schemas.ts",
+        "src/ai/core/schemas/agents.schemas.ts",
+        "src/ai/core/schemas/memory.schemas.ts",
+        "src/ai/core/schemas/skills.schemas.ts",
+        "src/ai/core/schemas/generate.schemas.ts",
+        "src/ai/core/utils/ai-provider.ts",
+        "src/ai/core/utils/delegation-context.ts",
+        "src/ai/core/utils/resilience.ts",
+        "src/ai/core/utils/constants.ts",
+        "src/ai/core/utils/tool-examples.ts",
+        "src/ai/core/utils/conversation-helpers.ts",
+        "src/ai/core/utils/request-registry.ts",
+        "src/ai/core/utils/card-registry.ts",
+        "src/ai/core/utils/compaction.ts",
+        "src/ai/core/streaming/sse-writer.ts",
+        "src/ai/core/streaming/stream-helpers.ts",
+        "src/ai/core/storage/skill-helpers.ts",
+        "src/ai/core/storage/file-storage/conversation-store.ts",
+        "src/ai/core/storage/file-storage/task-store.ts",
+        "src/ai/core/storage/file-storage/memory-store.ts",
+        "src/ai/core/storage/file-storage/audio-store.ts",
+        "src/ai/core/storage/file-storage/skill-store.ts",
+        "src/ai/core/storage/file-storage/prompt-store.ts",
+        "src/ai/core/storage/file-storage/index.ts",
+        "src/ai/core/storage/interfaces.ts",
+        "src/ai/core/storage/in-memory/memory-store.ts",
+        "src/ai/core/storage/in-memory/index.ts",
+        "src/ai/core/registry/agent-registry.ts",
+        "src/ai/core/registry/handler-factories.ts",
+        "src/ai/core/registry/tool-registry.ts",
+        "src/ai/core/registry/index.ts",
+        "src/ai/core/events/agent-events.ts",
+        "src/ai/core/events/events.ts",
+        "src/ai/core/events/emit-status.ts",
+        "src/ai/core/agents/memory-tool.ts",
+        "src/ai/core/agents/run-agent.ts",
+        "src/ai/core/agents/execute-task.ts",
+        "src/ai/core/agents/orchestrator.ts",
+        "src/ai/core/types.ts",
+        "src/ai/core/voice/voice-manager.ts",
+        "src/ai/core/voice/voice-provider.ts",
+        "src/ai/core/voice/openai-voice-provider.ts",
+        "src/ai/core/index.ts"
+      ],
+      "hash": "9aaac31f"
+    },
+    "hono": {
+      "registry": "@kitn",
+      "version": "1.0.0",
+      "installedAt": "2026-02-26T01:53:09.836Z",
+      "files": [
+        "src/ai/routes/plugin.ts",
+        "src/ai/routes/lib/configure-openapi.ts",
+        "src/ai/routes/adapters/request-adapter.ts",
+        "src/ai/routes/types.ts",
+        "src/ai/routes/index.ts",
+        "src/ai/routes/routes/health/health.route.ts",
+        "src/ai/routes/routes/conversations/conversations.routes.ts",
+        "src/ai/routes/routes/memory/memory.routes.ts",
+        "src/ai/routes/routes/memory/memory.handlers.ts",
+        "src/ai/routes/routes/agents/agents.routes.ts",
+        "src/ai/routes/routes/skills/skills.handlers.ts",
+        "src/ai/routes/routes/skills/skills.routes.ts",
+        "src/ai/routes/routes/voice/voice.routes.ts",
+        "src/ai/routes/routes/generate/generate.handlers.ts",
+        "src/ai/routes/routes/generate/generate.routes.ts",
+        "src/ai/routes/routes/tools/tools.routes.ts"
+      ],
+      "hash": "75cfb18a"
+    },
+    "weather-tool": {
+      "registry": "@kitn",
+      "version": "1.0.0",
+      "installedAt": "2026-02-26T13:53:33.483Z",
+      "files": [
+        "src/ai/tools/weather.ts"
+      ],
+      "hash": "7846d72a"
+    },
+    "weather-agent": {
+      "registry": "@kitn",
+      "version": "1.0.0",
+      "installedAt": "2026-02-26T13:53:33.490Z",
+      "files": [
+        "src/ai/agents/weather-agent.ts"
+      ],
+      "hash": "898a8625"
+    }
+  }
+}

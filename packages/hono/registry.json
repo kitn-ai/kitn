@@ -1,0 +1,12 @@
+{
+  "$schema": "https://kitn.dev/schema/registry.json",
+  "type": "kitn:package",
+  "installDir": "routes",
+  "registryDependencies": ["core"],
+  "tsconfig": {
+    "@kitnai/hono": ["./index.ts"]
+  },
+  "exclude": ["lib/auth.ts"],
+  "docs": "Routes installed to your project. Import with: import { ... } from '@kitnai/hono'",
+  "categories": ["http", "hono"]
+}

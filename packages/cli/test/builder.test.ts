@@ -250,7 +250,7 @@ describe("buildComponent", () => {
         version: "1.0.0",
         description: "API tool",
         files: ["api.ts"],
-        envVars: { API_KEY: "Your API key" },
+        envVars: { API_KEY: { description: "Your API key", required: true, secret: true, url: "https://example.com/keys" } },
         categories: ["api", "http"],
         docs: "# API Tool\nUsage docs here.",
         changelog: [
@@ -262,7 +262,7 @@ describe("buildComponent", () => {
 
     const result = await buildComponent(testDir);
 
-    expect(result.envVars).toEqual({ API_KEY: "Your API key" });
+    expect(result.envVars).toEqual({ API_KEY: { description: "Your API key", required: true, secret: true, url: "https://example.com/keys" } });
     expect(result.categories).toEqual(["api", "http"]);
     expect(result.docs).toBe("# API Tool\nUsage docs here.");
     expect(result.changelog).toHaveLength(1);

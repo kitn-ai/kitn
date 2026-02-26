@@ -19,8 +19,8 @@ describe("checkEnvVars", () => {
     process.env.TEST_KEY_B = "value_b";
 
     const result = checkEnvVars({
-      TEST_KEY_A: "Description A",
-      TEST_KEY_B: "Description B",
+      TEST_KEY_A: { description: "Description A" },
+      TEST_KEY_B: { description: "Description B" },
     });
 
     expect(result).toEqual([]);
@@ -31,8 +31,8 @@ describe("checkEnvVars", () => {
     delete process.env.MISSING_VAR_2;
 
     const result = checkEnvVars({
-      MISSING_VAR_1: "First missing var",
-      MISSING_VAR_2: "Second missing var",
+      MISSING_VAR_1: { description: "First missing var" },
+      MISSING_VAR_2: { description: "Second missing var" },
     });
 
     expect(result).toHaveLength(2);
@@ -47,8 +47,8 @@ describe("checkEnvVars", () => {
     delete process.env.ABSENT_VAR;
 
     const result = checkEnvVars({
-      PRESENT_VAR: "This one exists",
-      ABSENT_VAR: "This one is missing",
+      PRESENT_VAR: { description: "This one exists" },
+      ABSENT_VAR: { description: "This one is missing" },
     });
 
     expect(result).toHaveLength(1);
@@ -65,10 +65,23 @@ describe("checkEnvVars", () => {
     process.env.EMPTY_VAR = "";
 
     const result = checkEnvVars({
-      EMPTY_VAR: "Should be considered missing",
+      EMPTY_VAR: { description: "Should be considered missing" },
     });
 
     // Empty string is falsy, so checkEnvVars treats it as missing
     expect(result).toHaveLength(1);
+  });
+
+  it("includes url in output when provided", () => {
+    delete process.env.API_KEY;
+
+    const result = checkEnvVars({
+      API_KEY: { description: "Your API key", url: "https://example.com/keys" },
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toContain("API_KEY");
+    expect(result[0]).toContain("Your API key");
+    expect(result[0]).toContain("https://example.com/keys");
   });
 });

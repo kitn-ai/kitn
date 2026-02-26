@@ -32,13 +32,15 @@ program
 
 program
   .command("list")
+  .argument("[type]", "filter by type (agents, tools, skills, storages, packages)")
   .description("List available and installed components")
   .option("-i, --installed", "only show installed components")
   .option("-t, --type <type>", "filter by type (agent, tool, skill, storage, package)")
   .option("-r, --registry <namespace>", "only show components from this registry")
-  .action(async (opts) => {
+  .option("-v, --verbose", "show version numbers")
+  .action(async (type, opts) => {
     const { listCommand } = await import("./commands/list.js");
-    await listCommand(opts);
+    await listCommand(type, opts);
   });
 
 program

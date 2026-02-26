@@ -5,6 +5,13 @@ export type { AgentRequest, CoreConfig, PluginContext, ResilienceConfig, Fallbac
 export { AgentRegistry } from "./registry/agent-registry.js";
 export { ToolRegistry } from "./registry/tool-registry.js";
 export { makeRegistryHandlers, makeRegistryStreamHandler, makeRegistryJsonHandler, generateConversationId } from "./registry/handler-factories.js";
+export {
+  registerAgent, registerTool, registerCommand, registerSkill,
+  registerWithPlugin,
+} from "./registry/self-register.js";
+export type {
+  AgentSelfRegConfig, ToolSelfRegConfig, CommandSelfRegConfig, SkillSelfRegConfig,
+} from "./registry/self-register.js";
 export type { AgentRegistration, AgentHandler, ActionRegistration, GuardResult } from "./registry/agent-registry.js";
 export type { ToolRegistration } from "./registry/tool-registry.js";
 

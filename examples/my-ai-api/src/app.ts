@@ -4,6 +4,7 @@ import { HealthResponseSchema, PingResponseSchema } from "./schemas.ts";
 import type { Env } from "./env.ts";
 import { createAIPlugin } from "@kitnai/hono";
 import { openrouter } from "@openrouter/ai-sdk-provider";
+import { registerWithPlugin } from "./ai";
 
 export function createApp(env: Env) {
   const app = new OpenAPIHono();
@@ -77,8 +78,10 @@ export function createApp(env: Env) {
   });
 
   const plugin = createAIPlugin({
-    getModel: (id) => openrouter("gpt-4o-mini"),
+    getModel: (id) => openrouter(id ?? "openai/gpt-4o-mini"),
   });
+
+  registerWithPlugin(plugin);
 
   app.route("/api", plugin.app);
 

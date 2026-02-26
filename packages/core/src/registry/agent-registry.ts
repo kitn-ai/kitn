@@ -3,7 +3,7 @@ import type { z } from "zod";
 
 export type AgentHandler = (
   req: AgentRequest,
-  options: { systemPrompt: string; memoryContext?: string },
+  options: { systemPrompt: string; memoryContext?: string; body?: Record<string, any> },
 ) => Response | Promise<Response>;
 
 export interface GuardResult {

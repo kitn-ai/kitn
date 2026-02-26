@@ -13,9 +13,10 @@ interface RegistryHandlerConfig {
 }
 
 export function makeRegistryStreamHandler(config: RegistryHandlerConfig, ctx: PluginContext): AgentHandler {
-  return async (req: AgentRequest, { systemPrompt, memoryContext }) => {
+  return async (req: AgentRequest, { systemPrompt, memoryContext, body: preParsedBody }) => {
     const { streamAgentResponse } = await import("../streaming/stream-helpers.js");
-    const { message, messages, conversationId: cid, model } = await req.json<any>();
+    const body = preParsedBody ?? await req.json<any>();
+    const { message, messages, conversationId: cid, model } = body;
     const convId = generateConversationId(cid);
 
     const system = memoryContext
@@ -57,9 +58,10 @@ export function makeRegistryStreamHandler(config: RegistryHandlerConfig, ctx: Pl
 }
 
 export function makeRegistryJsonHandler(config: RegistryHandlerConfig, ctx: PluginContext): AgentHandler {
-  return async (req: AgentRequest, { systemPrompt, memoryContext }) => {
+  return async (req: AgentRequest, { systemPrompt, memoryContext, body: preParsedBody }) => {
     const { runAgent } = await import("../agents/run-agent.js");
-    const { message, conversationId: cid, model } = await req.json<any>();
+    const body = preParsedBody ?? await req.json<any>();
+    const { message, conversationId: cid, model } = body;
 
     const system = memoryContext
       ? `${systemPrompt}\n\n## Memory Context\n${memoryContext}`

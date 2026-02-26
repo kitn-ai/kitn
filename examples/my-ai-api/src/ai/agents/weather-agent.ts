@@ -1,4 +1,5 @@
-import { weatherTool } from "../tools/weather.js";
+import { registerAgent } from "../utils/registry.ts";
+import { weatherTool } from "../tools/weather.ts";
 
 const SYSTEM_PROMPT = `You are a weather specialist agent. Your job is to provide accurate, helpful weather information.
 
@@ -10,7 +11,10 @@ When asked about weather:
 
 Always use the tool to get real data rather than guessing.`;
 
-export const WEATHER_AGENT_CONFIG = {
+// Self-register
+registerAgent({
+  name: "weather",
+  description: "Weather specialist — fetches and presents weather data",
   system: SYSTEM_PROMPT,
   tools: { getWeather: weatherTool },
-};
+});

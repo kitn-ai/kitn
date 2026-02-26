@@ -266,25 +266,25 @@ export function createAgentsRoutes(ctx: PluginContext) {
       }
 
       const systemPrompt = ctx.agents.getResolvedPrompt(name) ?? "";
+      const body = await c.req.json();
 
       let memoryContext: string | undefined;
-      try {
-        const body = await c.req.json();
-        if (body.memoryIds && Array.isArray(body.memoryIds) && body.memoryIds.length > 0) {
+      if (body.memoryIds && Array.isArray(body.memoryIds) && body.memoryIds.length > 0) {
+        try {
           const memories = await ctx.storage.memory.loadMemoriesForIds(body.memoryIds);
           if (memories.length > 0) {
             memoryContext = memories.map((m) => `[${m.namespace}] ${m.key}: ${m.value}`).join("\n");
           }
-        }
-      } catch { /* body parsing may fail on re-read */ }
+        } catch { /* memory loading may fail */ }
+      }
 
       if (format === "sse") {
         const bus = new AgentEventBus();
         const delegationCtx: DelegationContext = { chain: [], depth: 0, events: bus, orchestrator: name };
-        return delegationStore.run(delegationCtx, () => handler(c.req, { systemPrompt, memoryContext }));
+        return delegationStore.run(delegationCtx, () => handler(c.req, { systemPrompt, memoryContext, body }));
       }
 
-      return handler(c.req, { systemPrompt, memoryContext });
+      return handler(c.req, { systemPrompt, memoryContext, body });
     }) as any,
   );
 

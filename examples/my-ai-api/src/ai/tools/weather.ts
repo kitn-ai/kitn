@@ -1,5 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { registerTool } from "../utils/registry.ts";
 
 const GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search";
 const WEATHER_URL = "https://api.open-meteo.com/v1/forecast";
@@ -102,4 +103,15 @@ export const weatherTool = tool({
       timezone: weatherData.timezone,
     };
   },
+});
+
+// Self-register
+registerTool({
+  name: "getWeather",
+  description: "Get current weather for a location",
+  inputSchema: z.object({ location: z.string() }),
+  tool: weatherTool,
+  directExecute: async (input) =>
+    weatherTool.execute!(input, { toolCallId: "direct" } as any),
+  category: "weather",
 });

@@ -32,9 +32,10 @@ kitn init
 
 Prompts for:
 - **Runtime**: bun, node, or deno
-- **Alias directories**: Where each component type gets installed (defaults to `src/agents`, `src/tools`, `src/skills`, `src/storage`)
+- **Framework**: hono, cloudflare, elysia, fastify, express
+- **Install path**: Base directory for kitn components (defaults to `src/ai`)
 
-Also offers to install `@kitnai/hono` as a dependency.
+Then run `kitn add core` to install the engine and `kitn add routes` for HTTP routes.
 
 ### `kitn add [components...]`
 
@@ -73,7 +74,7 @@ After installation, the CLI:
 List available and installed components from the registry.
 
 ```bash
-# List all components
+# List all components from all registries
 kitn list
 
 # Only show installed components
@@ -81,6 +82,9 @@ kitn list --installed
 
 # Filter by type
 kitn list --type tool
+
+# Filter by registry
+kitn list --registry @myteam
 ```
 
 **Flags:**
@@ -88,7 +92,10 @@ kitn list --type tool
 | Flag | Description |
 |------|-------------|
 | `-i, --installed` | Only show installed components |
-| `-t, --type <type>` | Filter by type (`agent`, `tool`, `skill`, `storage`) |
+| `-t, --type <type>` | Filter by type (`agent`, `tool`, `skill`, `storage`, `package`) |
+| `-r, --registry <namespace>` | Only show components from this registry |
+
+Shows installed version, latest registry version, and an update indicator when a newer version is available.
 
 ### `kitn diff <component>`
 
@@ -124,6 +131,39 @@ kitn update
 
 This re-fetches components from the registry and applies the same conflict resolution as `kitn add --overwrite`.
 
+### `kitn info <component>`
+
+Show details about a component from the registry.
+
+```bash
+kitn info weather-agent
+```
+
+Displays the component's description, type, version, dependencies, files, and changelog.
+
+### `kitn registry`
+
+Manage component registries.
+
+```bash
+# Add a custom registry
+kitn registry add @myteam https://registry.myteam.dev/r/{type}/{name}.json
+
+# List configured registries
+kitn registry list
+
+# Remove a registry
+kitn registry remove @myteam
+```
+
+**Subcommands:**
+
+| Subcommand | Description |
+|------------|-------------|
+| `add <namespace> <url>` | Add a registry (`-o` to overwrite) |
+| `list` | List all configured registries |
+| `remove <namespace>` | Remove a registry (`-f` to remove `@kitn`) |
+
 ## Configuration
 
 ### `kitn.json`
@@ -134,11 +174,13 @@ Created by `kitn init`. Controls where components are installed and which regist
 {
   "$schema": "https://kitn.dev/schema/config.json",
   "runtime": "bun",
+  "framework": "hono",
   "aliases": {
-    "agents": "src/agents",
-    "tools": "src/tools",
-    "skills": "src/skills",
-    "storage": "src/storage"
+    "base": "src/ai",
+    "agents": "src/ai/agents",
+    "tools": "src/ai/tools",
+    "skills": "src/ai/skills",
+    "storage": "src/ai/storage"
   },
   "registries": {
     "@kitn": "https://kitn-ai.github.io/registry/r/{type}/{name}.json"
@@ -149,26 +191,20 @@ Created by `kitn init`. Controls where components are installed and which regist
 | Field | Description |
 |-------|-------------|
 | `runtime` | `bun`, `node`, or `deno` |
+| `framework` | `hono`, `cloudflare`, `elysia`, `fastify`, or `express` |
 | `aliases` | Directory paths for each component type |
 | `registries` | Named registries with URL templates |
 | `installed` | Auto-managed tracking of installed components (don't edit manually) |
 
 ### Custom Registries
 
-Add custom registries alongside or instead of the default:
+Add custom registries via the CLI or by editing `kitn.json` directly:
 
-```json
-{
-  "registries": {
-    "@kitn": "https://kitn-ai.github.io/registry/r/{type}/{name}.json",
-    "@myteam": "https://registry.myteam.dev/r/{type}/{name}.json"
-  }
-}
+```bash
+kitn registry add @myteam https://registry.myteam.dev/r/{type}/{name}.json
 ```
 
-The URL template uses `{type}` and `{name}` placeholders. Components are fetched by replacing these with the component's type directory (`agents`, `tools`, `skills`, `storage`) and name.
-
-The registry index is fetched by replacing `{type}/{name}.json` with `registry.json` in the URL template.
+The URL template uses `{type}` and `{name}` placeholders. Components are fetched by replacing these with the component's type directory (`agents`, `tools`, `skills`, `storage`) and name. The registry index is fetched by replacing `{type}/{name}.json` with `registry.json` in the URL template.
 
 ## Package Manager Detection
 

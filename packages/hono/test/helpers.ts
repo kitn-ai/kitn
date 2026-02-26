@@ -122,6 +122,12 @@ export function makeStorage(): StorageProvider {
       listAudio: async () => [],
       cleanupOlderThan: async () => 0,
     },
+    commands: {
+      list: async () => [],
+      get: async () => undefined,
+      save: async () => {},
+      delete: async () => {},
+    },
   };
 }
 

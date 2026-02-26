@@ -17,6 +17,28 @@ export const changelogEntrySchema = z.object({
 });
 export type ChangelogEntry = z.infer<typeof changelogEntrySchema>;
 
+/** Schema for the author-facing registry.json file */
+export const componentConfigSchema = z.object({
+  $schema: z.string().optional(),
+  type: componentType,
+  name: z.string().optional(),
+  version: z.string().optional(),
+  description: z.string().optional(),
+  dependencies: z.array(z.string()).optional(),
+  devDependencies: z.array(z.string()).optional(),
+  registryDependencies: z.array(z.string()).optional(),
+  files: z.array(z.string()).optional(),
+  sourceDir: z.string().optional(),
+  exclude: z.array(z.string()).optional(),
+  installDir: z.string().optional(),
+  tsconfig: z.record(z.string(), z.array(z.string())).optional(),
+  envVars: z.record(z.string(), z.string()).optional(),
+  categories: z.array(z.string()).optional(),
+  docs: z.string().optional(),
+  changelog: z.array(changelogEntrySchema).optional(),
+});
+export type ComponentConfig = z.infer<typeof componentConfigSchema>;
+
 export const registryItemSchema = z.object({
   $schema: z.string().optional(),
   name: z.string(),

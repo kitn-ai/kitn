@@ -13,7 +13,7 @@ import {
   FileStatus,
 } from "../installers/file-writer.js";
 import { installDependencies } from "../installers/dep-installer.js";
-import { checkEnvVars } from "../installers/env-checker.js";
+import { collectEnvVars, handleEnvVars } from "../installers/env-writer.js";
 import { rewriteKitnImports } from "../installers/import-rewriter.js";
 import { patchProjectTsconfig } from "../installers/tsconfig-patcher.js";
 import { contentHash } from "../utils/hash.js";
@@ -84,13 +84,8 @@ export async function addCommand(components: string[], opts: AddOptions) {
   const updated: string[] = [];
   const skipped: string[] = [];
   const allDeps: string[] = [];
-  const allEnvWarnings: string[] = [];
-
   for (const item of resolved) {
     if (item.dependencies) allDeps.push(...item.dependencies);
-    if (item.envVars) {
-      allEnvWarnings.push(...checkEnvVars(item.envVars));
-    }
 
     if (item.type === "kitn:package") {
       // Package install — multi-file, preserved directory structure
@@ -281,10 +276,9 @@ export async function addCommand(components: string[], opts: AddOptions) {
     for (const f of skipped) p.log.message(`  ${pc.dim("-")} ${f}`);
   }
 
-  if (allEnvWarnings.length > 0) {
-    p.log.warn("Missing environment variables:");
-    for (const w of allEnvWarnings) p.log.message(w);
-  }
+  // Handle environment variables
+  const allEnvVars = collectEnvVars(resolved);
+  await handleEnvVars(cwd, allEnvVars);
 
   for (const item of resolved) {
     if (item.docs) {

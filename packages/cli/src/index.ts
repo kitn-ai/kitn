@@ -69,6 +69,26 @@ program
   });
 
 program
+  .command("build")
+  .description("Build registry JSON from components with registry.json files")
+  .argument("[paths...]", "directories to build (default: scan from cwd)")
+  .option("-o, --output <dir>", "output directory", "dist/r")
+  .action(async (paths: string[], opts) => {
+    const { buildCommand } = await import("./commands/build.js");
+    await buildCommand(paths, opts);
+  });
+
+program
+  .command("create")
+  .description("Scaffold a new kitn component")
+  .argument("<type>", "component type (agent, tool, skill, storage)")
+  .argument("<name>", "component name")
+  .action(async (type: string, name: string) => {
+    const { createCommand } = await import("./commands/create.js");
+    await createCommand(type, name);
+  });
+
+program
   .command("info")
   .description("Show details about a component")
   .argument("<component>", "component name (e.g. weather-agent, @acme/tool@1.0.0)")

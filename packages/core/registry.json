@@ -1,0 +1,11 @@
+{
+  "$schema": "https://kitn.dev/schema/registry.json",
+  "type": "kitn:package",
+  "installDir": "core",
+  "registryDependencies": [],
+  "tsconfig": {
+    "@kitnai/core": ["./index.ts"]
+  },
+  "docs": "Engine installed to your project. Import with: import { ... } from '@kitnai/core'",
+  "categories": ["engine", "core"]
+}

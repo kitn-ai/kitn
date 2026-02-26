@@ -1,9 +1,15 @@
 import { Command } from "commander";
+import { startUpdateCheck } from "./utils/update-check.js";
+
+declare const __CLI_VERSION__: string;
+const VERSION = typeof __CLI_VERSION__ !== "undefined" ? __CLI_VERSION__ : "0.0.0-dev";
+
+const printUpdateNotice = startUpdateCheck(VERSION);
 
 const program = new Command()
   .name("kitn")
   .description("Install AI agent components from the kitn registry")
-  .version("0.1.0");
+  .version(VERSION);
 
 program
   .command("init")
@@ -104,4 +110,5 @@ registry
     await registryListCommand();
   });
 
-program.parse();
+await program.parseAsync();
+printUpdateNotice();

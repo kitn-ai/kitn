@@ -265,19 +265,21 @@ export function createAgentsRoutes(ctx: PluginContext) {
         return c.json({ error: `Agent "${name}" does not support format "${format}". Supported: ${supported.join(", ")}` }, 400);
       }
 
+      const scopeId = c.req.header("X-Scope-Id") || undefined;
       const systemPrompt = ctx.agents.getResolvedPrompt(name) ?? "";
       const body = await c.req.json();
 
       let memoryContext: string | undefined;
       if (body.memoryIds && Array.isArray(body.memoryIds) && body.memoryIds.length > 0) {
         try {
-          const memories = await ctx.storage.memory.loadMemoriesForIds(body.memoryIds);
+          const memories = await ctx.storage.memory.loadMemoriesForIds(body.memoryIds, scopeId);
           if (memories.length > 0) {
             memoryContext = memories.map((m) => `[${m.namespace}] ${m.key}: ${m.value}`).join("\n");
           }
         } catch { /* memory loading may fail */ }
       }
 
+      // TODO: thread scopeId through handler options once handler factories in @kitnai/core support it
       if (format === "sse") {
         const bus = new AgentEventBus();
         const delegationCtx: DelegationContext = { chain: [], depth: 0, events: bus, orchestrator: name };

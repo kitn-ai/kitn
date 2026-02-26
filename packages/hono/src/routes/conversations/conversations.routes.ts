@@ -13,7 +13,8 @@ export function createConversationsRoutes(ctx: PluginContext) {
       responses: { 200: { description: "All conversations", content: { "application/json": { schema: z.object({ conversations: z.array(z.object({ id: z.string(), messageCount: z.number(), updatedAt: z.string() })), count: z.number() }) } } } },
     }),
     async (c) => {
-      const conversations = await store.list();
+      const scopeId = c.req.header("X-Scope-Id") || undefined;
+      const conversations = await store.list(scopeId);
       return c.json({ conversations, count: conversations.length }, 200);
     },
   );
@@ -29,7 +30,8 @@ export function createConversationsRoutes(ctx: PluginContext) {
     }),
     async (c) => {
       const { id } = c.req.param();
-      const conv = await store.get(id);
+      const scopeId = c.req.header("X-Scope-Id") || undefined;
+      const conv = await store.get(id, scopeId);
       if (!conv) return c.json({ error: "Conversation not found" }, 404);
       return c.json(conv, 200);
     },
@@ -43,7 +45,8 @@ export function createConversationsRoutes(ctx: PluginContext) {
     }),
     async (c) => {
       const { id } = await c.req.json();
-      const conv = await store.create(id);
+      const scopeId = c.req.header("X-Scope-Id") || undefined;
+      const conv = await store.create(id, scopeId);
       return c.json(conv, 200);
     },
   );
@@ -56,7 +59,8 @@ export function createConversationsRoutes(ctx: PluginContext) {
     }),
     async (c) => {
       const { id } = c.req.param();
-      const deleted = await store.delete(id);
+      const scopeId = c.req.header("X-Scope-Id") || undefined;
+      const deleted = await store.delete(id, scopeId);
       return c.json({ deleted, id }, 200);
     },
   );
@@ -72,8 +76,9 @@ export function createConversationsRoutes(ctx: PluginContext) {
     }),
     async (c) => {
       const { id } = c.req.param();
+      const scopeId = c.req.header("X-Scope-Id") || undefined;
       try {
-        const conv = await store.clear(id);
+        const conv = await store.clear(id, scopeId);
         return c.json(conv, 200);
       } catch {
         return c.json({ error: "Conversation not found" }, 404);
@@ -96,6 +101,7 @@ export function createConversationsRoutes(ctx: PluginContext) {
     async (c) => {
       const { id } = c.req.param();
       const body = await c.req.json().catch(() => ({}));
+      // TODO: thread scopeId through compactConversation once @kitnai/core supports it
       const result = await compactConversation(ctx, id, body);
       if (!result) return c.json({ error: "Conversation not found" }, 404);
       return c.json({ conversationId: id, ...result }, 200);

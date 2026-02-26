@@ -13,6 +13,7 @@ import type {
   AudioEntry,
 } from "../interfaces.js";
 import { createInMemoryMemoryStore } from "./memory-store.js";
+import { createCommandStore } from "./command-store.js";
 import { parseFrontmatter, parsePhase, buildSkill, KEBAB_CASE } from "../skill-helpers.js";
 
 // ── Conversation Store ──
@@ -248,5 +249,6 @@ export function createMemoryStorage(): StorageProvider {
     tasks: createTaskStore(),
     prompts: createPromptStore(),
     audio: createAudioStore(),
+    commands: createCommandStore(),
   };
 }

@@ -6,6 +6,7 @@ import { createSkillStore } from "./skill-store.js";
 import { createTaskStore } from "./task-store.js";
 import { createPromptStore } from "./prompt-store.js";
 import { createAudioStore } from "./audio-store.js";
+import { createCommandStore } from "./command-store.js";
 
 export interface FileStorageOptions {
   /** Base directory for all data files (e.g. "./data") */
@@ -22,5 +23,6 @@ export function createFileStorage(options: FileStorageOptions): StorageProvider 
     tasks: createTaskStore(dataDir),
     prompts: createPromptStore(dataDir),
     audio: createAudioStore(dataDir),
+    commands: createCommandStore(dataDir),
   };
 }

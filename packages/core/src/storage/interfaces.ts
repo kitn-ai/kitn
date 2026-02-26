@@ -220,6 +220,36 @@ export interface AudioStore {
   cleanupOlderThan(maxAgeMs: number): Promise<number>;
 }
 
+// ── Command Store ──
+
+/** A registered command definition for the command execution system */
+export interface CommandRegistration {
+  name: string;
+  description: string;
+  system: string;
+  tools?: string[];
+  model?: string;
+  format?: "json" | "sse";
+}
+
+/**
+ * Stores and retrieves command registrations.
+ *
+ * Commands are named configurations that pair a system prompt with tools
+ * and model settings. All methods accept an optional `scopeId` for
+ * multi-tenant scoping — when omitted, commands are stored in the global scope.
+ */
+export interface CommandStore {
+  /** List all commands in the given scope (or global scope when omitted). */
+  list(scopeId?: string): Promise<CommandRegistration[]>;
+  /** Get a command by name within the given scope. Returns `undefined` if not found. */
+  get(name: string, scopeId?: string): Promise<CommandRegistration | undefined>;
+  /** Save (create or overwrite) a command in the given scope. */
+  save(command: CommandRegistration, scopeId?: string): Promise<void>;
+  /** Delete a command by name within the given scope. */
+  delete(name: string, scopeId?: string): Promise<void>;
+}
+
 // ── Combined Storage Provider ──
 
 /**
@@ -249,4 +279,5 @@ export interface StorageProvider {
   tasks: TaskStore;
   prompts: PromptStore;
   audio: AudioStore;
+  commands: CommandStore;
 }

@@ -73,6 +73,8 @@ export type {
   PromptOverride,
   AudioStore,
   AudioEntry,
+  CommandRegistration,
+  CommandStore,
 } from "./storage/interfaces.js";
 export { createFileStorage } from "./storage/file-storage/index.js";
 export type { FileStorageOptions } from "./storage/file-storage/index.js";

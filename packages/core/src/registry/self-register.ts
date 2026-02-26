@@ -106,9 +106,9 @@ export function registerWithPlugin(ctx: PluginContext): void {
     });
   }
 
-  // 3. Save commands to storage (CommandStore may not exist yet)
+  // 3. Save commands to storage
   for (const config of commandConfigs.values()) {
-    (ctx.storage as any).commands?.save(config);
+    ctx.storage.commands.save(config);
   }
 
   // 4. Clear all maps (idempotent)

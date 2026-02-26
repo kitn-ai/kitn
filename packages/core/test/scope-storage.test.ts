@@ -31,12 +31,23 @@ describe("scoped storage", () => {
       expect(conv!.messages[0].content).toBe("hello");
     });
 
-    test("get without scopeId retrieves any conversation", async () => {
+    test("get without scopeId does not leak scoped conversations", async () => {
       const storage = createMemoryStorage();
       await storage.conversations.append("conv-1", { role: "user", content: "hello", timestamp: new Date().toISOString() }, "user-a");
 
+      // Without scopeId, only the unscoped key is checked — scoped data should not leak
+      const conv = await storage.conversations.get("conv-1");
+      expect(conv).toBeNull();
+    });
+
+    test("get without scopeId retrieves unscoped conversation", async () => {
+      const storage = createMemoryStorage();
+      // Create an unscoped conversation
+      await storage.conversations.append("conv-1", { role: "user", content: "hello", timestamp: new Date().toISOString() });
+
       const conv = await storage.conversations.get("conv-1");
       expect(conv).not.toBeNull();
+      expect(conv!.messages[0].content).toBe("hello");
     });
 
     test("create with scopeId scopes the conversation", async () => {
@@ -137,6 +148,26 @@ describe("scoped storage", () => {
       const memories = await storage.memory.loadMemoriesForIds(["ns"], "user-a");
       expect(memories).toHaveLength(1);
       expect(memories[0].value).toBe("val-a");
+    });
+
+    test("scopeIds containing colons work correctly", async () => {
+      const storage = createMemoryStorage();
+      await storage.memory.saveEntry("ns", "key", "val-org", undefined, "org:team");
+      await storage.memory.saveEntry("ns", "key", "val-plain", undefined, "org");
+
+      const orgTeam = await storage.memory.getEntry("ns", "key", "org:team");
+      expect(orgTeam).not.toBeNull();
+      expect(orgTeam!.value).toBe("val-org");
+
+      const orgPlain = await storage.memory.getEntry("ns", "key", "org");
+      expect(orgPlain).not.toBeNull();
+      expect(orgPlain!.value).toBe("val-plain");
+
+      const nsOrgTeam = await storage.memory.listNamespaces("org:team");
+      expect(nsOrgTeam).toEqual(["ns"]);
+
+      const nsOrg = await storage.memory.listNamespaces("org");
+      expect(nsOrg).toEqual(["ns"]);
     });
   });
 

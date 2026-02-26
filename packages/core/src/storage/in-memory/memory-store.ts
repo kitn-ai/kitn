@@ -7,56 +7,74 @@ import type { MemoryStore, MemoryEntry } from "../interfaces.js";
  */
 export function createInMemoryMemoryStore(): MemoryStore {
   // internal key -> (entry key -> entry)
-  // Internal keys are either plain namespace IDs or "{scopeId}:{namespaceId}"
+  // Internal keys use \0 as separator: "{namespaceId}\0{scopeId}" or plain namespaceId
   const store = new Map<string, Map<string, MemoryEntry>>();
+  /** Maps scopeId -> Set of internal store keys that belong to that scope */
+  const scopeIndex = new Map<string, Set<string>>();
 
-  function internalKey(namespaceId: string, scopeId?: string): string {
-    return scopeId ? `${scopeId}:${namespaceId}` : namespaceId;
+  function storeKey(namespaceId: string, scopeId?: string): string {
+    return scopeId ? `${namespaceId}\0${scopeId}` : namespaceId;
+  }
+
+  function trackScope(key: string, scopeId?: string): void {
+    if (!scopeId) return;
+    let set = scopeIndex.get(scopeId);
+    if (!set) { set = new Set(); scopeIndex.set(scopeId, set); }
+    set.add(key);
+  }
+
+  function untrackScope(key: string, scopeId?: string): void {
+    if (!scopeId) return;
+    scopeIndex.get(scopeId)?.delete(key);
+  }
+
+  /** Extract the user-facing namespace name from an internal key. */
+  function namespaceFromKey(key: string): string {
+    const idx = key.indexOf("\0");
+    return idx === -1 ? key : key.slice(0, idx);
   }
 
   function getNamespace(namespaceId: string, scopeId?: string): Map<string, MemoryEntry> {
-    const key = internalKey(namespaceId, scopeId);
+    const key = storeKey(namespaceId, scopeId);
     let ns = store.get(key);
     if (!ns) {
       ns = new Map();
       store.set(key, ns);
+      trackScope(key, scopeId);
     }
     return ns;
   }
 
-  /** Extract the user-facing namespace name from an internal key. */
-  function parseInternalKey(key: string): { namespaceId: string; scopeId?: string } {
-    const colonIdx = key.indexOf(":");
-    if (colonIdx === -1) return { namespaceId: key };
-    return { scopeId: key.slice(0, colonIdx), namespaceId: key.slice(colonIdx + 1) };
-  }
-
   return {
     async listNamespaces(scopeId?) {
-      const namespaces: string[] = [];
+      if (scopeId) {
+        const keys = scopeIndex.get(scopeId);
+        if (!keys) return [];
+        const namespaces: string[] = [];
+        for (const key of keys) {
+          const ns = store.get(key);
+          if (ns && ns.size > 0) namespaces.push(namespaceFromKey(key));
+        }
+        return namespaces;
+      }
+      // Without scopeId: return all unique namespaces
+      const namespaces = new Set<string>();
       for (const [key, entries] of store) {
         if (entries.size === 0) continue;
-        const parsed = parseInternalKey(key);
-        if (scopeId) {
-          if (parsed.scopeId === scopeId) namespaces.push(parsed.namespaceId);
-        } else {
-          namespaces.push(parsed.namespaceId);
-        }
+        namespaces.add(namespaceFromKey(key));
       }
-      // Deduplicate namespace names when returning all (unscoped + scoped may share names)
-      return scopeId ? namespaces : [...new Set(namespaces)];
+      return [...namespaces];
     },
 
     async listEntries(namespaceId: string, scopeId?) {
       if (scopeId) {
-        const ns = store.get(internalKey(namespaceId, scopeId));
+        const ns = store.get(storeKey(namespaceId, scopeId));
         return ns ? [...ns.values()] : [];
       }
       // Without scopeId, return entries from all scopes for this namespace
       const results: MemoryEntry[] = [];
       for (const [key, ns] of store) {
-        const parsed = parseInternalKey(key);
-        if (parsed.namespaceId === namespaceId) {
+        if (namespaceFromKey(key) === namespaceId) {
           results.push(...ns.values());
         }
       }
@@ -79,24 +97,26 @@ export function createInMemoryMemoryStore(): MemoryStore {
     },
 
     async getEntry(namespaceId: string, key: string, scopeId?) {
-      return store.get(internalKey(namespaceId, scopeId))?.get(key) ?? null;
+      return store.get(storeKey(namespaceId, scopeId))?.get(key) ?? null;
     },
 
     async deleteEntry(namespaceId: string, key: string, scopeId?) {
-      const ns = store.get(internalKey(namespaceId, scopeId));
+      const ns = store.get(storeKey(namespaceId, scopeId));
       if (!ns) return false;
       return ns.delete(key);
     },
 
     async clearNamespace(namespaceId: string, scopeId?) {
-      store.delete(internalKey(namespaceId, scopeId));
+      const key = storeKey(namespaceId, scopeId);
+      store.delete(key);
+      untrackScope(key, scopeId);
     },
 
     async loadMemoriesForIds(ids: string[], scopeId?) {
       const results: Array<MemoryEntry & { namespace: string }> = [];
       for (const id of ids) {
         if (scopeId) {
-          const ns = store.get(internalKey(id, scopeId));
+          const ns = store.get(storeKey(id, scopeId));
           if (!ns) continue;
           for (const entry of ns.values()) {
             results.push({ ...entry, namespace: id });
@@ -104,8 +124,7 @@ export function createInMemoryMemoryStore(): MemoryStore {
         } else {
           // Without scopeId, collect from all scopes for this namespace
           for (const [key, ns] of store) {
-            const parsed = parseInternalKey(key);
-            if (parsed.namespaceId === id) {
+            if (namespaceFromKey(key) === id) {
               for (const entry of ns.values()) {
                 results.push({ ...entry, namespace: id });
               }

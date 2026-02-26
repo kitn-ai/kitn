@@ -41,16 +41,8 @@ function createConversationStore(): ConversationStore {
 
   return {
     async get(id, scopeId?) {
-      if (scopeId) {
-        return store.get(storeKey(id, scopeId)) ?? null;
-      }
-      // Without scopeId, check the unscoped key first, then search all entries
-      const direct = store.get(id);
-      if (direct) return direct;
-      for (const conv of store.values()) {
-        if (conv.id === id) return conv;
-      }
-      return null;
+      const key = scopeId ? storeKey(id, scopeId) : id;
+      return store.get(key) ?? null;
     },
 
     async list(scopeId?) {
@@ -306,9 +298,13 @@ function createAudioStore(): AudioStore {
         if (!item) continue;
         if (new Date(item.entry.createdAt).getTime() < cutoff) {
           entries.delete(key);
-          // Also remove from scope index
-          for (const [, set] of scopeIndex) {
-            set.delete(key);
+          // Remove from the specific scope index (or scan all if no scopeId)
+          if (scopeId) {
+            scopeIndex.get(scopeId)?.delete(key);
+          } else {
+            for (const [, set] of scopeIndex) {
+              set.delete(key);
+            }
           }
           deleted++;
         }

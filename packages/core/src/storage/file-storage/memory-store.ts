@@ -76,8 +76,24 @@ export function createMemoryStore(dataDir: string): MemoryStore {
     },
 
     async listEntries(namespaceId, scopeId?) {
-      const data = await readNamespace(namespaceId, scopeId);
-      return Object.values(data);
+      if (scopeId) {
+        const data = await readNamespace(namespaceId, scopeId);
+        return Object.values(data);
+      }
+      // Without scopeId: aggregate entries from base dir + all subdirectories
+      const results: MemoryEntry[] = [];
+      const baseData = await readNamespace(namespaceId);
+      results.push(...Object.values(baseData));
+      await ensureDir(baseDir);
+      if (existsSync(baseDir)) {
+        const dirEntries = await readdir(baseDir, { withFileTypes: true });
+        for (const entry of dirEntries) {
+          if (!entry.isDirectory()) continue;
+          const scopedData = await readNamespace(namespaceId, entry.name);
+          results.push(...Object.values(scopedData));
+        }
+      }
+      return results;
     },
 
     saveEntry(namespaceId, key, value, context = "", scopeId?) {
@@ -122,14 +138,37 @@ export function createMemoryStore(dataDir: string): MemoryStore {
 
     async loadMemoriesForIds(ids, scopeId?) {
       const results: Array<MemoryEntry & { namespace: string }> = [];
-      await Promise.all(
-        ids.map(async (id) => {
-          const data = await readNamespace(id, scopeId);
-          for (const entry of Object.values(data)) {
-            results.push({ ...entry, namespace: id });
+      if (scopeId) {
+        await Promise.all(
+          ids.map(async (id) => {
+            const data = await readNamespace(id, scopeId);
+            for (const entry of Object.values(data)) {
+              results.push({ ...entry, namespace: id });
+            }
+          }),
+        );
+      } else {
+        // Without scopeId: aggregate from base dir + all subdirectories
+        await ensureDir(baseDir);
+        const subdirs: string[] = [""];
+        if (existsSync(baseDir)) {
+          const dirEntries = await readdir(baseDir, { withFileTypes: true });
+          for (const entry of dirEntries) {
+            if (entry.isDirectory()) subdirs.push(entry.name);
           }
-        }),
-      );
+        }
+        await Promise.all(
+          ids.map(async (id) => {
+            for (const sub of subdirs) {
+              const scope = sub || undefined;
+              const data = await readNamespace(id, scope);
+              for (const entry of Object.values(data)) {
+                results.push({ ...entry, namespace: id });
+              }
+            }
+          }),
+        );
+      }
       return results;
     },
   };

@@ -46,7 +46,7 @@ describe("config schema", () => {
     expect(() => configSchema.parse(config)).not.toThrow();
   });
 
-  test("accepts config without framework (backwards compat)", () => {
+  test("accepts config without framework", () => {
     const { configSchema } = require("../src/utils/config.js");
     const config = {
       runtime: "bun",
@@ -100,7 +100,7 @@ describe("installed tracking", () => {
     expect(() => configSchema.parse(config)).not.toThrow();
   });
 
-  test("registry field is optional for backwards compat", () => {
+  test("registry field is optional", () => {
     const { configSchema } = require("../src/utils/config.js");
     const config = {
       runtime: "bun",

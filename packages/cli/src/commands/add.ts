@@ -15,7 +15,6 @@ import {
 import { installDependencies } from "../installers/dep-installer.js";
 import { collectEnvVars, handleEnvVars } from "../installers/env-writer.js";
 import { rewriteKitnImports } from "../installers/import-rewriter.js";
-import { patchProjectTsconfig } from "../installers/tsconfig-patcher.js";
 import { createBarrelFile, addImportToBarrel } from "../installers/barrel-manager.js";
 import { contentHash } from "../utils/hash.js";
 import { parseComponentRef, type ComponentRef } from "../utils/parse-ref.js";
@@ -137,17 +136,6 @@ export async function addCommand(components: string[], opts: AddOptions) {
             }
             break;
         }
-      }
-
-      // Patch tsconfig.json with package paths
-      if (item.tsconfig) {
-        const resolvedPaths: Record<string, string[]> = {};
-        const installDir = item.installDir ?? item.name;
-        for (const [key, values] of Object.entries(item.tsconfig)) {
-          resolvedPaths[key] = values.map((v) => `./${join(baseDir, installDir, v)}`);
-        }
-        await patchProjectTsconfig(cwd, resolvedPaths);
-        p.log.info(`Patched tsconfig.json with paths: ${Object.keys(resolvedPaths).join(", ")}`);
       }
 
       // Track in installed
@@ -298,17 +286,12 @@ export async function addCommand(components: string[], opts: AddOptions) {
     if (!barrelExisted) {
       p.note(
         [
-          `import { createAIPlugin } from "@kitnai/hono";`,
-          `import { registerWithPlugin } from "./ai";`,
+          `import { ai } from "./${baseDir}/plugin.js";`,
           ``,
-          `const plugin = createAIPlugin({`,
-          `  model: (model) => yourProvider(model ?? "default-model"),`,
-          `});`,
-          ``,
-          `registerWithPlugin(plugin);`,
-          `app.route("/api", plugin.app);`,
+          `app.route("/api", ai.router);`,
+          `await ai.initialize();`,
         ].join("\n"),
-        "Add this to your app setup",
+        "Add this to your server entry point",
       );
     }
   }
@@ -362,22 +345,13 @@ export async function addCommand(components: string[], opts: AddOptions) {
 
   const fw = config.framework ?? "hono";
   if (installedNames.has(fw) || (installedNames.has("core") && installedNames.has(fw))) {
-    hints.push(`Add this to your server entry point:`);
-    if (fw === "hono") {
-      hints.push("");
-      hints.push(pc.dim(`  import { Hono } from "hono";`));
-      hints.push(pc.dim(`  import { createAIPlugin } from "@kitnai/hono";`));
-      hints.push(pc.dim(`  import { yourProvider } from "your-ai-provider";`));
-      hints.push(pc.dim(``));
-      hints.push(pc.dim(`  const plugin = createAIPlugin({`));
-      hints.push(pc.dim(`    model: (model) => yourProvider(model ?? "default-model"),`));
-      hints.push(pc.dim(`  });`));
-      hints.push(pc.dim(``));
-      hints.push(pc.dim(`  const app = new Hono();`));
-      hints.push(pc.dim(`  app.route("/api", plugin.app);`));
-      hints.push(pc.dim(`  await plugin.initialize();`));
-      hints.push("");
-    }
+    hints.push(`Configure your AI provider in ${pc.bold(baseDir + "/plugin.ts")}, then add to your server:`);
+    hints.push("");
+    hints.push(pc.dim(`  import { ai } from "./${baseDir}/plugin.js";`));
+    hints.push(pc.dim(``));
+    hints.push(pc.dim(`  app.route("/api", ai.router);`));
+    hints.push(pc.dim(`  await ai.initialize();`));
+    hints.push("");
   }
 
   if (hints.length > 0) {

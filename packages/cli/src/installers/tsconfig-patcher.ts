@@ -14,11 +14,14 @@ function stripJsonc(text: string): string {
 
 /**
  * Patches a tsconfig JSON string with additional paths entries.
+ * If removePrefixes is provided, any existing path keys starting with
+ * those prefixes are deleted first (useful for cleaning up old aliases).
  * Returns the updated JSON string.
  */
 export function patchTsconfig(
   tsconfigContent: string,
   paths: Record<string, string[]>,
+  removePrefixes?: string[],
 ): string {
   const config = JSON.parse(stripJsonc(tsconfigContent));
 
@@ -27,6 +30,14 @@ export function patchTsconfig(
   }
   if (!config.compilerOptions.paths) {
     config.compilerOptions.paths = {};
+  }
+
+  if (removePrefixes) {
+    for (const key of Object.keys(config.compilerOptions.paths)) {
+      if (removePrefixes.some((prefix) => key.startsWith(prefix))) {
+        delete config.compilerOptions.paths[key];
+      }
+    }
   }
 
   for (const [key, value] of Object.entries(paths)) {
@@ -43,6 +54,7 @@ export function patchTsconfig(
 export async function patchProjectTsconfig(
   projectDir: string,
   paths: Record<string, string[]>,
+  removePrefixes?: string[],
 ): Promise<void> {
   const tsconfigPath = join(projectDir, "tsconfig.json");
   let content: string;
@@ -52,6 +64,6 @@ export async function patchProjectTsconfig(
     content = "{}";
   }
 
-  const patched = patchTsconfig(content, paths);
+  const patched = patchTsconfig(content, paths, removePrefixes);
   await writeFile(tsconfigPath, patched);
 }

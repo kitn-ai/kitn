@@ -1,4 +1,4 @@
-const EXPORT_LINE = 'export { registerWithPlugin } from "@kitnai/core";';
+const EXPORT_LINE = 'export { registerWithPlugin } from "@kitn/core";';
 const BARREL_COMMENT = "// Managed by kitn CLI — components auto-imported below";
 
 export function createBarrelFile(): string {

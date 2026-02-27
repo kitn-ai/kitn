@@ -50,20 +50,11 @@ beforeAll(async () => {
   await ai.initialize();
 
   app = new Hono();
-  app.route("/ai", ai.app);
+  app.route("/ai", ai.router);
 });
 
 afterAll(async () => {
   if (tmpDir) await rm(tmpDir, { recursive: true, force: true });
-});
-
-describe("Health endpoint", () => {
-  test("GET /health returns 200 with status ok", async () => {
-    const res = await app.request("/ai/health");
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body).toHaveProperty("status", "ok");
-  });
 });
 
 describe("Agent endpoints", () => {

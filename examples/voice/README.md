@@ -66,7 +66,7 @@ This avoids CORS issues and lets the client use relative fetch URLs. For product
 
 ## Note on duplicate audio utilities
 
-This example ships its own SSE parser (`lib/sse-parser.ts`), chunked TTS helper (`lib/chunked-speak.ts`), and audio recorder/player hooks (`lib/useAudioRecorder.ts`, `lib/useAudioPlayer.ts`). Similar utilities exist in the `@kitnai/client` package. This duplication is intentional for now so the example stays self-contained, but it will be refactored to share code with `@kitnai/client` in a future release.
+This example ships its own SSE parser (`lib/sse-parser.ts`), chunked TTS helper (`lib/chunked-speak.ts`), and audio recorder/player hooks (`lib/useAudioRecorder.ts`, `lib/useAudioPlayer.ts`). Similar utilities exist in the `@kitn/client` package. This duplication is intentional for now so the example stays self-contained, but it will be refactored to share code with `@kitn/client` in a future release.
 
 ## Monorepo
 

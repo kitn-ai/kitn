@@ -66,7 +66,7 @@ plugin.createOrchestrator({
 // Build the app
 const app = new Hono();
 app.use("/*", cors());
-app.route("/api", plugin.app);
+app.route("/api", plugin.router);
 
 // Initialize and start
 await plugin.initialize();

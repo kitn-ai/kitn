@@ -23,24 +23,11 @@ bunx @kitnai/cli init
 
 Choose:
 - **Runtime:** Bun
-- **Framework:** Hono
 - **Install path:** `src/ai` (default)
 
-This creates a `kitn.json` config file that tracks your registries and installed components.
+This creates a `kitn.json` config file and automatically installs the core engine and Hono routes into your project. npm dependencies (`hono`, `@hono/zod-openapi`, `zod`, `ai`, etc.) are installed automatically.
 
-## 3. Install the framework
-
-The CLI installs everything — framework packages, source components, and their npm dependencies:
-
-```bash
-# Install the core engine and Hono routes (npm deps like hono, zod, ai are auto-installed)
-bunx @kitnai/cli add core
-bunx @kitnai/cli add routes
-```
-
-`core` installs the kitn engine into `src/ai/`. `routes` resolves to the framework you chose during init (Hono) and installs the HTTP adapter. Both commands auto-install their npm dependencies (`hono`, `@hono/zod-openapi`, `zod`, `ai`, etc.).
-
-## 4. Browse and install components
+## 3. Browse and install components
 
 See what's available:
 
@@ -63,7 +50,7 @@ src/ai/
     weather.ts          # Weather tool using Open-Meteo API (free, no key needed)
 ```
 
-## 5. Install your AI provider
+## 4. Install your AI provider
 
 You'll need an AI provider SDK. OpenRouter is recommended since it gives access to many models:
 
@@ -71,7 +58,7 @@ You'll need an AI provider SDK. OpenRouter is recommended since it gives access 
 bun add @openrouter/ai-sdk-provider
 ```
 
-## 6. Set up TypeScript
+## 5. Set up TypeScript
 
 Create `tsconfig.json`:
 
@@ -92,9 +79,9 @@ Create `tsconfig.json`:
 }
 ```
 
-> Note: `kitn add core` and `kitn add routes` may patch your tsconfig with path aliases automatically. If you already have a tsconfig, the CLI will merge into it.
+> Note: `kitn init` patches your tsconfig with path aliases automatically. If you already have a tsconfig, the CLI will merge into it.
 
-## 7. Create the server
+## 6. Create the server
 
 Create `src/index.ts`:
 
@@ -102,7 +89,7 @@ Create `src/index.ts`:
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { z } from "zod";
-import { createAIPlugin } from "@kitnai/hono";
+import { createAIPlugin } from "@kitn/routes";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 
 // Import the components you installed via `kitn add`
@@ -157,7 +144,7 @@ plugin.agents.register({
 
 const app = new Hono();
 app.use("/*", cors());
-app.route("/api", plugin.app);
+app.route("/api", plugin.router);
 
 await plugin.initialize();
 
@@ -170,7 +157,7 @@ export default {
 };
 ```
 
-## 8. Add environment variables
+## 7. Add environment variables
 
 If components you installed declare required environment variables, the CLI will have prompted you during `kitn add` and generated a `.env.example` file. Check it for any variables you still need to set.
 
@@ -184,7 +171,7 @@ PORT=4000
 
 Get your key at [openrouter.ai/keys](https://openrouter.ai/keys).
 
-## 9. Run it
+## 8. Run it
 
 ```bash
 bun --watch src/index.ts
@@ -197,7 +184,7 @@ Server running on http://localhost:4000
 API Reference: http://localhost:4000/api/reference
 ```
 
-## 10. Try it out
+## 9. Try it out
 
 ### Browse the API docs
 
@@ -271,7 +258,7 @@ curl http://localhost:4000/api/conversations/conv_1234_abc
 curl http://localhost:4000/api/health
 ```
 
-## 11. Add more components
+## 10. Add more components
 
 Browse what's available and install more:
 
@@ -296,7 +283,7 @@ After installing new tools, register them in `src/index.ts` following the same p
 
 ## What kitn gives you
 
-When you mount the plugin with `app.route("/api", plugin.app)`, you get these routes automatically:
+When you mount the plugin with `app.route("/api", plugin.router)`, you get these routes automatically:
 
 | Endpoint | Description |
 |----------|-------------|
@@ -322,7 +309,7 @@ When you mount the plugin with `app.route("/api", plugin.app)`, you get these ro
 
 - **Add file storage** to persist conversations across restarts:
   ```typescript
-  import { createAIPlugin, createFileStorage } from "@kitnai/hono";
+  import { createAIPlugin, createFileStorage } from "@kitn/routes";
 
   const plugin = createAIPlugin({
     getModel: (id) => openrouter(id ?? MODEL),
@@ -341,4 +328,4 @@ When you mount the plugin with `app.route("/api", plugin.app)`, you get these ro
 
 - **Add voice** support for speech-to-text and text-to-speech (requires OpenAI API key)
 
-- **Build a frontend** using `@kitnai/client` for SSE parsing, audio recording, and TTS playback
+- **Build a frontend** using `@kitn/client` for SSE parsing, audio recording, and TTS playback

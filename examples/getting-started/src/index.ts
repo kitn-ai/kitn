@@ -55,7 +55,7 @@ plugin.agents.register({
 
 const app = new Hono();
 app.use("/*", cors());
-app.route("/api", plugin.app);
+app.route("/api", plugin.router);
 
 await plugin.initialize();
 

@@ -31,7 +31,7 @@ describe("createComponent", () => {
     const source = await readFile(join(dir, "weather-agent.ts"), "utf-8");
     expect(source).toContain("registerAgent");
     expect(source).toContain('name: "weather-agent"');
-    expect(source).toContain("@kitnai/core");
+    expect(source).toContain("@kitn/core");
   });
 
   test("creates a tool component", async () => {

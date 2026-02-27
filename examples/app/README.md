@@ -56,7 +56,7 @@ The app runs on Vite's default port (`http://localhost:5173`).
 - [Solid.js](https://www.solidjs.com/) -- reactive UI framework
 - [Tailwind CSS v4](https://tailwindcss.com/) -- utility-first styling
 - [Vite](https://vitejs.dev/) -- dev server and bundler
-- `@kitnai/client` -- workspace package providing `parseSseStream`, `chunkedSpeak`, and `AudioScheduler`
+- `@kitn/client` -- workspace package providing `parseSseStream`, `chunkedSpeak`, and `AudioScheduler`
 
 ## API Proxy
 

@@ -147,6 +147,7 @@ describe("registryRemoveCommand", () => {
       installed: {
         "@myteam/custom-agent": {
           registry: "@myteam",
+          type: "kitn:agent",
           version: "1.0.0",
           installedAt: new Date().toISOString(),
           files: ["src/ai/agents/custom-agent.ts"],

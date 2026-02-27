@@ -7,10 +7,13 @@ type ComponentType = z.infer<typeof componentType>;
 
 const installedComponentSchema = z.object({
   registry: z.string().optional(),
+  type: componentType,
+  slot: z.string().optional(),
   version: z.string(),
   installedAt: z.string(),
   files: z.array(z.string()),
   hash: z.string(),
+  registryDependencies: z.array(z.string()).optional(),
 });
 
 const registryEntrySchema = z.object({

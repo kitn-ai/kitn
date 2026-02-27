@@ -6,6 +6,7 @@
   "installDir": "adapters/hono-openapi",
   "dependencies": ["hono", "@hono/zod-openapi"],
   "registryDependencies": ["core"],
+  "slot": "hono",
   "exclude": ["lib/auth.ts"],
   "docs": "Add to your Hono server:\n\n  import { ai } from '@kitn/adapters/hono-openapi';\n  app.route('/api', ai.router);\n\nOpenAPI spec available at /api/doc. See src/ai/adapters/hono-openapi/plugin.ts to configure your AI provider.",
   "categories": ["http", "hono", "openapi"],

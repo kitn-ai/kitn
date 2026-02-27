@@ -90,6 +90,7 @@ describe("installed tracking", () => {
       installed: {
         "weather-agent": {
           registry: "@kitn",
+          type: "kitn:agent",
           version: "1.0.0",
           installedAt: "2026-02-25T00:00:00Z",
           files: ["src/ai/agents/weather-agent.ts"],
@@ -108,6 +109,7 @@ describe("installed tracking", () => {
       registries: { "@kitn": "https://example.com/r/{type}/{name}.json" },
       installed: {
         "weather-agent": {
+          type: "kitn:agent",
           version: "1.0.0",
           installedAt: "2026-02-25T00:00:00Z",
           files: ["src/agents/weather-agent.ts"],

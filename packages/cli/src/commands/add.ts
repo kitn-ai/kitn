@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { join } from "path";
+import { join, dirname } from "path";
 import { readConfig, writeConfig, getInstallPath, resolveRoutesAlias } from "../utils/config.js";
 import { detectPackageManager } from "../utils/detect.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
@@ -15,13 +15,13 @@ import {
 import { installDependencies, installDevDependencies } from "../installers/dep-installer.js";
 import { collectEnvVars, handleEnvVars } from "../installers/env-writer.js";
 import { rewriteKitnImports } from "../installers/import-rewriter.js";
-import { createBarrelFile, addImportToBarrel } from "../installers/barrel-manager.js";
+import { createBarrelFile, addImportToBarrel, removeImportFromBarrel } from "../installers/barrel-manager.js";
 import { contentHash } from "../utils/hash.js";
 import { parseComponentRef, type ComponentRef } from "../utils/parse-ref.js";
 import { resolveTypeAlias, toComponentType } from "../utils/type-aliases.js";
 import { typeToDir, type RegistryItem, type ComponentType } from "../registry/schema.js";
 import { existsSync } from "fs";
-import { readFile, writeFile, mkdir } from "fs/promises";
+import { readFile, writeFile, mkdir, unlink } from "fs/promises";
 import { relative } from "path";
 
 interface AddOptions {
@@ -40,8 +40,77 @@ export async function addCommand(components: string[], opts: AddOptions) {
   }
 
   if (components.length === 0) {
-    p.log.error("Please specify at least one component to add.");
-    process.exit(1);
+    // Interactive browse mode — fetch index, group by type, multi-select
+    const fetcher = new RegistryFetcher(config.registries);
+    const s = p.spinner();
+    s.start("Fetching registry...");
+
+    const allItems: Array<{ name: string; type: string; description: string; namespace: string }> = [];
+    for (const namespace of Object.keys(config.registries)) {
+      try {
+        const index = await fetcher.fetchIndex(namespace);
+        for (const item of index.items) {
+          allItems.push({ name: item.name, type: item.type, description: item.description, namespace });
+        }
+      } catch {
+        // Skip failing registries
+      }
+    }
+
+    s.stop(`Found ${allItems.length} component(s)`);
+
+    if (allItems.length === 0) {
+      p.log.warn("No components found in configured registries.");
+      process.exit(0);
+    }
+
+    const installed = new Set(Object.keys(config.installed ?? {}));
+
+    // Group by type, preserving order
+    const typeLabels: Record<string, string> = {
+      "kitn:agent": "Agents",
+      "kitn:tool": "Tools",
+      "kitn:skill": "Skills",
+      "kitn:storage": "Storage",
+      "kitn:package": "Packages",
+    };
+
+    const groups = new Map<string, typeof allItems>();
+    for (const item of allItems) {
+      if (!groups.has(item.type)) groups.set(item.type, []);
+      groups.get(item.type)!.push(item);
+    }
+
+    const options: Array<{ value: string; label: string; hint?: string }> = [];
+    for (const [type, items] of groups) {
+      const label = typeLabels[type] ?? type;
+      options.push({ value: `__separator_${type}`, label: pc.bold(`── ${label} ${"─".repeat(Math.max(0, 40 - label.length))}`), hint: "" });
+      for (const item of items) {
+        const isInstalled = installed.has(item.name);
+        options.push({
+          value: item.name,
+          label: isInstalled ? pc.dim(`${item.name} (installed)`) : item.name,
+          hint: item.description,
+        });
+      }
+    }
+
+    const selected = await p.multiselect({
+      message: "Select components to install:",
+      options,
+    });
+
+    if (p.isCancel(selected)) {
+      p.cancel("Cancelled.");
+      process.exit(0);
+    }
+
+    components = (selected as string[]).filter((s) => !s.startsWith("__separator_"));
+
+    if (components.length === 0) {
+      p.log.warn("No components selected.");
+      process.exit(0);
+    }
   }
 
   // --- Positional type argument parsing ---
@@ -244,6 +313,83 @@ export async function addCommand(components: string[], opts: AddOptions) {
 
   s.stop(`Resolved ${resolved.length} component(s)`);
 
+  // --- Slot conflict detection ---
+  const slotReplacements = new Map<string, string>(); // oldName → newName
+  for (const item of resolved) {
+    if (!item.slot) continue;
+    const existing = Object.entries(config.installed ?? {}).find(
+      ([key, entry]) => key !== item.name && (entry as any).slot === item.slot
+    );
+    if (!existing) continue;
+
+    const [existingKey] = existing;
+    const action = await p.select({
+      message: `${pc.bold(existingKey)} already fills the ${pc.cyan(item.slot)} slot. What would you like to do?`,
+      options: [
+        { value: "replace", label: `Replace ${existingKey} with ${item.name}` },
+        { value: "add", label: `Add alongside ${existingKey}` },
+      ],
+    });
+
+    if (p.isCancel(action)) {
+      p.cancel("Cancelled.");
+      process.exit(0);
+    }
+
+    if (action === "replace") {
+      slotReplacements.set(existingKey, item.name);
+    }
+  }
+
+  // Process slot replacements — remove old components
+  if (slotReplacements.size > 0) {
+    const baseDir = config.aliases.base ?? "src/ai";
+    for (const [oldKey] of slotReplacements) {
+      const oldEntry = config.installed![oldKey];
+      if (!oldEntry) continue;
+
+      for (const filePath of oldEntry.files) {
+        try {
+          await unlink(join(cwd, filePath));
+        } catch {
+          // File may have been moved or deleted
+        }
+      }
+
+      // Remove barrel imports for deleted files
+      const barrelPath = join(cwd, baseDir, "index.ts");
+      const barrelEligibleDirs = new Set([
+        config.aliases.agents,
+        config.aliases.tools,
+        config.aliases.skills,
+      ]);
+
+      if (existsSync(barrelPath)) {
+        let barrelContent = await readFile(barrelPath, "utf-8");
+        let barrelChanged = false;
+
+        for (const filePath of oldEntry.files) {
+          const fileDir = dirname(filePath);
+          if (!barrelEligibleDirs.has(fileDir)) continue;
+          const barrelDir = join(cwd, baseDir);
+          const importPath = "./" + relative(barrelDir, join(cwd, filePath)).replace(/\\/g, "/");
+          const updated = removeImportFromBarrel(barrelContent, importPath);
+          if (updated !== barrelContent) {
+            barrelContent = updated;
+            barrelChanged = true;
+          }
+        }
+
+        if (barrelChanged) {
+          await writeFile(barrelPath, barrelContent);
+        }
+      }
+
+      delete config.installed![oldKey];
+      p.log.info(`Replaced ${pc.dim(oldKey)} → ${pc.cyan(slotReplacements.get(oldKey)!)}`);
+    }
+  }
+
   p.log.info("Components to install:\n" + resolved.map((item) => {
     const isExplicit = expandedNames.includes(item.name) || components.includes(item.name);
     const label = isExplicit ? item.name : `${item.name} ${pc.dim("(dependency)")}`;
@@ -323,10 +469,13 @@ export async function addCommand(components: string[], opts: AddOptions) {
       const installedKey = ref.namespace === "@kitn" ? item.name : `${ref.namespace}/${item.name}`;
       installed[installedKey] = {
         registry: ref.namespace,
+        type: item.type,
+        ...(item.slot && { slot: item.slot }),
         version: item.version ?? "1.0.0",
         installedAt: new Date().toISOString(),
         files: item.files.map((f) => join(baseDir, f.path)),
         hash: contentHash(allContent),
+        registryDependencies: item.registryDependencies,
       };
       config.installed = installed;
 
@@ -400,6 +549,8 @@ export async function addCommand(components: string[], opts: AddOptions) {
       const installedKey = ns === "@kitn" ? item.name : `${ns}/${item.name}`;
       installed[installedKey] = {
         registry: ns,
+        type: item.type,
+        ...(item.slot && { slot: item.slot }),
         version: item.version ?? "1.0.0",
         installedAt: new Date().toISOString(),
         files: item.files.map((f) => {
@@ -407,6 +558,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
           return getInstallPath(config, item.type as Exclude<ComponentType, "kitn:package">, fileName, ns);
         }),
         hash: contentHash(allContent),
+        registryDependencies: item.registryDependencies,
       };
       config.installed = installed;
     }

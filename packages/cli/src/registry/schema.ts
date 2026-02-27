@@ -42,6 +42,7 @@ export const componentConfigSchema = z.object({
   tsconfig: z.record(z.string(), z.array(z.string())).optional(),
   envVars: z.record(z.string(), envVarConfigSchema).optional(),
   categories: z.array(z.string()).optional(),
+  slot: z.string().optional(),
   docs: z.string().optional(),
   changelog: z.array(changelogEntrySchema).optional(),
 });
@@ -61,6 +62,7 @@ export const registryItemSchema = z.object({
   tsconfig: z.record(z.string(), z.array(z.string())).optional(),
   docs: z.string().optional(),
   categories: z.array(z.string()).optional(),
+  slot: z.string().optional(),
   version: z.string().optional(),
   updatedAt: z.string().optional(),
   changelog: z.array(changelogEntrySchema).optional(),
@@ -73,6 +75,7 @@ export const registryIndexItemSchema = z.object({
   description: z.string(),
   registryDependencies: z.array(z.string()).optional(),
   categories: z.array(z.string()).optional(),
+  slot: z.string().optional(),
   version: z.string().optional(),
   versions: z.array(z.string()).optional(),
   updatedAt: z.string().optional(),

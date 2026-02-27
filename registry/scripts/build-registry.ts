@@ -14,6 +14,7 @@ interface ComponentManifest {
   installDir?: string;        // target directory name
   exclude?: string[];         // files to exclude from source
   tsconfig?: Record<string, string[]>;  // tsconfig paths
+  slot?: string;              // exclusive slot — components sharing a slot conflict
   docs?: string;
   categories?: string[];
   version?: string;
@@ -96,6 +97,7 @@ export function buildRegistryItem(
     files,
     docs: manifest.docs,
     categories: manifest.categories,
+    slot: manifest.slot,
     version: manifest.version ?? "1.0.0",
     installDir: manifest.installDir,
     tsconfig: manifest.tsconfig,
@@ -111,12 +113,13 @@ export function buildRegistryIndex(
   return {
     $schema: "https://kitn.dev/schema/registry.json",
     version: "1.0.0",
-    items: items.map(({ name, type, description, registryDependencies, categories, version, updatedAt }) => ({
+    items: items.map(({ name, type, description, registryDependencies, categories, slot, version, updatedAt }) => ({
       name,
       type,
       description,
       registryDependencies,
       categories,
+      slot,
       version,
       versions: existingVersions.get(name) ?? [version ?? "1.0.0"],
       updatedAt,

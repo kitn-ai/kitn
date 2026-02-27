@@ -47,6 +47,7 @@ export const registryItemSchema = z.object({
   tsconfig: z.record(z.string(), z.array(z.string())).optional().describe("TSConfig path aliases to add"),
   docs: z.string().optional().describe("Post-install instructions shown in terminal"),
   categories: z.array(z.string()).optional(),
+  slot: z.string().optional().describe("Exclusive slot — components sharing a slot value conflict at install time"),
   version: z.string().optional().default("1.0.0"),
   updatedAt: z.string().optional(),
   changelog: z.array(changelogEntrySchema).optional(),
@@ -60,6 +61,7 @@ export const registryIndexItemSchema = z.object({
   description: z.string(),
   registryDependencies: z.array(z.string()).optional(),
   categories: z.array(z.string()).optional(),
+  slot: z.string().optional(),
   version: z.string().optional(),
   versions: z.array(z.string()).optional(),
   updatedAt: z.string().optional(),
@@ -77,10 +79,13 @@ export type RegistryIndex = z.infer<typeof registryIndexSchema>;
 // Installed component tracking
 export const installedComponentSchema = z.object({
   registry: z.string().optional(),
+  type: componentType,
+  slot: z.string().optional(),
   version: z.string(),
   installedAt: z.string(),
   files: z.array(z.string()),
   hash: z.string(),
+  registryDependencies: z.array(z.string()).optional(),
 });
 export type InstalledComponent = z.infer<typeof installedComponentSchema>;
 

@@ -6,6 +6,7 @@
   "installDir": "adapters/elysia",
   "dependencies": ["elysia"],
   "registryDependencies": ["core"],
+  "slot": "elysia",
   "docs": "Add to your Elysia server:\n\n  import { ai } from '@kitn/adapters/elysia';\n  app.use(ai.plugin);\n\nSee src/ai/adapters/elysia/plugin.ts to configure your AI provider and register agents.",
   "version": "1.0.0",
   "changelog": [

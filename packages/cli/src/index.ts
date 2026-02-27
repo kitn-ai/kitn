@@ -25,6 +25,7 @@ program
 
 program
   .command("add")
+  .alias("install")
   .description("Add components from the registry (supports type-first: kitn add agent <name>)")
   .argument("[components...]", "component names or type followed by names")
   .option("-o, --overwrite", "overwrite existing files without prompting")
@@ -58,9 +59,10 @@ program
 
 program
   .command("remove")
+  .alias("uninstall")
   .description("Remove an installed component")
-  .argument("<component>", "component name to remove")
-  .action(async (component: string) => {
+  .argument("[component]", "component name to remove (interactive if omitted)")
+  .action(async (component?: string) => {
     const { removeCommand } = await import("./commands/remove.js");
     await removeCommand(component);
   });

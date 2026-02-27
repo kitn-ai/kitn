@@ -6,6 +6,7 @@
   "installDir": "adapters/hono",
   "dependencies": ["hono"],
   "registryDependencies": ["core"],
+  "slot": "hono",
   "exclude": ["lib/auth.ts"],
   "docs": "Add to your Hono server:\n\n  import { ai } from '@kitn/adapters/hono';\n  app.route('/api', ai.router);\n\nSee src/ai/adapters/hono/plugin.ts to configure your AI provider and register agents.",
   "version": "1.1.0",

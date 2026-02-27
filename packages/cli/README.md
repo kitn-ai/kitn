@@ -182,7 +182,7 @@ Created by `kitn init`. Controls where components are installed and which regist
     "storage": "src/ai/storage"
   },
   "registries": {
-    "@kitn": "https://kitn-ai.github.io/registry/r/{type}/{name}.json"
+    "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json"
   }
 }
 ```

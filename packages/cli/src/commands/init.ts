@@ -81,7 +81,7 @@ export async function initCommand() {
     },
     registries: {
       "@kitn": {
-        url: "https://kitn-ai.github.io/registry/r/{type}/{name}.json",
+        url: "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
         homepage: "https://kitn.ai",
         description: "Official kitn AI agent components",
       },

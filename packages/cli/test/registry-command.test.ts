@@ -10,7 +10,7 @@ function makeConfig(overrides: Partial<KitnConfig> = {}): KitnConfig {
   return {
     runtime: "bun",
     aliases: { agents: "src/ai/agents", tools: "src/ai/tools", skills: "src/ai/skills", storage: "src/ai/storage" },
-    registries: { "@kitn": "https://kitn-ai.github.io/registry/r/{type}/{name}.json" },
+    registries: { "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json" },
     ...overrides,
   };
 }
@@ -110,7 +110,7 @@ describe("registryRemoveCommand", () => {
   test("removes a registry from config", async () => {
     const config = makeConfig({
       registries: {
-        "@kitn": "https://kitn-ai.github.io/registry/r/{type}/{name}.json",
+        "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
         "@myteam": "https://myteam.dev/r/{type}/{name}.json",
       },
     });
@@ -141,7 +141,7 @@ describe("registryRemoveCommand", () => {
   test("warns about installed components from removed registry", async () => {
     const config = makeConfig({
       registries: {
-        "@kitn": "https://kitn-ai.github.io/registry/r/{type}/{name}.json",
+        "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
         "@myteam": "https://myteam.dev/r/{type}/{name}.json",
       },
       installed: {
@@ -173,7 +173,7 @@ describe("registryListCommand", () => {
   test("returns all registries with URLs extracted", async () => {
     const config = makeConfig({
       registries: {
-        "@kitn": "https://kitn-ai.github.io/registry/r/{type}/{name}.json",
+        "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
         "@myteam": "https://myteam.dev/r/{type}/{name}.json",
       },
     });
@@ -181,7 +181,7 @@ describe("registryListCommand", () => {
     const result = await registryListCommand({ cwd: dir });
     expect(result).toHaveLength(2);
     expect(result[0].namespace).toBe("@kitn");
-    expect(result[0].url).toBe("https://kitn-ai.github.io/registry/r/{type}/{name}.json");
+    expect(result[0].url).toBe("https://kitn-ai.github.io/kitn/r/{type}/{name}.json");
     expect(result[1].namespace).toBe("@myteam");
     expect(result[1].url).toBe("https://myteam.dev/r/{type}/{name}.json");
   });
@@ -190,7 +190,7 @@ describe("registryListCommand", () => {
     const config = makeConfig({
       registries: {
         "@kitn": {
-          url: "https://kitn-ai.github.io/registry/r/{type}/{name}.json",
+          url: "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
           homepage: "https://kitn.ai",
           description: "Official kitn components",
         },
@@ -199,7 +199,7 @@ describe("registryListCommand", () => {
     await writeConfig(dir, config);
     const result = await registryListCommand({ cwd: dir });
     expect(result).toHaveLength(1);
-    expect(result[0].url).toBe("https://kitn-ai.github.io/registry/r/{type}/{name}.json");
+    expect(result[0].url).toBe("https://kitn-ai.github.io/kitn/r/{type}/{name}.json");
     expect(result[0].homepage).toBe("https://kitn.ai");
     expect(result[0].description).toBe("Official kitn components");
   });

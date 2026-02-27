@@ -29,9 +29,7 @@ export async function buildCommand(paths: string[], opts: BuildOptions) {
   }
 
   s.stop(`Found ${componentDirs.length} component(s)`);
-  for (const dir of componentDirs) {
-    p.log.message(`  ${pc.dim(relative(cwd, dir))}`);
-  }
+  p.log.message(componentDirs.map((dir) => `  ${pc.dim(relative(cwd, dir))}`).join("\n"));
 
   s.start("Building components...");
 
@@ -49,9 +47,7 @@ export async function buildCommand(paths: string[], opts: BuildOptions) {
 
   if (errors.length > 0) {
     s.stop(pc.red(`Build failed with ${errors.length} error(s)`));
-    for (const { dir, error } of errors) {
-      p.log.error(`${pc.bold(dir)}: ${error}`);
-    }
+    p.log.error(errors.map(({ dir, error }) => `${pc.bold(dir)}: ${error}`).join("\n"));
     process.exit(1);
   }
 
@@ -60,17 +56,11 @@ export async function buildCommand(paths: string[], opts: BuildOptions) {
   s.stop(pc.green(`Built ${items.length} component(s)`));
 
   if (written.length > 0) {
-    p.log.success(`Wrote ${written.length} file(s):`);
-    for (const f of written) {
-      p.log.message(`  ${pc.green("+")} ${f}`);
-    }
+    p.log.success(`Wrote ${written.length} file(s):\n` + written.map((f) => `  ${pc.green("+")} ${f}`).join("\n"));
   }
 
   if (skipped.length > 0) {
-    p.log.info(`Skipped ${skipped.length} file(s) (already exist):`);
-    for (const f of skipped) {
-      p.log.message(`  ${pc.dim("-")} ${f}`);
-    }
+    p.log.info(`Skipped ${skipped.length} file(s) (already exist):\n` + skipped.map((f) => `  ${pc.dim("-")} ${f}`).join("\n"));
   }
 
   p.outro(`Output: ${pc.cyan(relative(cwd, outputDir) || ".")}`);

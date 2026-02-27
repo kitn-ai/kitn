@@ -4,9 +4,9 @@
   "installDir": "hono-routes",
   "registryDependencies": ["core"],
   "tsconfig": {
-    "@kitnai/hono": ["./index.ts"]
+    "@kitn/hono-routes": ["./index.ts"]
   },
   "exclude": ["lib/auth.ts"],
-  "docs": "Routes installed to your project. Import with: import { ... } from '@kitnai/hono'",
+  "docs": "Routes installed to your project. Import with: import { ... } from '@kitn/hono-routes'",
   "categories": ["http", "hono"]
 }

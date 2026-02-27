@@ -4,8 +4,8 @@
   "installDir": "core",
   "registryDependencies": [],
   "tsconfig": {
-    "@kitnai/core": ["./index.ts"]
+    "@kitn/core": ["./index.ts"]
   },
-  "docs": "Engine installed to your project. Import with: import { ... } from '@kitnai/core'",
+  "docs": "Engine installed to your project. Import with: import { ... } from '@kitn/core'",
   "categories": ["engine", "core"]
 }

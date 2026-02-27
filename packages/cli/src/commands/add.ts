@@ -76,12 +76,11 @@ export async function addCommand(components: string[], opts: AddOptions) {
 
   s.stop(`Resolved ${resolved.length} component(s)`);
 
-  p.log.info("Components to install:");
-  for (const item of resolved) {
+  p.log.info("Components to install:\n" + resolved.map((item) => {
     const isExplicit = resolvedComponents.includes(item.name) || components.includes(item.name);
     const label = isExplicit ? item.name : `${item.name} ${pc.dim("(dependency)")}`;
-    p.log.message(`  ${pc.cyan(label)}`);
-  }
+    return `  ${pc.cyan(label)}`;
+  }).join("\n"));
 
   const created: string[] = [];
   const updated: string[] = [];
@@ -276,7 +275,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
     if (!barrelExisted) {
       p.note(
         [
-          `import { ai } from "./${baseDir}/plugin.js";`,
+          `import { ai } from "./${baseDir.replace(/^src\//, "")}/plugin";`,
           ``,
           `app.route("/api", ai.router);`,
           `await ai.initialize();`,
@@ -303,16 +302,13 @@ export async function addCommand(components: string[], opts: AddOptions) {
   }
 
   if (created.length > 0) {
-    p.log.success(`Created ${created.length} file(s):`);
-    for (const f of created) p.log.message(`  ${pc.green("+")} ${f}`);
+    p.log.success(`Created ${created.length} file(s):\n` + created.map((f) => `  ${pc.green("+")} ${f}`).join("\n"));
   }
   if (updated.length > 0) {
-    p.log.success(`Updated ${updated.length} file(s):`);
-    for (const f of updated) p.log.message(`  ${pc.yellow("~")} ${f}`);
+    p.log.success(`Updated ${updated.length} file(s):\n` + updated.map((f) => `  ${pc.yellow("~")} ${f}`).join("\n"));
   }
   if (skipped.length > 0) {
-    p.log.info(`Skipped ${skipped.length} file(s):`);
-    for (const f of skipped) p.log.message(`  ${pc.dim("-")} ${f}`);
+    p.log.info(`Skipped ${skipped.length} file(s):\n` + skipped.map((f) => `  ${pc.dim("-")} ${f}`).join("\n"));
   }
 
   // Handle environment variables
@@ -337,7 +333,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
   if (installedNames.has(fw) || (installedNames.has("core") && installedNames.has(fw))) {
     hints.push(`Configure your AI provider in ${pc.bold(baseDir + "/plugin.ts")}, then add to your server:`);
     hints.push("");
-    hints.push(pc.dim(`  import { ai } from "./${baseDir}/plugin.js";`));
+    hints.push(pc.dim(`  import { ai } from "./${baseDir.replace(/^src\//, "")}/plugin";`));
     hints.push(pc.dim(``));
     hints.push(pc.dim(`  app.route("/api", ai.router);`));
     hints.push(pc.dim(`  await ai.initialize();`));
@@ -345,8 +341,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
   }
 
   if (hints.length > 0) {
-    p.log.message(pc.bold("\nNext steps:"));
-    for (const hint of hints) p.log.message(hint);
+    p.log.message(pc.bold("\nNext steps:") + "\n" + hints.join("\n"));
   }
 
   p.outro(pc.green("Done!"));

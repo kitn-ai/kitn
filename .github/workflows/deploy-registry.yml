@@ -6,7 +6,9 @@ on:
     paths:
       - 'registry/**'
       - 'packages/core/src/**'
+      - 'packages/core/registry.json'
       - 'packages/hono/src/**'
+      - 'packages/hono/registry.json'
   workflow_dispatch:
 
 permissions:

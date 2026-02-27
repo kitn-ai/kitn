@@ -120,7 +120,7 @@ export async function initCommand() {
 
   p.note(
     [
-      `import { ai } from "./${baseDir}/plugin.js";`,
+      `import { ai } from "./${baseDir.replace(/^src\//, "")}/plugin";`,
       ``,
       `app.route("/api", ai.router);`,
       `await ai.initialize();`,

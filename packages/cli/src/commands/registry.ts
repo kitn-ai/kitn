@@ -87,10 +87,7 @@ export async function registryRemoveCommand(
 
   p.log.success(`Removed registry ${pc.bold(namespace)}`);
   if (affectedComponents.length > 0) {
-    p.log.warn(`${affectedComponents.length} installed component(s) referenced this registry:`);
-    for (const name of affectedComponents) {
-      p.log.message(`  ${pc.yellow("!")} ${name}`);
-    }
+    p.log.warn(`${affectedComponents.length} installed component(s) referenced this registry:\n` + affectedComponents.map((name) => `  ${pc.yellow("!")} ${name}`).join("\n"));
   }
 
   return { affectedComponents };
@@ -113,11 +110,13 @@ export async function registryListCommand(
   if (entries.length === 0) {
     p.log.message(pc.dim("  No registries configured."));
   } else {
+    const lines: string[] = [];
     for (const { namespace, url, homepage, description } of entries) {
-      p.log.message(`  ${pc.bold(namespace.padEnd(16))} ${pc.dim(url)}`);
-      if (description) p.log.message(`  ${" ".repeat(16)} ${description}`);
-      if (homepage) p.log.message(`  ${" ".repeat(16)} ${pc.dim(homepage)}`);
+      lines.push(`  ${pc.bold(namespace.padEnd(16))} ${pc.dim(url)}`);
+      if (description) lines.push(`  ${" ".repeat(16)} ${description}`);
+      if (homepage) lines.push(`  ${" ".repeat(16)} ${pc.dim(homepage)}`);
     }
+    p.log.message(lines.join("\n"));
   }
 
   return entries;

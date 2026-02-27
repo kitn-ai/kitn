@@ -86,7 +86,6 @@ export async function removeCommand(componentName: string) {
   await writeConfig(cwd, config);
 
   if (deleted.length > 0) {
-    p.log.success(`Removed ${ref.name}:`);
-    for (const f of deleted) p.log.message(`  ${pc.red("-")} ${f}`);
+    p.log.success(`Removed ${ref.name}:\n` + deleted.map((f) => `  ${pc.red("-")} ${f}`).join("\n"));
   }
 }

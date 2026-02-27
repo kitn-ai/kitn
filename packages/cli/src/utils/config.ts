@@ -46,6 +46,16 @@ export function getRegistryUrl(entry: string | RegistryEntry): string {
   return typeof entry === "string" ? entry : entry.url;
 }
 
+const FRAMEWORK_TO_ADAPTER: Record<string, string> = {
+  hono: "hono-adapter",
+  elysia: "elysia-adapter",
+};
+
+export function resolveRoutesAlias(config: KitnConfig): string {
+  const fw = config.framework ?? "hono";
+  return FRAMEWORK_TO_ADAPTER[fw] ?? `${fw}-adapter`;
+}
+
 const CONFIG_FILE = "kitn.json";
 
 export async function readConfig(projectDir: string): Promise<KitnConfig | null> {

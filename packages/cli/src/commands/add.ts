@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { join } from "path";
-import { readConfig, writeConfig, getInstallPath } from "../utils/config.js";
+import { readConfig, writeConfig, getInstallPath, resolveRoutesAlias } from "../utils/config.js";
 import { detectPackageManager } from "../utils/detect.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
 import { resolveDependencies } from "../registry/resolver.js";
@@ -72,11 +72,10 @@ export async function addCommand(components: string[], opts: AddOptions) {
     typeFilter = flagAlias;
   }
 
-  // Resolve "routes" to framework-specific package name, then parse refs
+  // Resolve "routes" to framework-specific adapter name, then parse refs
   const resolvedComponents = components.map((c) => {
     if (c === "routes") {
-      const fw = config.framework ?? "hono";
-      return fw;
+      return resolveRoutesAlias(config);
     }
     return c;
   });
@@ -460,21 +459,11 @@ export async function addCommand(components: string[], opts: AddOptions) {
   const projectInstalled = new Set(Object.keys(config.installed ?? {}));
   const hints: string[] = [];
 
-  const fw = config.framework ?? "hono";
+  const adapterName = resolveRoutesAlias(config);
 
   // Only suggest adding routes if neither resolved nor already installed
-  if (resolvedNames.has("core") && !resolvedNames.has(fw) && !projectInstalled.has(fw)) {
+  if (resolvedNames.has("core") && !resolvedNames.has(adapterName) && !projectInstalled.has(adapterName)) {
     hints.push(`Run ${pc.cyan(`kitn add routes`)} to install the HTTP adapter.`);
-  }
-
-  // Show integration hint when routes are being installed for the first time
-  if (resolvedNames.has(fw)) {
-    hints.push(`Configure your AI provider in ${pc.bold(baseDir + "/plugin.ts")}, then add to your server:`);
-    hints.push("");
-    hints.push(pc.dim(`  import { ai } from "./${baseDir.replace(/^src\//, "")}/plugin";`));
-    hints.push(pc.dim(``));
-    hints.push(pc.dim(`  app.route("/api", ai.router);`));
-    hints.push("");
   }
 
   if (hints.length > 0) {

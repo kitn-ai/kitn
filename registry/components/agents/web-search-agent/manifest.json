@@ -10,7 +10,6 @@
     "web-search-tool",
     "web-fetch-tool"
   ],
-  "envVars": {},
   "files": [
     "web-search-agent.ts"
   ],

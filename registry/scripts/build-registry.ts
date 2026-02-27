@@ -8,7 +8,7 @@ interface ComponentManifest {
   dependencies?: string[];
   devDependencies?: string[];
   registryDependencies?: string[];
-  envVars?: Record<string, string>;
+  envVars?: Record<string, { description: string; required?: boolean; secret?: boolean; url?: string }>;
   files?: string[];           // for regular components
   sourceDir?: string;         // for packages (relative path to source)
   installDir?: string;        // target directory name
@@ -34,9 +34,9 @@ const typeToDir: Record<ComponentType, string> = {
  */
 const PACKAGE_IMPORT_REWRITES: Record<string, string> = {
   "@kitnai/core": "@kitn/core",
-  "@kitnai/hono": "@kitn/routes",
-  "@kitnai/hono-openapi": "@kitn/routes",
-  "@kitnai/elysia-adapter": "@kitn/elysia",
+  "@kitnai/hono": "@kitn/adapters/hono",
+  "@kitnai/hono-openapi": "@kitn/adapters/hono-openapi",
+  "@kitnai/elysia-adapter": "@kitn/adapters/elysia",
 };
 
 function rewritePackageImports(content: string): string {

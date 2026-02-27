@@ -8,7 +8,6 @@
   "registryDependencies": [
     "core"
   ],
-  "envVars": {},
   "files": [
     "compact-agent.ts"
   ],

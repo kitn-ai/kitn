@@ -3,7 +3,7 @@ import pc from "picocolors";
 import { join, relative, dirname } from "path";
 import { unlink, readFile, writeFile } from "fs/promises";
 import { existsSync } from "fs";
-import { readConfig, writeConfig } from "../utils/config.js";
+import { readConfig, writeConfig, resolveRoutesAlias } from "../utils/config.js";
 import { parseComponentRef } from "../utils/parse-ref.js";
 import { removeImportFromBarrel } from "../installers/barrel-manager.js";
 
@@ -15,8 +15,8 @@ export async function removeCommand(componentName: string) {
     process.exit(1);
   }
 
-  // Resolve "routes" alias to framework-specific package name
-  const input = componentName === "routes" ? (config.framework ?? "hono") : componentName;
+  // Resolve "routes" alias to framework-specific adapter name
+  const input = componentName === "routes" ? resolveRoutesAlias(config) : componentName;
   const ref = parseComponentRef(input);
 
   // Look up in installed — @kitn uses plain name, third-party uses @namespace/name

@@ -9,7 +9,6 @@
     "core",
     "hackernews-tool"
   ],
-  "envVars": {},
   "files": [
     "hackernews-agent.ts"
   ],

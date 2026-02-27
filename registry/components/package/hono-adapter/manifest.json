@@ -1,13 +1,13 @@
 {
-  "name": "hono",
+  "name": "hono-adapter",
   "type": "kitn:package",
   "description": "Plain Hono HTTP adapter with routes for kitn AI agents",
   "sourceDir": "../../../../packages/hono/src",
-  "installDir": "routes",
+  "installDir": "adapters/hono",
   "dependencies": ["hono"],
   "registryDependencies": ["core"],
   "exclude": ["lib/auth.ts"],
-  "docs": "Routes installed to your project. Import with: import { ... } from '@kitn/routes'",
+  "docs": "Add to your Hono server:\n\n  import { ai } from '@kitn/adapters/hono';\n  app.route('/api', ai.router);\n\nSee src/ai/adapters/hono/plugin.ts to configure your AI provider and register agents.",
   "version": "1.1.0",
   "changelog": [
     { "version": "1.1.0", "date": "2026-02-27", "type": "breaking", "note": "Remove initialize() — plugin no longer requires await plugin.initialize() at startup. Prompt overrides are lazy-loaded." },

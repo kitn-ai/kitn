@@ -4,7 +4,6 @@
   "description": "Produces concise summaries with bullet points, leading with the direct answer",
   "dependencies": [],
   "registryDependencies": [],
-  "envVars": {},
   "files": ["README.md"],
   "docs": "Inject this skill when the user asks for a summary, TLDR, or brief overview. Phase: response.",
   "categories": ["summary", "concise", "productivity"],

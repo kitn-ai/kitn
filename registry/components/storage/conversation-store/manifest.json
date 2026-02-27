@@ -4,7 +4,6 @@
   "description": "File-based JSON conversation storage with append, list, clear, and delete operations",
   "dependencies": [],
   "registryDependencies": [],
-  "envVars": {},
   "files": ["conversation-store.ts"],
   "docs": "Call createConversationStore(dataDir) with a path to your data directory. Conversations are stored as individual JSON files. Includes write locking for concurrent safety.",
   "categories": ["storage", "conversations", "persistence"],

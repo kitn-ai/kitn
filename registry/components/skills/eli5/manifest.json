@@ -4,7 +4,6 @@
   "description": "Explain Like I'm 5 -- simplifies complex topics using everyday analogies and plain language",
   "dependencies": [],
   "registryDependencies": [],
-  "envVars": {},
   "files": ["README.md"],
   "docs": "Inject this skill when the user asks for simple explanations. Phase: response (applied during synthesis).",
   "categories": ["explanation", "beginner", "simplification"],

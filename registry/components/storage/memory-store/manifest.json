@@ -4,7 +4,6 @@
   "description": "File-based namespaced key-value memory store for agent memory persistence",
   "dependencies": [],
   "registryDependencies": [],
-  "envVars": {},
   "files": ["memory-store.ts"],
   "docs": "Call createMemoryStore(dataDir) with a path to your data directory. Memories are organized by namespace, each stored as a JSON file. Includes write locking per namespace.",
   "categories": ["storage", "memory", "persistence"],

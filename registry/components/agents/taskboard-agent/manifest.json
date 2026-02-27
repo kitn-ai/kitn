@@ -9,7 +9,6 @@
   "registryDependencies": [
     "core"
   ],
-  "envVars": {},
   "files": [
     "taskboard-agent.ts"
   ],

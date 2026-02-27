@@ -121,7 +121,7 @@ export async function initCommand(opts: InitOptions = {}) {
   await writeConfig(cwd, config);
   s.stop("Created kitn.json");
 
-  // Set up wildcard tsconfig path so @kitn/core, @kitn/routes, etc. all resolve.
+  // Set up wildcard tsconfig path so @kitn/core, @kitn/adapters/*, etc. all resolve.
   // Remove any old per-package entries (e.g. @kitnai/core, @kitn/core) left from earlier versions.
   await patchProjectTsconfig(
     cwd,

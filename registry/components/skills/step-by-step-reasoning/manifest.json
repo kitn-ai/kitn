@@ -4,7 +4,6 @@
   "description": "Structured logical analysis with numbered steps, reasoning shown at each stage",
   "dependencies": [],
   "registryDependencies": [],
-  "envVars": {},
   "files": ["README.md"],
   "docs": "Inject this skill when the user asks how something works, wants to compare options, or needs structured problem-solving. Phase: response.",
   "categories": ["reasoning", "analysis", "problem-solving"],

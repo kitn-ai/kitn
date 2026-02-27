@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { join } from "path";
-import { readConfig } from "../utils/config.js";
+import { readConfig, resolveRoutesAlias } from "../utils/config.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
 import { readExistingFile, generateDiff } from "../installers/file-writer.js";
 import { parseComponentRef } from "../utils/parse-ref.js";
@@ -15,8 +15,8 @@ export async function diffCommand(componentName: string) {
     process.exit(1);
   }
 
-  // Resolve "routes" alias to framework-specific package name
-  const input = componentName === "routes" ? (config.framework ?? "hono") : componentName;
+  // Resolve "routes" alias to framework-specific adapter name
+  const input = componentName === "routes" ? resolveRoutesAlias(config) : componentName;
   const ref = parseComponentRef(input);
 
   // Look up in installed — @kitn uses plain name, third-party uses @namespace/name

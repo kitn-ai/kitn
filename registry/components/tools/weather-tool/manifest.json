@@ -9,7 +9,6 @@
   "registryDependencies": [
     "core"
   ],
-  "envVars": {},
   "files": [
     "weather.ts"
   ],

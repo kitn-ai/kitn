@@ -4,7 +4,6 @@
   "description": "Balanced trade-off analysis with structured pros/cons and a clear recommendation",
   "dependencies": [],
   "registryDependencies": [],
-  "envVars": {},
   "files": ["README.md"],
   "docs": "Inject this skill when the user asks to compare options or make a decision. Phase: response.",
   "categories": ["comparison", "decision", "analysis"],

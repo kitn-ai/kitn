@@ -9,7 +9,6 @@
     "core",
     "movies-tool"
   ],
-  "envVars": {},
   "files": [
     "knowledge-agent.ts"
   ],

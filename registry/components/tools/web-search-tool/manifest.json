@@ -10,7 +10,12 @@
     "core"
   ],
   "envVars": {
-    "BRAVE_API_KEY": "Brave Search API subscription token (https://brave.com/search/api/)"
+    "BRAVE_API_KEY": {
+      "description": "Brave Search API subscription token",
+      "url": "https://brave.com/search/api/",
+      "required": true,
+      "secret": true
+    }
   },
   "files": [
     "web-search.ts"

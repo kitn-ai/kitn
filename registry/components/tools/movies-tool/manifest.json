@@ -10,7 +10,12 @@
     "core"
   ],
   "envVars": {
-    "TMDB_API_KEY": "TMDB API bearer token (https://www.themoviedb.org/settings/api)"
+    "TMDB_API_KEY": {
+      "description": "TMDB API bearer token",
+      "url": "https://www.themoviedb.org/settings/api",
+      "required": true,
+      "secret": true
+    }
   },
   "files": [
     "movies.ts"

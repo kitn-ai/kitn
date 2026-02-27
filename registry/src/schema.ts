@@ -36,7 +36,12 @@ export const registryItemSchema = z.object({
   dependencies: z.array(z.string()).optional().describe("npm package dependencies"),
   devDependencies: z.array(z.string()).optional(),
   registryDependencies: z.array(z.string()).optional().describe("Other kitn components this depends on"),
-  envVars: z.record(z.string(), z.string()).optional().describe("Required env vars with descriptions"),
+  envVars: z.record(z.string(), z.object({
+    description: z.string(),
+    required: z.boolean().optional(),
+    secret: z.boolean().optional(),
+    url: z.string().optional(),
+  })).optional().describe("Required env vars with rich config"),
   files: z.array(registryFileSchema),
   installDir: z.string().optional().describe("Target directory for package installation"),
   tsconfig: z.record(z.string(), z.array(z.string())).optional().describe("TSConfig path aliases to add"),

@@ -9,7 +9,6 @@
     "core",
     "weather-tool"
   ],
-  "envVars": {},
   "files": [
     "weather-agent.ts"
   ],

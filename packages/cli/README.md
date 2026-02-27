@@ -1,6 +1,6 @@
 # @kitnai/cli
 
-CLI for installing AI agent components from the kitn registry.
+CLI for installing AI agent components from kitn registries.
 
 ## Installation
 
@@ -38,7 +38,7 @@ After answering, the CLI automatically installs the core engine and HTTP routes 
 
 ### `kitn add [components...]`
 
-Add components from the registry. Resolves `registryDependencies` transitively.
+Add components from a registry. Resolves `registryDependencies` transitively.
 
 ```bash
 # Add a single component
@@ -47,12 +47,22 @@ kitn add weather-agent
 # Add multiple components
 kitn add weather-agent hackernews-tool eli5
 
+# Add from a third-party registry
+kitn add @acme/custom-agent
+
+# Add a specific version
+kitn add weather-agent@1.2.0
+
 # Overwrite existing files without prompting
 kitn add weather-agent --overwrite
 
 # Filter interactive selection by type
 kitn add --type agent
 ```
+
+Components from the default `@kitn` registry don't need a namespace prefix. Components from other registries use `@namespace/name` format.
+
+Third-party components install into a namespace subdirectory (e.g. `src/ai/agents/acme/custom-agent.ts`).
 
 **Flags:**
 
@@ -70,20 +80,24 @@ After installation, the CLI:
 
 ### `kitn list`
 
-List available and installed components from the registry.
+List available and installed components from configured registries.
 
 ```bash
 # List all components from all registries
 kitn list
 
+# Filter by type
+kitn list agents
+kitn list --type tool
+
 # Only show installed components
 kitn list --installed
 
-# Filter by type
-kitn list --type tool
-
 # Filter by registry
-kitn list --registry @myteam
+kitn list --registry @acme
+
+# Show version numbers
+kitn list --verbose
 ```
 
 **Flags:**
@@ -91,10 +105,9 @@ kitn list --registry @myteam
 | Flag | Description |
 |------|-------------|
 | `-i, --installed` | Only show installed components |
-| `-t, --type <type>` | Filter by type (`agent`, `tool`, `skill`, `storage`) |
+| `-t, --type <type>` | Filter by type (`agent`, `tool`, `skill`, `storage`, `package`) |
 | `-r, --registry <namespace>` | Only show components from this registry |
-
-Shows installed version, latest registry version, and an update indicator when a newer version is available.
+| `-v, --verbose` | Show version numbers |
 
 ### `kitn diff <component>`
 
@@ -128,40 +141,80 @@ kitn update weather-agent weather-tool
 kitn update
 ```
 
-This re-fetches components from the registry and applies the same conflict resolution as `kitn add --overwrite`.
+Re-fetches components from the registry and applies the same conflict resolution as `kitn add --overwrite`.
 
 ### `kitn info <component>`
 
 Show details about a component from the registry.
 
 ```bash
+# Default registry
 kitn info weather-agent
+
+# With namespace and version
+kitn info @acme/tool@1.0.0
 ```
 
 Displays the component's description, type, version, dependencies, files, and changelog.
+
+### `kitn create <type> <name>`
+
+Scaffold a new kitn component.
+
+```bash
+kitn create agent my-agent
+kitn create tool my-tool
+```
+
+Creates a new component directory with a manifest and template source file.
+
+### `kitn build`
+
+Build registry JSON from components that have `registry.json` manifests.
+
+```bash
+# Scan from current directory
+kitn build
+
+# Specify directories and output
+kitn build src/components --output dist/r
+```
 
 ### `kitn registry`
 
 Manage component registries.
 
 ```bash
-# Add a custom registry
+# Add a registry with metadata
+kitn registry add @acme https://acme.dev/r/{type}/{name}.json \
+  --homepage https://acme.dev \
+  --description "Acme AI components"
+
+# Add a plain registry (URL only)
 kitn registry add @myteam https://registry.myteam.dev/r/{type}/{name}.json
 
-# List configured registries
+# List configured registries (shows URL, homepage, description)
 kitn registry list
 
 # Remove a registry
 kitn registry remove @myteam
+
+# Overwrite an existing registry
+kitn registry add @myteam https://new-url.dev/r/{type}/{name}.json --overwrite
+
+# Remove the default @kitn registry (requires --force)
+kitn registry remove @kitn --force
 ```
 
 **Subcommands:**
 
 | Subcommand | Description |
 |------------|-------------|
-| `add <namespace> <url>` | Add a registry (`-o` to overwrite) |
-| `list` | List all configured registries |
-| `remove <namespace>` | Remove a registry (`-f` to remove `@kitn`) |
+| `add <namespace> <url>` | Add a registry. Options: `-o` overwrite, `--homepage`, `--description` |
+| `list` | List all configured registries with URLs and metadata |
+| `remove <namespace>` | Remove a registry. `-f` required to remove `@kitn` |
+
+The URL template uses `{type}` and `{name}` placeholders. Components are fetched by replacing these with the component's type directory (`agents`, `tools`, `skills`, `storage`, `package`) and name. The registry index is fetched by replacing `{type}/{name}.json` with `registry.json`.
 
 ## Configuration
 
@@ -182,7 +235,11 @@ Created by `kitn init`. Controls where components are installed and which regist
     "storage": "src/ai/storage"
   },
   "registries": {
-    "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json"
+    "@kitn": {
+      "url": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
+      "homepage": "https://kitn.ai",
+      "description": "Official kitn AI agent components"
+    }
   }
 }
 ```
@@ -192,18 +249,27 @@ Created by `kitn init`. Controls where components are installed and which regist
 | `runtime` | `bun`, `node`, or `deno` |
 | `framework` | `hono` |
 | `aliases` | Directory paths for each component type |
-| `registries` | Named registries with URL templates |
+| `registries` | Named registries — each value is a URL string or an object with `url`, `homepage`, `description` |
 | `installed` | Auto-managed tracking of installed components (don't edit manually) |
 
-### Custom Registries
+### Registry entries
 
-Add custom registries via the CLI or by editing `kitn.json` directly:
+Registry entries can be a plain URL string or a rich object:
 
-```bash
-kitn registry add @myteam https://registry.myteam.dev/r/{type}/{name}.json
+```json
+{
+  "registries": {
+    "@kitn": {
+      "url": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
+      "homepage": "https://kitn.ai",
+      "description": "Official kitn AI agent components"
+    },
+    "@myteam": "https://registry.myteam.dev/r/{type}/{name}.json"
+  }
+}
 ```
 
-The URL template uses `{type}` and `{name}` placeholders. Components are fetched by replacing these with the component's type directory (`agents`, `tools`, `skills`, `storage`) and name. The registry index is fetched by replacing `{type}/{name}.json` with `registry.json` in the URL template.
+Both formats are supported. The CLI stores a rich object when `--homepage` or `--description` is provided, and a plain string otherwise.
 
 ## Package Manager Detection
 
@@ -219,3 +285,7 @@ The CLI automatically detects your package manager by checking for lockfiles in 
 Components are **source code**, not packages. `kitn add` copies TypeScript files directly into your project. You own the code and can modify it freely.
 
 The CLI tracks what it installed in `kitn.json` under `installed`, storing file paths and content hashes. This enables `kitn diff` to detect local changes and `kitn update` to apply registry updates.
+
+### Hosting your own registry
+
+Any HTTP server that serves JSON files matching the registry schema can be a kitn registry. See the [registry documentation](https://github.com/kitn-ai/registry) for the schema specification and instructions on registering your registry in the public directory.

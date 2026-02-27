@@ -119,8 +119,56 @@ export async function addCommand(components: string[], opts: AddOptions) {
       }
 
       if (matches.length === 0) {
-        // No matches — let the resolution phase produce the error
-        newExpandedNames.push(name);
+        // No exact match — try substring search
+        let fuzzyMatches = allIndexItems.filter(
+          (i) => i.name.includes(name) && (ref.namespace === "@kitn" || i.namespace === ref.namespace)
+        );
+
+        if (typeFilter) {
+          const filteredType = toComponentType(typeFilter);
+          fuzzyMatches = fuzzyMatches.filter((m) => m.type === filteredType);
+        }
+
+        if (fuzzyMatches.length === 0) {
+          // Truly not found — let the resolution phase produce the error
+          newExpandedNames.push(name);
+        } else if (fuzzyMatches.length === 1) {
+          // Single substring match — use it directly
+          preResolvedTypes.set(fuzzyMatches[0].name, fuzzyMatches[0].type);
+          newExpandedNames.push(fuzzyMatches[0].name);
+        } else {
+          // Multiple substring matches — prompt user to select
+          s.stop("Multiple matches found");
+
+          if (!process.stdin.isTTY) {
+            const suggestions = fuzzyMatches.map((m) => `${m.name} (${m.type.replace("kitn:", "")})`).join(", ");
+            p.log.error(
+              `Component ${pc.bold(name)} not found. Did you mean one of: ${suggestions}`
+            );
+            process.exit(1);
+          }
+
+          const selected = await p.multiselect({
+            message: `No exact match for ${pc.bold(name)}. Select component(s) to install:`,
+            options: fuzzyMatches.map((m) => ({
+              value: `${m.name}::${m.type}`,
+              label: `${m.name} ${pc.dim(`(${m.type.replace("kitn:", "")})`)}`,
+            })),
+          });
+
+          if (p.isCancel(selected)) {
+            p.cancel("Cancelled.");
+            process.exit(0);
+          }
+
+          for (const sel of selected as string[]) {
+            const [selName, selType] = sel.split("::");
+            preResolvedTypes.set(selName, selType as ComponentType);
+            newExpandedNames.push(selName);
+          }
+
+          s.start("Resolving dependencies...");
+        }
       } else if (matches.length === 1) {
         preResolvedTypes.set(name, matches[0].type);
         newExpandedNames.push(name);

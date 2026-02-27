@@ -57,6 +57,9 @@ tmp/
 registry/r/
 registry/_staging/
 
+# Test projects (CLI testing scratch space)
+test-projects/
+
 # Misc
 .cache/
 .parcel-cache/

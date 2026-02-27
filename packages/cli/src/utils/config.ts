@@ -27,7 +27,7 @@ const registryValueSchema = z.union([z.string(), registryEntrySchema]);
 export const configSchema = z.object({
   $schema: z.string().optional(),
   runtime: z.enum(["bun", "node", "deno"]),
-  framework: z.enum(["hono", "cloudflare", "elysia", "fastify", "express"]).optional(),
+  framework: z.enum(["hono", "hono-openapi", "cloudflare", "elysia", "fastify", "express"]).optional(),
   aliases: z.object({
     base: z.string().optional(),
     agents: z.string(),
@@ -48,6 +48,7 @@ export function getRegistryUrl(entry: string | RegistryEntry): string {
 
 const FRAMEWORK_TO_ADAPTER: Record<string, string> = {
   hono: "hono",
+  "hono-openapi": "hono-openapi",
   elysia: "elysia",
 };
 

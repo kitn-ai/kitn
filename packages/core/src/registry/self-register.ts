@@ -114,7 +114,17 @@ export async function registerWithPlugin(ctx: PluginContext): Promise<void> {
   // 4. Skills — collected for future use (skill storage uses a different model)
   // skillConfigs are cleared below but not persisted here
 
-  // 5. Clear all maps (idempotent)
+  // 5. Log registration summary
+  const parts: string[] = [];
+  if (agentConfigs.size > 0) parts.push(`${agentConfigs.size} agent(s)`);
+  if (toolConfigs.size > 0) parts.push(`${toolConfigs.size} tool(s)`);
+  if (commandConfigs.size > 0) parts.push(`${commandConfigs.size} command(s)`);
+  if (skillConfigs.size > 0) parts.push(`${skillConfigs.size} skill(s)`);
+  if (parts.length > 0) {
+    console.log(`[ai] Registered ${parts.join(", ")}`);
+  }
+
+  // 6. Clear all maps (idempotent)
   agentConfigs.clear();
   toolConfigs.clear();
   commandConfigs.clear();

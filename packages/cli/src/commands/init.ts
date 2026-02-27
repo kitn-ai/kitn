@@ -7,7 +7,9 @@ import { patchProjectTsconfig } from "../installers/tsconfig-patcher.js";
 import { createBarrelFile } from "../installers/barrel-manager.js";
 import { addCommand } from "./add.js";
 
-const PLUGIN_TEMPLATE = `import { createAIPlugin } from "@kitn/routes";
+function getPluginTemplate(framework: string): string {
+  const adapterName = framework === "hono-openapi" ? "hono-openapi" : framework;
+  return `import { createAIPlugin } from "@kitn/adapters/${adapterName}";
 import { registerWithPlugin } from "./index.js";
 
 export const ai = createAIPlugin({
@@ -26,9 +28,11 @@ export const ai = createAIPlugin({
 // Flush all auto-registered components into the plugin
 registerWithPlugin(ai);
 `;
+}
 
 interface InitOptions {
   runtime?: string;
+  framework?: string;
   base?: string;
   yes?: boolean;
 }
@@ -80,6 +84,33 @@ export async function initCommand(opts: InitOptions = {}) {
     runtime = selected as string;
   }
 
+  const validFrameworks = ["hono", "hono-openapi", "elysia"] as const;
+  type Framework = (typeof validFrameworks)[number];
+  let framework: Framework;
+  if (opts.framework) {
+    if (!validFrameworks.includes(opts.framework as Framework)) {
+      p.log.error(`Invalid framework: ${opts.framework}. Must be one of: ${validFrameworks.join(", ")}`);
+      process.exit(1);
+    }
+    framework = opts.framework as Framework;
+  } else if (opts.yes) {
+    framework = "hono";
+  } else {
+    const selected = await p.select({
+      message: "Which HTTP framework do you use?",
+      options: [
+        { value: "hono", label: "Hono", hint: "recommended" },
+        { value: "hono-openapi", label: "Hono + OpenAPI", hint: "zod-openapi routes with /doc endpoint" },
+        { value: "elysia", label: "Elysia", hint: "Bun-native framework" },
+      ],
+    });
+    if (p.isCancel(selected)) {
+      p.cancel("Init cancelled.");
+      process.exit(0);
+    }
+    framework = selected as Framework;
+  }
+
   let baseDir: string;
   if (opts.base) {
     baseDir = opts.base;
@@ -99,7 +130,7 @@ export async function initCommand(opts: InitOptions = {}) {
   }
   const config = {
     runtime: runtime as "bun" | "node" | "deno",
-    framework: "hono" as const,
+    framework,
     aliases: {
       base: baseDir,
       agents: `${baseDir}/agents`,
@@ -130,8 +161,8 @@ export async function initCommand(opts: InitOptions = {}) {
   );
   p.log.info(`Patched tsconfig.json with path: ${pc.bold("@kitn/*")}`);
 
-  // Auto-install core engine + Hono routes
-  p.log.info("Installing core engine and routes...");
+  // Auto-install core engine + framework adapter
+  p.log.info("Installing core engine and adapter...");
   await addCommand(["core", "routes"], { overwrite: true });
 
   // Generate plugin.ts and barrel index.ts
@@ -142,15 +173,18 @@ export async function initCommand(opts: InitOptions = {}) {
   await writeFile(barrelPath, createBarrelFile());
 
   const pluginPath = join(aiDir, "plugin.ts");
-  await writeFile(pluginPath, PLUGIN_TEMPLATE);
+  await writeFile(pluginPath, getPluginTemplate(framework));
 
   p.log.success(`Created ${pc.bold(baseDir + "/plugin.ts")} — configure your AI provider there`);
 
+  const mountCode = framework === "elysia"
+    ? `app.use(ai.router);`
+    : `app.route("/api", ai.router);`;
   p.note(
     [
       `import { ai } from "./${baseDir.replace(/^src\//, "")}/plugin";`,
       ``,
-      `app.route("/api", ai.router);`,
+      mountCode,
     ].join("\n"),
     "Add this to your server entry point:",
   );

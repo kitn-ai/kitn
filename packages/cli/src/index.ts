@@ -15,6 +15,7 @@ program
   .command("init")
   .description("Initialize kitn in your project")
   .option("-r, --runtime <runtime>", "runtime to use (bun, node, deno)")
+  .option("-f, --framework <framework>", "HTTP framework (hono, hono-openapi, elysia)")
   .option("-b, --base <path>", "base directory for components (default: src/ai)")
   .option("-y, --yes", "accept all defaults without prompting")
   .action(async (opts) => {

@@ -95,7 +95,7 @@ export async function executeTask(
   const bus = getEventBus();
   const from = chain.length > 0 ? chain[chain.length - 1] : (parentCtx?.orchestrator ?? agent);
 
-  let systemPrompt = ctx.agents.getResolvedPrompt(agent)!;
+  let systemPrompt = (await ctx.agents.getResolvedPrompt(agent))!;
   const querySkillNames: string[] = [];
   const responseSkillNames: string[] = [];
 

@@ -47,8 +47,6 @@ beforeAll(async () => {
     tools: { greet: greetTool },
   });
 
-  await ai.initialize();
-
   app = new Hono();
   app.route("/ai", ai.router);
 });

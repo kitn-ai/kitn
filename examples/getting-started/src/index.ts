@@ -57,8 +57,6 @@ const app = new Hono();
 app.use("/*", cors());
 app.route("/api", plugin.router);
 
-await plugin.initialize();
-
 console.log(`kitn getting-started server running on http://localhost:${PORT}`);
 console.log(`API docs: http://localhost:${PORT}/api/doc`);
 

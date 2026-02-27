@@ -66,7 +66,6 @@ const plugin = createAIPlugin({
 const app = new Hono();
 app.use("/*", cors());
 app.route("/api", plugin.router);
-await plugin.initialize();
 
 export default { port: 4000, fetch: app.fetch };
 ```
@@ -393,7 +392,7 @@ import { readFileSync } from "fs";
 
 const skillContent = readFileSync("./src/skills/README.md", "utf-8");
 
-// After plugin.initialize(), use the storage directly
+// Use the storage directly
 await plugin.router.storage?.skills.createSkill("eli5", skillContent);
 ```
 

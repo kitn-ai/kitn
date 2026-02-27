@@ -30,7 +30,6 @@ describe("createAIPlugin", () => {
     expect(ai.tools).toBeDefined();
     expect(ai.cards).toBeDefined();
     expect(ai.cards).toBeInstanceOf(CardRegistry);
-    expect(ai.initialize).toBeFunction();
   });
 
   test("registers a tool", () => {
@@ -72,9 +71,6 @@ describe("createAIPlugin", () => {
     expect(ai.agents.get("test-agent")).toBeDefined();
   });
 
-  test("initialize() runs without error", async () => {
-    await ai.initialize();
-  });
 });
 
 describe("Agent guard hook", () => {

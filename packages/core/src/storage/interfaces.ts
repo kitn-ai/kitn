@@ -178,7 +178,7 @@ export interface PromptOverride {
  * Persists system prompt overrides for agents.
  *
  * When an agent's prompt is customized at runtime, it is saved here and
- * loaded during `plugin.initialize()` to restore overrides across restarts.
+ * lazy-loaded on first agent access to restore overrides across restarts.
  */
 export interface PromptStore {
   /** Load all stored prompt overrides, keyed by agent name. */

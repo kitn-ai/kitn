@@ -410,7 +410,6 @@ export async function addCommand(components: string[], opts: AddOptions) {
           `import { ai } from "./${baseDir.replace(/^src\//, "")}/plugin";`,
           ``,
           `app.route("/api", ai.router);`,
-          `await ai.initialize();`,
         ].join("\n"),
         "Add this to your server entry point",
       );
@@ -475,7 +474,6 @@ export async function addCommand(components: string[], opts: AddOptions) {
     hints.push(pc.dim(`  import { ai } from "./${baseDir.replace(/^src\//, "")}/plugin";`));
     hints.push(pc.dim(``));
     hints.push(pc.dim(`  app.route("/api", ai.router);`));
-    hints.push(pc.dim(`  await ai.initialize();`));
     hints.push("");
   }
 

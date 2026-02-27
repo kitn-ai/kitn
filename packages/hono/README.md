@@ -66,7 +66,6 @@ plugin.createOrchestrator({ name: "orchestrator" });
 // Mount and start
 app.route("/ai", plugin.app);
 
-await plugin.initialize();
 export default { port: 3000, fetch: app.fetch };
 ```
 

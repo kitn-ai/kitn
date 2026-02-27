@@ -124,8 +124,6 @@ plugin.agents.register({
 const app = new Hono();
 app.route("/api", plugin.app);
 
-await plugin.initialize();
-
 export default { port: 4000, fetch: app.fetch };
 ```
 

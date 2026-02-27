@@ -35,6 +35,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   })();
 
   const agents = new AgentRegistry();
+  agents.setPromptStore(storage.prompts);
   const tools = new ToolRegistry();
   const cards = new CardRegistry();
   const voice = config.voice ? new VoiceManager() : undefined;
@@ -101,20 +102,6 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   return {
     ...ctx,
     router: app,
-    async initialize() {
-      // Load persisted prompt overrides
-      const overrides = await storage.prompts.loadOverrides();
-      const overrideMap: Record<string, string> = {};
-      for (const [name, entry] of Object.entries(overrides)) {
-        overrideMap[name] = entry.prompt;
-      }
-      agents.loadPromptOverrides(overrideMap);
-
-      const skills = await storage.skills.listSkills();
-      console.log(
-        `[ai] Initialized: ${agents.list().length} agents, ${tools.list().length} tools, ${skills.length} skills`,
-      );
-    },
     createHandlers(handlerConfig) {
       return makeRegistryHandlers(handlerConfig, ctx);
     },

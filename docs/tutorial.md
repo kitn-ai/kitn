@@ -146,8 +146,6 @@ const app = new Hono();
 app.use("/*", cors());
 app.route("/api", plugin.router);
 
-await plugin.initialize();
-
 console.log(`Server running on http://localhost:${PORT}`);
 console.log(`API Reference: http://localhost:${PORT}/api/reference`);
 

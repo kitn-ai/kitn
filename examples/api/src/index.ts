@@ -68,9 +68,6 @@ const app = new Hono();
 app.use("/*", cors());
 app.route("/api", plugin.router);
 
-// Initialize and start
-await plugin.initialize();
-
 printConfig();
 console.log(`[kitn-api] Running on http://localhost:${env.PORT}`);
 console.log(`[kitn-api] API Reference: http://localhost:${env.PORT}/api/reference`);

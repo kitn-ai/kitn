@@ -10,7 +10,7 @@ function createTestPlugin() {
 describe("command routes", () => {
   test("GET /commands returns empty list initially", async () => {
     const plugin = createTestPlugin();
-    await plugin.initialize();
+
     const res = await plugin.router.request("/commands");
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -19,7 +19,7 @@ describe("command routes", () => {
 
   test("POST /commands creates a command", async () => {
     const plugin = createTestPlugin();
-    await plugin.initialize();
+
 
     const res = await plugin.router.request("/commands", {
       method: "POST",
@@ -38,7 +38,7 @@ describe("command routes", () => {
 
   test("GET /commands/:name returns a specific command", async () => {
     const plugin = createTestPlugin();
-    await plugin.initialize();
+
 
     await plugin.router.request("/commands", {
       method: "POST",
@@ -54,14 +54,14 @@ describe("command routes", () => {
 
   test("GET /commands/:name returns 404 for missing", async () => {
     const plugin = createTestPlugin();
-    await plugin.initialize();
+
     const res = await plugin.router.request("/commands/missing");
     expect(res.status).toBe(404);
   });
 
   test("POST /commands/:name/run returns 404 for missing command", async () => {
     const plugin = createTestPlugin();
-    await plugin.initialize();
+
     const res = await plugin.router.request("/commands/missing/run", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -72,7 +72,7 @@ describe("command routes", () => {
 
   test("DELETE /commands/:name removes command", async () => {
     const plugin = createTestPlugin();
-    await plugin.initialize();
+
 
     await plugin.router.request("/commands", {
       method: "POST",

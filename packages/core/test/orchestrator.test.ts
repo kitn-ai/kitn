@@ -594,7 +594,7 @@ describe("Delegation depth enforcement", () => {
 // ── 10. AgentRegistry prompt helpers ─────────────────────────────────────────
 
 describe("AgentRegistry prompt resolution", () => {
-  test("getResolvedPrompt returns defaultSystem when no override", () => {
+  test("getResolvedPrompt returns defaultSystem when no override", async () => {
     const registry = new AgentRegistry();
     registry.register({
       name: "agent",
@@ -604,10 +604,10 @@ describe("AgentRegistry prompt resolution", () => {
       defaultSystem: "Default prompt",
     });
 
-    expect(registry.getResolvedPrompt("agent")).toBe("Default prompt");
+    expect(await registry.getResolvedPrompt("agent")).toBe("Default prompt");
   });
 
-  test("getResolvedPrompt returns override when set", () => {
+  test("getResolvedPrompt returns override when set", async () => {
     const registry = new AgentRegistry();
     registry.register({
       name: "agent",
@@ -618,15 +618,15 @@ describe("AgentRegistry prompt resolution", () => {
     });
 
     registry.setPromptOverride("agent", "Custom override");
-    expect(registry.getResolvedPrompt("agent")).toBe("Custom override");
+    expect(await registry.getResolvedPrompt("agent")).toBe("Custom override");
   });
 
-  test("getResolvedPrompt returns undefined for unknown agent", () => {
+  test("getResolvedPrompt returns undefined for unknown agent", async () => {
     const registry = new AgentRegistry();
-    expect(registry.getResolvedPrompt("nonexistent")).toBeUndefined();
+    expect(await registry.getResolvedPrompt("nonexistent")).toBeUndefined();
   });
 
-  test("resetPrompt restores default after override", () => {
+  test("resetPrompt restores default after override", async () => {
     const registry = new AgentRegistry();
     registry.register({
       name: "agent",
@@ -637,22 +637,11 @@ describe("AgentRegistry prompt resolution", () => {
     });
 
     registry.setPromptOverride("agent", "Override");
-    expect(registry.hasPromptOverride("agent")).toBe(true);
+    expect(await registry.hasPromptOverride("agent")).toBe(true);
 
     registry.resetPrompt("agent");
-    expect(registry.hasPromptOverride("agent")).toBe(false);
-    expect(registry.getResolvedPrompt("agent")).toBe("Default prompt");
-  });
-
-  test("loadPromptOverrides bulk-loads overrides", () => {
-    const registry = new AgentRegistry();
-    registry.register({ name: "a1", description: "", toolNames: [], defaultFormat: "json", defaultSystem: "orig-a1" });
-    registry.register({ name: "a2", description: "", toolNames: [], defaultFormat: "json", defaultSystem: "orig-a2" });
-
-    registry.loadPromptOverrides({ a1: "override-a1", a2: "override-a2" });
-
-    expect(registry.getResolvedPrompt("a1")).toBe("override-a1");
-    expect(registry.getResolvedPrompt("a2")).toBe("override-a2");
+    expect(await registry.hasPromptOverride("agent")).toBe(false);
+    expect(await registry.getResolvedPrompt("agent")).toBe("Default prompt");
   });
 });
 

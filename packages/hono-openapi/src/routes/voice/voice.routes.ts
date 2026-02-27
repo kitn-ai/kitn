@@ -199,7 +199,7 @@ export function createVoiceRoutes(ctx: PluginContext) {
       const regularAgents = ctx.agents.list().filter((a) => !orchestrators.has(a.name) && a.tools && Object.keys(a.tools).length > 0);
       const agentName = requestedAgent ?? regularAgents[0]?.name ?? ctx.agents.list()[0]?.name ?? "assistant";
       const agent = ctx.agents.get(agentName);
-      const systemPrompt = agent ? ctx.agents.getResolvedPrompt(agentName) ?? "" : "You are a helpful assistant.";
+      const systemPrompt = agent ? await ctx.agents.getResolvedPrompt(agentName) ?? "" : "You are a helpful assistant.";
       const agentResult = await runAgent(ctx, { system: systemPrompt, tools: agent?.tools ?? {} }, transcription.text, model);
       const responseText = agentResult.response;
       const convId = generateConversationId(conversationId);

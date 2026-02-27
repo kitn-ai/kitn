@@ -151,7 +151,6 @@ export async function initCommand(opts: InitOptions = {}) {
       `import { ai } from "./${baseDir.replace(/^src\//, "")}/plugin";`,
       ``,
       `app.route("/api", ai.router);`,
-      `await ai.initialize();`,
     ].join("\n"),
     "Add this to your server entry point:",
   );

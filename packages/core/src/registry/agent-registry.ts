@@ -1,4 +1,5 @@
 import type { AgentRequest } from "../types.js";
+import type { PromptStore } from "../storage/interfaces.js";
 import type { z } from "zod";
 
 export type AgentHandler = (
@@ -45,6 +46,8 @@ export interface AgentRegistration {
 export class AgentRegistry {
   private agents = new Map<string, AgentRegistration>();
   private promptOverrides = new Map<string, string>();
+  private overridesLoaded = false;
+  private promptStore?: PromptStore;
 
   register(registration: AgentRegistration) {
     this.agents.set(registration.name, registration);
@@ -58,9 +61,25 @@ export class AgentRegistry {
     return [...this.agents.values()];
   }
 
-  getResolvedPrompt(name: string): string | undefined {
+  setPromptStore(store: PromptStore) {
+    this.promptStore = store;
+  }
+
+  private async ensureOverridesLoaded(): Promise<void> {
+    if (this.overridesLoaded || !this.promptStore) return;
+    this.overridesLoaded = true;
+    try {
+      const overrides = await this.promptStore.loadOverrides();
+      for (const [name, entry] of Object.entries(overrides)) {
+        this.promptOverrides.set(name, entry.prompt);
+      }
+    } catch { /* storage unavailable — use defaults */ }
+  }
+
+  async getResolvedPrompt(name: string): Promise<string | undefined> {
     const agent = this.agents.get(name);
     if (!agent) return undefined;
+    await this.ensureOverridesLoaded();
     return this.promptOverrides.get(name) ?? agent.defaultSystem;
   }
 
@@ -72,7 +91,8 @@ export class AgentRegistry {
     this.promptOverrides.delete(name);
   }
 
-  hasPromptOverride(name: string): boolean {
+  async hasPromptOverride(name: string): Promise<boolean> {
+    await this.ensureOverridesLoaded();
     return this.promptOverrides.has(name);
   }
 
@@ -83,11 +103,5 @@ export class AgentRegistry {
       if (agent.isOrchestrator) names.add(agent.name);
     }
     return names;
-  }
-
-  loadPromptOverrides(overrides: Record<string, string>) {
-    for (const [name, prompt] of Object.entries(overrides)) {
-      this.promptOverrides.set(name, prompt);
-    }
   }
 }

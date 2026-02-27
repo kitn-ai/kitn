@@ -25,7 +25,6 @@ export interface VoiceConfig {
 
 export interface AIPluginInstance extends PluginContext {
   router: OpenAPIHono;
-  initialize(): Promise<void>;
   createHandlers(config: { tools: Record<string, any>; maxSteps?: number }): {
     sseHandler: AgentHandler;
     jsonHandler: AgentHandler;

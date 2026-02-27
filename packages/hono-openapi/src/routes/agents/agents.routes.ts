@@ -44,8 +44,8 @@ export function createAgentsRoutes(ctx: PluginContext) {
         },
       },
     }),
-    (c) => {
-      const agents = ctx.agents.list().map((a) => {
+    async (c) => {
+      const agents = await Promise.all(ctx.agents.list().map(async (a) => {
         const formats: string[] = [];
         if (a.jsonHandler) formats.push("json");
         if (a.sseHandler) formats.push("sse");
@@ -55,12 +55,12 @@ export function createAgentsRoutes(ctx: PluginContext) {
           defaultFormat: a.defaultFormat,
           formats,
           toolNames: a.toolNames,
-          hasPromptOverride: ctx.agents.hasPromptOverride(a.name),
+          hasPromptOverride: await ctx.agents.hasPromptOverride(a.name),
           actions: a.actions?.map((act) => `${act.method.toUpperCase()} /${a.name}/${act.name}`),
           ...(a.isOrchestrator && { isOrchestrator: true }),
           ...(a.agents && { agents: a.agents }),
         };
-      });
+      }));
       return c.json({ agents, count: agents.length });
     },
   );
@@ -103,7 +103,7 @@ export function createAgentsRoutes(ctx: PluginContext) {
       },
     }),
     // hono/zod-openapi handler type mismatch
-    ((c: any) => {
+    (async (c: any) => {
       const name = c.req.param("agentName");
       const agent = ctx.agents.get(name);
       if (!agent) return c.json({ error: `Agent not found: ${name}` }, 404);
@@ -118,8 +118,8 @@ export function createAgentsRoutes(ctx: PluginContext) {
         defaultFormat: agent.defaultFormat,
         formats,
         toolNames: agent.toolNames,
-        systemPrompt: ctx.agents.getResolvedPrompt(name) ?? "",
-        isDefault: !ctx.agents.hasPromptOverride(name),
+        systemPrompt: await ctx.agents.getResolvedPrompt(name) ?? "",
+        isDefault: !(await ctx.agents.hasPromptOverride(name)),
         actions: agent.actions?.map((act) => ({
           name: act.name, method: act.method, summary: act.summary, description: act.description,
         })),
@@ -168,8 +168,8 @@ export function createAgentsRoutes(ctx: PluginContext) {
 
       return c.json({
         name,
-        systemPrompt: ctx.agents.getResolvedPrompt(name) ?? "",
-        isDefault: !ctx.agents.hasPromptOverride(name),
+        systemPrompt: await ctx.agents.getResolvedPrompt(name) ?? "",
+        isDefault: !(await ctx.agents.hasPromptOverride(name)),
       });
     }) as any,
   );
@@ -266,7 +266,7 @@ export function createAgentsRoutes(ctx: PluginContext) {
       }
 
       const scopeId = c.req.header("X-Scope-Id") || undefined;
-      const systemPrompt = ctx.agents.getResolvedPrompt(name) ?? "";
+      const systemPrompt = await ctx.agents.getResolvedPrompt(name) ?? "";
       const body = await c.req.json();
 
       let memoryContext: string | undefined;

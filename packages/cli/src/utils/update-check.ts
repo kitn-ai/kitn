@@ -2,6 +2,7 @@ import { readFile, writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { homedir } from "os";
 import pc from "picocolors";
+import { detectCliInstaller, getRunCommand, getGlobalInstallCommand } from "./detect.js";
 
 const CACHE_DIR = join(homedir(), ".kitn");
 const CACHE_FILE = join(CACHE_DIR, "update-check.json");
@@ -76,10 +77,13 @@ export function startUpdateCheck(currentVersion: string): () => void {
     }
 
     if (latest && isNewer(latest, currentVersion)) {
+      const pm = detectCliInstaller();
+      const runCmd = `${getRunCommand(pm)} @kitnai/cli@latest`;
+      const installCmd = getGlobalInstallCommand(pm, "@kitnai/cli");
       message = [
         "",
         pc.yellow(`  Update available: ${pc.dim(currentVersion)} → ${pc.green(latest)}`),
-        pc.dim(`  Run ${pc.cyan("npx @kitnai/cli@latest")} or ${pc.cyan("npm i -g @kitnai/cli")}`),
+        pc.dim(`  Run ${pc.cyan(runCmd)} or ${pc.cyan(installCmd)}`),
         "",
       ].join("\n");
     }

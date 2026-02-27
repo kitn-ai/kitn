@@ -49,3 +49,35 @@ export function getRunCommand(pm: PackageManager): string {
       return "npx";
   }
 }
+
+/**
+ * Detects which package manager was used to invoke the CLI globally.
+ * Checks npm_config_user_agent first, falls back to process.env._, defaults to npm.
+ */
+export function detectCliInstaller(): PackageManager {
+  const userAgent = process.env.npm_config_user_agent ?? "";
+  if (userAgent.startsWith("bun/")) return "bun";
+  if (userAgent.startsWith("pnpm/")) return "pnpm";
+  if (userAgent.startsWith("yarn/")) return "yarn";
+  if (userAgent.startsWith("npm/")) return "npm";
+
+  const invoker = process.env._ ?? "";
+  if (invoker.includes("bun")) return "bun";
+  if (invoker.includes("pnpm")) return "pnpm";
+  if (invoker.includes("yarn")) return "yarn";
+
+  return "npm";
+}
+
+export function getGlobalInstallCommand(pm: PackageManager, pkg: string): string {
+  switch (pm) {
+    case "bun":
+      return `bun install -g ${pkg}`;
+    case "pnpm":
+      return `pnpm add -g ${pkg}`;
+    case "yarn":
+      return `yarn global add ${pkg}`;
+    case "npm":
+      return `npm install -g ${pkg}`;
+  }
+}

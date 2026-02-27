@@ -1,0 +1,26 @@
+{
+  "$schema": "https://kitn.dev/schema/registry-item.json",
+  "name": "example-skill",
+  "type": "kitn:skill",
+  "description": "A minimal example skill",
+  "files": [
+    {
+      "path": "skills/README.md",
+      "content": "---\nname: example-skill\ndescription: A minimal example skill that demonstrates the skill format\n---\n\n# Example Skill\n\nThis is a minimal skill template. Skills are markdown files with YAML frontmatter\nthat provide instructions, prompts, or documentation for your AI agents.\n\n## Usage\n\nDescribe how to use this skill here.\n",
+      "type": "kitn:skill"
+    }
+  ],
+  "categories": [
+    "example"
+  ],
+  "version": "0.1.0",
+  "updatedAt": "2026-02-27T15:19:52.546Z",
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2025-01-01",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

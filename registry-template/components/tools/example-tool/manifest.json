@@ -1,0 +1,17 @@
+{
+  "name": "example-tool",
+  "type": "kitn:tool",
+  "description": "A minimal example tool that echoes input",
+  "version": "0.1.0",
+  "dependencies": ["ai", "zod"],
+  "files": ["example-tool.ts"],
+  "categories": ["example"],
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2025-01-01",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

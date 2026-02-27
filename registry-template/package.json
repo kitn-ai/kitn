@@ -1,0 +1,18 @@
+{
+  "name": "my-kitn-registry",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun run scripts/build-registry.ts",
+    "validate": "bun run scripts/validate-registry.ts",
+    "stage": "bun run scripts/stage-registry.ts",
+    "typecheck": "bun run stage && tsc --noEmit",
+    "bump": "bun run scripts/bump-version.ts"
+  },
+  "devDependencies": {
+    "@clack/prompts": "^0.10.0",
+    "ai": "^6.0.99",
+    "picocolors": "^1.1.1",
+    "zod": "^3.24.0"
+  }
+}

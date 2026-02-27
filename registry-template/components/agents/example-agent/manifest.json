@@ -1,0 +1,16 @@
+{
+  "name": "example-agent",
+  "type": "kitn:agent",
+  "description": "A minimal example agent that greets users",
+  "version": "0.1.0",
+  "files": ["example-agent.ts"],
+  "categories": ["example"],
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2025-01-01",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- TODO: customize your registry name -->
+  <title>My Registry</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #09090b;
+      --surface: #131318;
+      --border: #26252e;
+      --border-subtle: #1c1b24;
+
+      /* Text — Apple-inspired contrast hierarchy */
+      --text: #f5f5f7;
+      --text-secondary: #a1a1a6;
+      --text-tertiary: #86868b;
+
+      /* Brand */
+      --brand: #e429a3;
+      --brand-hover: #f04db8;
+      --brand-subtle: rgba(228, 41, 163, 0.12);
+
+      /* Type colors */
+      --type-agent: #6366f1;
+      --type-tool: #a855f7;
+      --type-skill: #f59e0b;
+      --type-storage: #14b8a6;
+
+      /* Tags */
+      --tag-bg: rgba(245, 245, 247, 0.05);
+      --tag-border: rgba(245, 245, 247, 0.09);
+      --tag-text: #9d99a8;
+
+      --dep-bg: rgba(228, 41, 163, 0.06);
+      --dep-border: rgba(228, 41, 163, 0.14);
+      --dep-text: #b88da6;
+
+      --radius: 8px;
+      --max-w: 860px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 2rem 1.5rem 1.5rem;
+    }
+
+    header .inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    header h1 span { color: var(--brand); }
+
+    header p {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+
+    .search-bar {
+      max-width: var(--max-w);
+      margin: 1.5rem auto 0;
+      padding: 0 1.5rem;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 0.625rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-bar input::placeholder { color: var(--text-tertiary); }
+    .search-bar input:focus { border-color: var(--brand); }
+
+    .filters {
+      max-width: var(--max-w);
+      margin: 1rem auto 0;
+      padding: 0 1.5rem;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-btn:hover { border-color: var(--text-tertiary); color: var(--text); }
+    .filter-btn.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+    .count {
+      max-width: var(--max-w);
+      margin: 1.25rem auto 0;
+      padding: 0 1.5rem;
+      font-size: 0.8125rem;
+      color: var(--text-tertiary);
+    }
+
+    main {
+      max-width: var(--max-w);
+      margin: 0.75rem auto 3rem;
+      padding: 0 1.5rem;
+    }
+
+    .group { margin-top: 1.5rem; }
+
+    .group-header {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.25rem;
+    }
+
+    .item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .item:last-child { border-bottom: none; }
+
+    .item-name {
+      font-size: 0.9375rem;
+      font-weight: 500;
+    }
+
+    .item-desc {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      margin-top: 0.125rem;
+    }
+
+    .item-meta {
+      display: flex;
+      gap: 0.375rem;
+      margin-top: 0.375rem;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 0.6875rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 100px;
+      background: var(--tag-bg);
+      border: 1px solid var(--tag-border);
+      color: var(--tag-text);
+    }
+
+    .dep-tag {
+      background: var(--dep-bg);
+      border-color: var(--dep-border);
+      color: var(--dep-text);
+    }
+
+    .copy-btn {
+      white-space: nowrap;
+      padding: 0.375rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+      cursor: pointer;
+      transition: all 0.15s;
+      align-self: center;
+    }
+
+    .copy-btn:hover { border-color: var(--brand); color: var(--text); }
+
+    .copy-btn.copied {
+      border-color: var(--brand);
+      color: var(--brand);
+    }
+
+    .empty {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 4rem 1rem;
+      color: var(--text-tertiary);
+    }
+
+    .type-color-agent { color: var(--type-agent); }
+    .type-color-tool { color: var(--type-tool); }
+    .type-color-skill { color: var(--type-skill); }
+    .type-color-storage { color: var(--type-storage); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    footer a {
+      color: var(--text-tertiary);
+      font-size: 0.8125rem;
+      text-decoration: none;
+    }
+
+    footer a:hover { color: var(--brand); }
+
+    @media (max-width: 640px) {
+      .item { grid-template-columns: 1fr; gap: 0.5rem; }
+      .copy-btn { justify-self: start; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="inner">
+      <!-- TODO: customize your registry name and description -->
+      <h1><span>my</span> registry</h1>
+      <p>Custom kitn components</p>
+    </div>
+  </header>
+
+  <div class="search-bar">
+    <input type="text" id="search" placeholder="Search components..." autocomplete="off" spellcheck="false">
+  </div>
+
+  <div class="filters" id="filters"></div>
+  <div class="count" id="count"></div>
+  <main id="content"><div class="loading">Loading registry...</div></main>
+
+  <footer>
+    <!-- TODO: link to your project -->
+    <a href="https://github.com/your-org/your-registry">your-org/your-registry</a>
+  </footer>
+
+  <script>
+    const TYPE_ORDER = ["agent", "tool", "skill", "storage"];
+    const TYPE_LABELS = { agent: "Agents", tool: "Tools", skill: "Skills", storage: "Storage" };
+
+    let items = [];
+    let activeType = null;
+    let searchQuery = "";
+
+    async function init() {
+      try {
+        const res = await fetch("./r/registry.json");
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+        items = data.items.map(item => ({
+          ...item,
+          typeShort: item.type.replace("kitn:", ""),
+        }));
+        buildFilters();
+        render();
+      } catch (err) {
+        document.getElementById("content").innerHTML =
+          `<div class="empty">Failed to load registry. <br><span style="color:var(--text-muted)">${err.message}</span></div>`;
+      }
+    }
+
+    function buildFilters() {
+      const counts = {};
+      for (const item of items) {
+        counts[item.typeShort] = (counts[item.typeShort] || 0) + 1;
+      }
+
+      const container = document.getElementById("filters");
+      const allBtn = document.createElement("button");
+      allBtn.className = "filter-btn active";
+      allBtn.textContent = `All (${items.length})`;
+      allBtn.onclick = () => setFilter(null);
+      container.appendChild(allBtn);
+
+      for (const type of TYPE_ORDER) {
+        if (!counts[type]) continue;
+        const btn = document.createElement("button");
+        btn.className = "filter-btn";
+        btn.dataset.type = type;
+        btn.textContent = `${TYPE_LABELS[type]} (${counts[type]})`;
+        btn.onclick = () => setFilter(type);
+        container.appendChild(btn);
+      }
+    }
+
+    function setFilter(type) {
+      activeType = type;
+      document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.classList.toggle("active",
+          type === null ? !btn.dataset.type : btn.dataset.type === type
+        );
+      });
+      render();
+    }
+
+    function render() {
+      const q = searchQuery.toLowerCase();
+      const filtered = items.filter(item => {
+        if (activeType && item.typeShort !== activeType) return false;
+        if (q) {
+          return item.name.toLowerCase().includes(q) ||
+                 item.description.toLowerCase().includes(q) ||
+                 (item.categories || []).some(c => c.toLowerCase().includes(q));
+        }
+        return true;
+      });
+
+      document.getElementById("count").textContent =
+        `${filtered.length} component${filtered.length !== 1 ? "s" : ""}`;
+
+      if (filtered.length === 0) {
+        document.getElementById("content").innerHTML =
+          `<div class="empty">No components match your search.</div>`;
+        return;
+      }
+
+      const groups = {};
+      for (const item of filtered) {
+        if (!groups[item.typeShort]) groups[item.typeShort] = [];
+        groups[item.typeShort].push(item);
+      }
+
+      let html = "";
+      for (const type of TYPE_ORDER) {
+        const group = groups[type];
+        if (!group) continue;
+        group.sort((a, b) => a.name.localeCompare(b.name));
+
+        html += `<div class="group">`;
+        html += `<div class="group-header">${TYPE_LABELS[type]}</div>`;
+
+        for (const item of group) {
+          const cats = (item.categories || [])
+            .map(c => `<span class="tag">${esc(c)}</span>`)
+            .join("");
+          const deps = (item.registryDependencies || [])
+            .map(d => `<span class="tag dep-tag">${esc(d)}</span>`)
+            .join("");
+          const meta = cats + deps;
+
+          html += `<div class="item">
+            <div>
+              <div class="item-name"><span class="type-color-${item.typeShort}">${esc(item.name)}</span></div>
+              <div class="item-desc">${esc(item.description)}</div>
+              ${meta ? `<div class="item-meta">${meta}</div>` : ""}
+            </div>
+            <button class="copy-btn" onclick="copyInstall(this, '${esc(item.name)}')">kitn add ${esc(item.name)}</button>
+          </div>`;
+        }
+        html += `</div>`;
+      }
+
+      document.getElementById("content").innerHTML = html;
+    }
+
+    function copyInstall(btn, name) {
+      navigator.clipboard.writeText(`kitn add ${name}`).then(() => {
+        btn.textContent = "copied!";
+        btn.classList.add("copied");
+        setTimeout(() => {
+          btn.textContent = `kitn add ${name}`;
+          btn.classList.remove("copied");
+        }, 1500);
+      });
+    }
+
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    document.getElementById("search").addEventListener("input", e => {
+      searchQuery = e.target.value;
+      render();
+    });
+
+    init();
+  </script>
+</body>
+</html>

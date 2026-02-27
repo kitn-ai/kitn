@@ -27,14 +27,27 @@ pnpm dlx @kitnai/cli init
 Initialize kitn in your project. Creates `kitn.json`, installs the core engine and Hono routes, and sets up tsconfig path aliases.
 
 ```bash
+# Interactive (prompts for runtime and base directory)
 kitn init
+
+# Non-interactive with flags
+kitn init --runtime bun --base src/ai
+
+# Accept all defaults (runtime=bun, base=src/ai)
+kitn init -y
 ```
 
-Prompts for:
-- **Runtime**: bun, node, or deno
-- **Install path**: Base directory for kitn components (defaults to `src/ai`)
+**Flags:**
 
-After answering, the CLI automatically installs the core engine and HTTP routes into your project.
+| Flag | Description |
+|------|-------------|
+| `-r, --runtime <runtime>` | Runtime to use (`bun`, `node`, `deno`) — skips runtime prompt |
+| `-b, --base <path>` | Base directory for components (default: `src/ai`) — skips path prompt |
+| `-y, --yes` | Accept all defaults without prompting |
+
+When flags are provided, the corresponding prompts are skipped. This enables scripting and CI usage.
+
+After setup, the CLI automatically installs the core engine and HTTP routes into your project.
 
 ### `kitn add [components...]`
 
@@ -179,6 +192,16 @@ kitn build
 # Specify directories and output
 kitn build src/components --output dist/r
 ```
+
+### `kitn check`
+
+Check for CLI updates.
+
+```bash
+kitn check
+```
+
+Shows the current version and whether a newer version is available on npm.
 
 ### `kitn registry`
 

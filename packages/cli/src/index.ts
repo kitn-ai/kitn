@@ -14,9 +14,12 @@ const program = new Command()
 program
   .command("init")
   .description("Initialize kitn in your project")
-  .action(async () => {
+  .option("-r, --runtime <runtime>", "runtime to use (bun, node, deno)")
+  .option("-b, --base <path>", "base directory for components (default: src/ai)")
+  .option("-y, --yes", "accept all defaults without prompting")
+  .action(async (opts) => {
     const { initCommand } = await import("./commands/init.js");
-    await initCommand();
+    await initCommand(opts);
   });
 
 program
@@ -97,6 +100,14 @@ program
   .action(async (component: string) => {
     const { infoCommand } = await import("./commands/info.js");
     await infoCommand(component);
+  });
+
+program
+  .command("check")
+  .description("Check for CLI updates")
+  .action(async () => {
+    const { checkCommand } = await import("./commands/check.js");
+    await checkCommand(VERSION);
   });
 
 const registry = program

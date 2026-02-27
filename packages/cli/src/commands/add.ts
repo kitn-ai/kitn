@@ -91,6 +91,15 @@ export async function addCommand(components: string[], opts: AddOptions) {
     if (item.dependencies) allDeps.push(...item.dependencies);
     if (item.devDependencies) allDevDeps.push(...item.devDependencies);
 
+    // Skip file processing for packages already installed with identical content
+    const existingInstall = (config.installed ?? {})[item.name];
+    if (existingInstall && item.type === "kitn:package") {
+      const allContent = item.files.map((f) => f.content).join("\n");
+      if (contentHash(allContent) === existingInstall.hash) {
+        continue;
+      }
+    }
+
     if (item.type === "kitn:package") {
       // Package install — multi-file, preserved directory structure
       const baseDir = config.aliases.base ?? "src/ai";
@@ -307,7 +316,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
   }
 
   if (created.length > 0) {
-    p.log.success(`Created ${created.length} file(s):\n` + created.map((f) => `  ${pc.green("+")} ${f}`).join("\n"));
+    p.log.success(`Added ${created.length} file(s):\n` + created.map((f) => `  ${pc.green("+")} ${f}`).join("\n"));
   }
   if (updated.length > 0) {
     p.log.success(`Updated ${updated.length} file(s):\n` + updated.map((f) => `  ${pc.yellow("~")} ${f}`).join("\n"));
@@ -327,15 +336,19 @@ export async function addCommand(components: string[], opts: AddOptions) {
   }
 
   // Show next-step hints for well-known packages
-  const installedNames = new Set(resolved.map((r) => r.name));
+  const resolvedNames = new Set(resolved.map((r) => r.name));
+  const projectInstalled = new Set(Object.keys(config.installed ?? {}));
   const hints: string[] = [];
 
-  if (installedNames.has("core") && !installedNames.has(config.framework ?? "hono")) {
+  const fw = config.framework ?? "hono";
+
+  // Only suggest adding routes if neither resolved nor already installed
+  if (resolvedNames.has("core") && !resolvedNames.has(fw) && !projectInstalled.has(fw)) {
     hints.push(`Run ${pc.cyan(`kitn add routes`)} to install the HTTP adapter.`);
   }
 
-  const fw = config.framework ?? "hono";
-  if (installedNames.has(fw) || (installedNames.has("core") && installedNames.has(fw))) {
+  // Show integration hint when routes are being installed for the first time
+  if (resolvedNames.has(fw)) {
     hints.push(`Configure your AI provider in ${pc.bold(baseDir + "/plugin.ts")}, then add to your server:`);
     hints.push("");
     hints.push(pc.dim(`  import { ai } from "./${baseDir.replace(/^src\//, "")}/plugin";`));

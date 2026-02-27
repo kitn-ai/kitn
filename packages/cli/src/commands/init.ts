@@ -27,48 +27,76 @@ export const ai = createAIPlugin({
 registerWithPlugin(ai);
 `;
 
-export async function initCommand() {
+interface InitOptions {
+  runtime?: string;
+  base?: string;
+  yes?: boolean;
+}
+
+export async function initCommand(opts: InitOptions = {}) {
   p.intro(pc.bgCyan(pc.black(" kitn init ")));
 
   const cwd = process.cwd();
 
   const existing = await readConfig(cwd);
   if (existing) {
-    p.log.warn("kitn.json already exists in this directory.");
-    const shouldContinue = await p.confirm({
-      message: "Overwrite existing configuration?",
-      initialValue: false,
-    });
-    if (p.isCancel(shouldContinue) || !shouldContinue) {
-      p.cancel("Init cancelled.");
-      process.exit(0);
+    if (opts.yes) {
+      p.log.warn("kitn.json already exists — overwriting (--yes).");
+    } else {
+      p.log.warn("kitn.json already exists in this directory.");
+      const shouldContinue = await p.confirm({
+        message: "Overwrite existing configuration?",
+        initialValue: false,
+      });
+      if (p.isCancel(shouldContinue) || !shouldContinue) {
+        p.cancel("Init cancelled.");
+        process.exit(0);
+      }
     }
   }
 
-  const runtime = await p.select({
-    message: "Which runtime do you use?",
-    options: [
-      { value: "bun", label: "Bun", hint: "recommended" },
-      { value: "node", label: "Node.js" },
-      { value: "deno", label: "Deno" },
-    ],
-  });
-  if (p.isCancel(runtime)) {
-    p.cancel("Init cancelled.");
-    process.exit(0);
+  let runtime: string;
+  if (opts.runtime) {
+    if (!["bun", "node", "deno"].includes(opts.runtime)) {
+      p.log.error(`Invalid runtime: ${opts.runtime}. Must be bun, node, or deno.`);
+      process.exit(1);
+    }
+    runtime = opts.runtime;
+  } else if (opts.yes) {
+    runtime = "bun";
+  } else {
+    const selected = await p.select({
+      message: "Which runtime do you use?",
+      options: [
+        { value: "bun", label: "Bun", hint: "recommended" },
+        { value: "node", label: "Node.js" },
+        { value: "deno", label: "Deno" },
+      ],
+    });
+    if (p.isCancel(selected)) {
+      p.cancel("Init cancelled.");
+      process.exit(0);
+    }
+    runtime = selected as string;
   }
 
-  const base = await p.text({
-    message: "Where should kitn components be installed?",
-    initialValue: "src/ai",
-    placeholder: "src/ai",
-  });
-  if (p.isCancel(base)) {
-    p.cancel("Init cancelled.");
-    process.exit(0);
+  let baseDir: string;
+  if (opts.base) {
+    baseDir = opts.base;
+  } else if (opts.yes) {
+    baseDir = "src/ai";
+  } else {
+    const base = await p.text({
+      message: "Where should kitn components be installed?",
+      initialValue: "src/ai",
+      placeholder: "src/ai",
+    });
+    if (p.isCancel(base)) {
+      p.cancel("Init cancelled.");
+      process.exit(0);
+    }
+    baseDir = base as string;
   }
-
-  const baseDir = base as string;
   const config = {
     runtime: runtime as "bun" | "node" | "deno",
     framework: "hono" as const,
@@ -126,6 +154,16 @@ export async function initCommand() {
       `await ai.initialize();`,
     ].join("\n"),
     "Add this to your server entry point:",
+  );
+
+  p.log.message(
+    [
+      pc.bold("Add your first agent:"),
+      `  ${pc.cyan("kitn add weather-agent")}`,
+      "",
+      pc.bold("Browse all components:"),
+      `  ${pc.cyan("kitn list")}`,
+    ].join("\n"),
   );
 
   p.outro("Done!");

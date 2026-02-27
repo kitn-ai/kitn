@@ -1,0 +1,30 @@
+{
+  "name": "guardrails-agent",
+  "type": "kitn:agent",
+  "description": "Guardrails finance advisor that classifies input before generating advice, blocking off-topic queries",
+  "dependencies": [
+    "ai",
+    "zod"
+  ],
+  "registryDependencies": [
+    "core"
+  ],
+  "envVars": {},
+  "files": [
+    "guardrails-agent.ts"
+  ],
+  "docs": "Demonstrates the guardrails pattern: Phase 1 classifies whether the query is a personal finance question (using generateObject), Phase 2 generates advice only for allowed queries.",
+  "categories": [
+    "guardrails",
+    "finance",
+    "safety"
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-25",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

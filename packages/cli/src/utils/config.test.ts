@@ -71,4 +71,34 @@ describe("config", () => {
     const result = getInstallPath(config, "kitn:agent", "weather-agent.ts");
     expect(result).toBe("src/agents/weather-agent.ts");
   });
+
+  it("getInstallPath adds namespace subdirectory for non-default registry", () => {
+    const config = {
+      runtime: "bun" as const,
+      aliases: {
+        agents: "src/agents",
+        tools: "src/tools",
+        skills: "src/skills",
+        storage: "src/storage",
+      },
+      registries: {},
+    };
+    const result = getInstallPath(config, "kitn:agent", "weather-agent.ts", "@acme");
+    expect(result).toBe("src/agents/acme/weather-agent.ts");
+  });
+
+  it("getInstallPath uses flat path for @kitn namespace", () => {
+    const config = {
+      runtime: "bun" as const,
+      aliases: {
+        agents: "src/agents",
+        tools: "src/tools",
+        skills: "src/skills",
+        storage: "src/storage",
+      },
+      registries: {},
+    };
+    const result = getInstallPath(config, "kitn:tool", "weather.ts", "@kitn");
+    expect(result).toBe("src/tools/weather.ts");
+  });
 });

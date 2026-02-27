@@ -1,0 +1,15 @@
+{
+  "name": "kitn-registry",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bun run scripts/build-registry.ts",
+    "validate": "bun run scripts/validate-registry.ts",
+    "stage": "bun run scripts/stage-registry.ts",
+    "typecheck": "bun run stage && tsc --noEmit"
+  },
+  "devDependencies": {
+    "ai": "^6.0.99",
+    "zod": "^3.24.0"
+  }
+}

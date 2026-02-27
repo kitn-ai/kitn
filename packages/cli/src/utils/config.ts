@@ -13,6 +13,17 @@ const installedComponentSchema = z.object({
   hash: z.string(),
 });
 
+const registryEntrySchema = z.object({
+  url: z.string(),
+  homepage: z.string().optional(),
+  description: z.string().optional(),
+});
+
+export type RegistryEntry = z.infer<typeof registryEntrySchema>;
+
+// Registries can be a plain URL string (backward compat) or a rich entry object
+const registryValueSchema = z.union([z.string(), registryEntrySchema]);
+
 export const configSchema = z.object({
   $schema: z.string().optional(),
   runtime: z.enum(["bun", "node", "deno"]),
@@ -24,11 +35,16 @@ export const configSchema = z.object({
     skills: z.string(),
     storage: z.string(),
   }),
-  registries: z.record(z.string(), z.string()),
+  registries: z.record(z.string(), registryValueSchema),
   installed: z.record(z.string(), installedComponentSchema).optional(),
 });
 
 export type KitnConfig = z.infer<typeof configSchema>;
+
+/** Extract the URL from a registry entry (string or object). */
+export function getRegistryUrl(entry: string | RegistryEntry): string {
+  return typeof entry === "string" ? entry : entry.url;
+}
 
 const CONFIG_FILE = "kitn.json";
 
@@ -60,8 +76,14 @@ type SingleFileComponentType = Exclude<ComponentType, "kitn:package">;
 export function getInstallPath(
   config: KitnConfig,
   type: SingleFileComponentType,
-  fileName: string
+  fileName: string,
+  namespace?: string,
 ): string {
   const aliasKey = typeToAliasKey[type];
-  return join(config.aliases[aliasKey], fileName);
+  const base = config.aliases[aliasKey];
+  if (namespace && namespace !== "@kitn") {
+    const nsDir = namespace.replace("@", "");
+    return join(base, nsDir, fileName);
+  }
+  return join(base, fileName);
 }

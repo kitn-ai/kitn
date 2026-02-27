@@ -53,6 +53,10 @@ tmp/
 .tmp/
 *.tmp
 
+# Registry build output
+registry/r/
+registry/_staging/
+
 # Misc
 .cache/
 .parcel-cache/

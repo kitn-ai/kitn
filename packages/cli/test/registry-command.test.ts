@@ -33,6 +33,28 @@ describe("registryAddCommand", () => {
     expect(config!.registries["@kitn"]).toBeDefined();
   });
 
+  test("stores rich entry with --homepage and --description", async () => {
+    await writeConfig(dir, makeConfig());
+    await registryAddCommand("@acme", "https://acme.dev/r/{type}/{name}.json", {
+      cwd: dir,
+      homepage: "https://acme.dev",
+      description: "Acme AI components",
+    });
+    const config = await readConfig(dir);
+    const entry = config!.registries["@acme"];
+    expect(typeof entry).toBe("object");
+    expect((entry as any).url).toBe("https://acme.dev/r/{type}/{name}.json");
+    expect((entry as any).homepage).toBe("https://acme.dev");
+    expect((entry as any).description).toBe("Acme AI components");
+  });
+
+  test("stores plain URL string when no extra fields provided", async () => {
+    await writeConfig(dir, makeConfig());
+    await registryAddCommand("@myteam", "https://myteam.dev/r/{type}/{name}.json", { cwd: dir });
+    const config = await readConfig(dir);
+    expect(typeof config!.registries["@myteam"]).toBe("string");
+  });
+
   test("rejects URL missing {type} placeholder", async () => {
     await writeConfig(dir, makeConfig());
     await expect(
@@ -148,7 +170,7 @@ describe("registryListCommand", () => {
     await rm(dir, { recursive: true });
   });
 
-  test("returns all registries", async () => {
+  test("returns all registries with URLs extracted", async () => {
     const config = makeConfig({
       registries: {
         "@kitn": "https://kitn-ai.github.io/registry/r/{type}/{name}.json",
@@ -157,10 +179,29 @@ describe("registryListCommand", () => {
     });
     await writeConfig(dir, config);
     const result = await registryListCommand({ cwd: dir });
-    expect(result).toEqual([
-      { namespace: "@kitn", url: "https://kitn-ai.github.io/registry/r/{type}/{name}.json" },
-      { namespace: "@myteam", url: "https://myteam.dev/r/{type}/{name}.json" },
-    ]);
+    expect(result).toHaveLength(2);
+    expect(result[0].namespace).toBe("@kitn");
+    expect(result[0].url).toBe("https://kitn-ai.github.io/registry/r/{type}/{name}.json");
+    expect(result[1].namespace).toBe("@myteam");
+    expect(result[1].url).toBe("https://myteam.dev/r/{type}/{name}.json");
+  });
+
+  test("returns homepage and description for rich entries", async () => {
+    const config = makeConfig({
+      registries: {
+        "@kitn": {
+          url: "https://kitn-ai.github.io/registry/r/{type}/{name}.json",
+          homepage: "https://kitn.ai",
+          description: "Official kitn components",
+        },
+      },
+    });
+    await writeConfig(dir, config);
+    const result = await registryListCommand({ cwd: dir });
+    expect(result).toHaveLength(1);
+    expect(result[0].url).toBe("https://kitn-ai.github.io/registry/r/{type}/{name}.json");
+    expect(result[0].homepage).toBe("https://kitn.ai");
+    expect(result[0].description).toBe("Official kitn components");
   });
 
   test("returns empty array when no registries", async () => {
@@ -198,6 +239,29 @@ describe("multi-registry fetchIndex", () => {
 
     expect(calls).toContain("https://kitn.example.com/r/registry.json");
     expect(calls).toContain("https://acme.example.com/r/registry.json");
+  });
+
+  test("fetchIndex works with rich registry entries", async () => {
+    const calls: string[] = [];
+    globalThis.fetch = mock(async (url: string | URL | Request) => {
+      const urlStr = url.toString();
+      calls.push(urlStr);
+      return new Response(JSON.stringify({ version: "1.0", items: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }) as typeof fetch;
+
+    const fetcher = new RegistryFetcher({
+      "@kitn": {
+        url: "https://kitn.example.com/r/{type}/{name}.json",
+        homepage: "https://kitn.ai",
+        description: "Official kitn components",
+      },
+    });
+
+    await fetcher.fetchIndex("@kitn");
+    expect(calls).toContain("https://kitn.example.com/r/registry.json");
   });
 
   test("fetching multiple registries returns independent results", async () => {

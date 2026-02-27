@@ -109,6 +109,8 @@ registry
   .argument("<namespace>", "registry namespace (e.g. @myteam)")
   .argument("<url>", "URL template with {type} and {name} placeholders")
   .option("-o, --overwrite", "overwrite if namespace already exists")
+  .option("--homepage <url>", "registry homepage URL")
+  .option("--description <text>", "short description of the registry")
   .action(async (namespace: string, url: string, opts) => {
     const { registryAddCommand } = await import("./commands/registry.js");
     await registryAddCommand(namespace, url, opts);

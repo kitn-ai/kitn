@@ -1,0 +1,14 @@
+{
+  "name": "eli5",
+  "type": "kitn:skill",
+  "description": "Explain Like I'm 5 -- simplifies complex topics using everyday analogies and plain language",
+  "dependencies": [],
+  "registryDependencies": [],
+  "envVars": {},
+  "files": ["README.md"],
+  "docs": "Inject this skill when the user asks for simple explanations. Phase: response (applied during synthesis).",
+  "categories": ["explanation", "beginner", "simplification"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-02-25", "type": "initial", "note": "Initial release" }
+  ]
+}

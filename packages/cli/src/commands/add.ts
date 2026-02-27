@@ -154,6 +154,9 @@ export async function addCommand(components: string[], opts: AddOptions) {
 
     } else {
       // Regular component install — single file, import rewriting
+      const ref = refs.find((r) => r.name === item.name) ?? { namespace: "@kitn", name: item.name, version: undefined };
+      const ns = ref.namespace;
+
       for (const file of item.files) {
         const aliasKey = (() => {
           switch (item.type) {
@@ -165,8 +168,9 @@ export async function addCommand(components: string[], opts: AddOptions) {
         })() as "agents" | "tools" | "skills" | "storage";
 
         const fileName = file.path.split("/").pop()!;
-        const targetPath = join(cwd, config.aliases[aliasKey], fileName);
-        const relativePath = join(config.aliases[aliasKey], fileName);
+        const installPath = getInstallPath(config, item.type as Exclude<ComponentType, "kitn:package">, fileName, ns);
+        const targetPath = join(cwd, installPath);
+        const relativePath = installPath;
         const content = rewriteKitnImports(file.content, item.type, fileName, config.aliases);
 
         const status = await checkFileStatus(targetPath, content);
@@ -215,23 +219,14 @@ export async function addCommand(components: string[], opts: AddOptions) {
         const fn = f.path.split("/").pop()!;
         return rewriteKitnImports(f.content, item.type, fn, config.aliases);
       }).join("\n");
-      const ref = refs.find((r) => r.name === item.name) ?? { namespace: "@kitn", name: item.name, version: undefined };
-      const installedKey = ref.namespace === "@kitn" ? item.name : `${ref.namespace}/${item.name}`;
+      const installedKey = ns === "@kitn" ? item.name : `${ns}/${item.name}`;
       installed[installedKey] = {
-        registry: ref.namespace,
+        registry: ns,
         version: item.version ?? "1.0.0",
         installedAt: new Date().toISOString(),
         files: item.files.map((f) => {
-          const aliasKey = (() => {
-            switch (item.type) {
-              case "kitn:agent": return "agents";
-              case "kitn:tool": return "tools";
-              case "kitn:skill": return "skills";
-              case "kitn:storage": return "storage";
-            }
-          })() as "agents" | "tools" | "skills" | "storage";
           const fileName = f.path.split("/").pop()!;
-          return join(config.aliases[aliasKey], fileName);
+          return getInstallPath(config, item.type as Exclude<ComponentType, "kitn:package">, fileName, ns);
         }),
         hash: contentHash(allContent),
       };
@@ -249,17 +244,12 @@ export async function addCommand(components: string[], opts: AddOptions) {
   for (const item of resolved) {
     if (!BARREL_ELIGIBLE.has(item.type)) continue;
 
-    for (const file of item.files) {
-      const aliasKey = (() => {
-        switch (item.type) {
-          case "kitn:agent": return "agents";
-          case "kitn:tool": return "tools";
-          case "kitn:skill": return "skills";
-        }
-      })() as "agents" | "tools" | "skills";
+    const ref = refs.find((r) => r.name === item.name) ?? { namespace: "@kitn", name: item.name, version: undefined };
 
+    for (const file of item.files) {
       const fileName = file.path.split("/").pop()!;
-      const filePath = join(cwd, config.aliases[aliasKey], fileName);
+      const installPath = getInstallPath(config, item.type as Exclude<ComponentType, "kitn:package">, fileName, ref.namespace);
+      const filePath = join(cwd, installPath);
       const importPath = "./" + relative(barrelDir, filePath).replace(/\\/g, "/");
       barrelImports.push(importPath);
     }

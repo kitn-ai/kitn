@@ -36,6 +36,7 @@ const PACKAGE_IMPORT_REWRITES: Record<string, string> = {
   "@kitnai/core": "@kitn/core",
   "@kitnai/hono": "@kitn/routes",
   "@kitnai/hono-openapi": "@kitn/routes",
+  "@kitnai/elysia-adapter": "@kitn/elysia",
 };
 
 function rewritePackageImports(content: string): string {

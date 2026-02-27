@@ -60,12 +60,8 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   const app = new Elysia();
 
   app.onError(({ error, set }) => {
-    // Only handle Error instances (not ElysiaCustomStatusResponse etc.)
-    if (!(error instanceof Error)) {
-      console.error(error);
-      set.status = 500;
-      return { error: "Internal Server Error" };
-    }
+    // Let non-Error values (e.g. ElysiaCustomStatusResponse) pass through
+    if (!(error instanceof Error)) return;
 
     // Surface AI SDK errors (auth failures, rate limits, bad requests, etc.)
     if (error.name?.startsWith("AI_")) {

@@ -1,0 +1,14 @@
+{
+  "name": "elysia-adapter",
+  "type": "kitn:package",
+  "description": "Elysia adapter with routes for kitn AI agents",
+  "sourceDir": "../../../../packages/elysia-adapter/src",
+  "installDir": "routes",
+  "dependencies": ["elysia"],
+  "registryDependencies": ["core"],
+  "docs": "Routes installed to your project. Import with: import { ... } from '@kitn/elysia'",
+  "version": "1.0.0",
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-02-27", "type": "initial", "note": "Initial release" }
+  ]
+}

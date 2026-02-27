@@ -18,7 +18,7 @@ export function createSkillsRoutes(ctx: PluginContext) {
       const { name, content } = body as any;
       try {
         const skill = await store.createSkill(name, content);
-        return skill;
+        return status(201, skill);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         return status(400, { error: message });

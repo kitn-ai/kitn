@@ -7,7 +7,7 @@ import { patchProjectTsconfig } from "../installers/tsconfig-patcher.js";
 import { createBarrelFile } from "../installers/barrel-manager.js";
 import { addCommand } from "./add.js";
 
-const PLUGIN_TEMPLATE = `import { createAIPlugin } from "@kitn/hono-routes";
+const PLUGIN_TEMPLATE = `import { createAIPlugin } from "@kitn/routes";
 import { registerWithPlugin } from "./index.js";
 
 export const ai = createAIPlugin({
@@ -121,7 +121,7 @@ export async function initCommand(opts: InitOptions = {}) {
   await writeConfig(cwd, config);
   s.stop("Created kitn.json");
 
-  // Set up wildcard tsconfig path so @kitn/core, @kitn/hono-routes, etc. all resolve.
+  // Set up wildcard tsconfig path so @kitn/core, @kitn/routes, etc. all resolve.
   // Remove any old per-package entries (e.g. @kitnai/core, @kitn/core) left from earlier versions.
   await patchProjectTsconfig(
     cwd,

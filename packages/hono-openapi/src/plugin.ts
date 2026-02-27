@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import type { AIPluginConfig, AIPluginInstance } from "./types.js";
 import type { PluginContext } from "@kitnai/core";
@@ -13,6 +13,7 @@ import {
   createMemoryStorage,
   VoiceManager,
 } from "@kitnai/core";
+import { configureOpenAPI } from "./lib/configure-openapi.js";
 
 // Route factories
 import { createAgentsRoutes } from "./routes/agents/agents.routes.js";
@@ -57,7 +58,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   };
 
   // Build the Hono sub-app
-  const app = new Hono();
+  const app = new OpenAPIHono();
 
   app.onError((err, c) => {
     if (err instanceof HTTPException) {
@@ -97,6 +98,9 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   if (voice) {
     app.route("/voice", createVoiceRoutes(ctx));
   }
+
+  // Configure OpenAPI docs
+  configureOpenAPI(app, config.openapi);
 
   return {
     ...ctx,

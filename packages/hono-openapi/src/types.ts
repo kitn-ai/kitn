@@ -1,9 +1,14 @@
-import type { Hono } from "hono";
+import type { OpenAPIHono } from "@hono/zod-openapi";
 import type {
   CoreConfig,
   PluginContext,
+  AgentRegistry,
+  ToolRegistry,
   AgentHandler,
   AgentRegistration,
+  CardRegistry,
+  VoiceManager,
+  StorageProvider,
   MemoryStore,
   OrchestratorAgentConfig,
 } from "@kitnai/core";
@@ -11,6 +16,7 @@ import type {
 export interface AIPluginConfig extends CoreConfig {
   voice?: VoiceConfig;
   memoryStore?: MemoryStore;
+  openapi?: { title?: string; version?: string; description?: string; serverUrl?: string };
 }
 
 export interface VoiceConfig {
@@ -18,7 +24,7 @@ export interface VoiceConfig {
 }
 
 export interface AIPluginInstance extends PluginContext {
-  router: Hono;
+  router: OpenAPIHono;
   initialize(): Promise<void>;
   createHandlers(config: { tools: Record<string, any>; maxSteps?: number }): {
     sseHandler: AgentHandler;

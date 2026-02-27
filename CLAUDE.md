@@ -35,7 +35,7 @@ examples/
   getting-started/ Minimal getting-started example
 ```
 
-> **Note:** The `@kitnai/*` names above are internal workspace package names. User projects import from the published npm scope: `@kitn/core` (maps to `@kitnai/core`) and `@kitn/hono-routes` (maps to `@kitnai/hono`).
+> **Note:** The `@kitnai/*` names above are internal workspace package names. User projects import from the published npm scope: `@kitn/core` (maps to `@kitnai/core`) and `@kitn/routes` (maps to `@kitnai/hono`).
 
 **Dependency graph:** `hono` depends on `core`. `cli` and `client` are standalone.
 
@@ -55,7 +55,7 @@ These conventions apply **within the monorepo** (for developers working on kitn 
 - Use `@kitnai/core` and `@kitnai/hono` for cross-package imports within the monorepo
 - Use `ai` package for Vercel AI SDK types and functions (e.g. `tool()`, `streamText()`)
 
-User projects import from the published npm packages: `@kitn/core` and `@kitn/hono-routes`.
+User projects import from the published npm packages: `@kitn/core` and `@kitn/routes`.
 
 ## Hono Route Pattern
 

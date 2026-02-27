@@ -30,11 +30,12 @@ const typeToDir: Record<ComponentType, string> = {
 
 /**
  * Rewrite monorepo package imports to user-facing tsconfig aliases.
- * e.g. `@kitnai/core` → `@kitn/core`, `@kitnai/hono` → `@kitn/hono-routes`
+ * e.g. `@kitnai/core` → `@kitn/core`, `@kitnai/hono` → `@kitn/routes`
  */
 const PACKAGE_IMPORT_REWRITES: Record<string, string> = {
   "@kitnai/core": "@kitn/core",
-  "@kitnai/hono": "@kitn/hono-routes",
+  "@kitnai/hono": "@kitn/routes",
+  "@kitnai/hono-openapi": "@kitn/routes",
 };
 
 function rewritePackageImports(content: string): string {

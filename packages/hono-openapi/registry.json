@@ -1,5 +1,6 @@
 {
   "$schema": "https://kitn.dev/schema/registry.json",
+  "name": "hono-openapi",
   "type": "kitn:package",
   "installDir": "routes",
   "registryDependencies": ["core"],
@@ -7,6 +8,6 @@
     "@kitn/routes": ["./index.ts"]
   },
   "exclude": ["lib/auth.ts"],
-  "docs": "Routes installed to your project. Import with: import { ... } from '@kitn/routes'",
-  "categories": ["http", "hono"]
+  "docs": "OpenAPI routes with zod schemas and /doc JSON spec endpoint. Import with: import { ... } from '@kitn/routes'",
+  "categories": ["http", "hono", "openapi"]
 }

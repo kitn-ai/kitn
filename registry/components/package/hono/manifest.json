@@ -1,13 +1,13 @@
 {
   "name": "hono",
   "type": "kitn:package",
-  "description": "Hono HTTP adapter with routes for kitn AI agents",
+  "description": "Plain Hono HTTP adapter with routes for kitn AI agents",
   "sourceDir": "../../../../packages/hono/src",
-  "installDir": "hono-routes",
-  "dependencies": ["hono", "@hono/zod-openapi", "@scalar/hono-api-reference"],
+  "installDir": "routes",
+  "dependencies": ["hono"],
   "registryDependencies": ["core"],
   "exclude": ["lib/auth.ts"],
-  "docs": "Routes installed to your project. Import with: import { ... } from '@kitn/hono-routes'",
+  "docs": "Routes installed to your project. Import with: import { ... } from '@kitn/routes'",
   "version": "1.0.0",
   "changelog": [
     { "version": "1.0.0", "date": "2026-02-25", "type": "initial", "note": "Initial release" }

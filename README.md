@@ -85,7 +85,7 @@ Create a server with `createAIPlugin`, register your agents and tools, and mount
 
 ```ts
 import { Hono } from "hono";
-import { createAIPlugin, createFileStorage } from "@kitn/hono-routes";
+import { createAIPlugin, createFileStorage } from "@kitn/routes";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 
 const plugin = createAIPlugin({

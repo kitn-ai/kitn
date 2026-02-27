@@ -1,4 +1,3 @@
-import { apiReference } from "@scalar/hono-api-reference";
 import type { OpenAPIHono } from "@hono/zod-openapi";
 
 export interface OpenAPIConfig {
@@ -33,15 +32,4 @@ export function configureOpenAPI(app: OpenAPIHono, config: OpenAPIConfig = {}) {
     ...(servers.length > 0 && { servers }),
     security: [{ ApiKeyAuth: [] }],
   });
-
-  app.get(
-    "/reference",
-    apiReference({
-      url: "./doc",
-      theme: "kepler",
-      layout: "modern",
-      defaultHttpClient: { targetKey: "js", clientKey: "fetch" },
-      pageTitle: `${title} - API Reference`,
-    })
-  );
 }

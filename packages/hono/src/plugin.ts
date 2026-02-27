@@ -31,7 +31,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   }
 
   const storage = config.storage ?? (() => {
-    console.log("[ai-plugin] Using in-memory storage (data will not persist across restarts)");
+    console.log("[ai] Using in-memory storage (data will not persist across restarts)");
     return createMemoryStorage();
   })();
 
@@ -73,7 +73,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
         ? (() => { try { return JSON.parse(aiErr.responseBody); } catch { return undefined; } })()
         : undefined;
       const code = status >= 400 && status < 500 ? status : 502;
-      console.error(`[ai-plugin] AI provider error (${status}):`, err.message);
+      console.error(`[ai] AI provider error (${status}):`, err.message);
       return c.json({
         error: err.message,
         ...(aiErr.url && { url: aiErr.url }),
@@ -116,7 +116,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
 
       const skills = await storage.skills.listSkills();
       console.log(
-        `[ai-plugin] Initialized: ${agents.list().length} agents, ${tools.list().length} tools, ${skills.length} skills`,
+        `[ai] Initialized: ${agents.list().length} agents, ${tools.list().length} tools, ${skills.length} skills`,
       );
     },
     createHandlers(handlerConfig) {

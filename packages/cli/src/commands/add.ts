@@ -18,6 +18,7 @@ import { rewriteKitnImports } from "../installers/import-rewriter.js";
 import { createBarrelFile, addImportToBarrel } from "../installers/barrel-manager.js";
 import { contentHash } from "../utils/hash.js";
 import { parseComponentRef, type ComponentRef } from "../utils/parse-ref.js";
+import { resolveTypeAlias, toComponentType } from "../utils/type-aliases.js";
 import { typeToDir, type RegistryItem, type ComponentType } from "../registry/schema.js";
 import { existsSync } from "fs";
 import { readFile, writeFile, mkdir } from "fs/promises";
@@ -43,6 +44,34 @@ export async function addCommand(components: string[], opts: AddOptions) {
     process.exit(1);
   }
 
+  // --- Positional type argument parsing ---
+  // e.g. `kitn add agent weather` → typeFilter="agent", components=["weather"]
+  let typeFilter: string | undefined;
+  const firstAlias = resolveTypeAlias(components[0]);
+  if (firstAlias) {
+    if (components.length === 1) {
+      p.log.error(
+        `${pc.bold(components[0])} looks like a type, not a component name. Usage: ${pc.cyan(`kitn add ${components[0]} <name>`)}`
+      );
+      process.exit(1);
+    }
+    typeFilter = firstAlias;
+    components = components.slice(1);
+  }
+
+  // Merge with --type flag (flag wins on conflict)
+  if (opts.type) {
+    const flagAlias = resolveTypeAlias(opts.type);
+    if (!flagAlias) {
+      p.log.error(`Unknown type ${pc.bold(opts.type)}. Valid types: agent, tool, skill, storage, package`);
+      process.exit(1);
+    }
+    if (typeFilter && typeFilter !== flagAlias) {
+      p.log.warn(`Positional type ${pc.bold(typeFilter)} overridden by --type ${pc.bold(flagAlias)}`);
+    }
+    typeFilter = flagAlias;
+  }
+
   // Resolve "routes" to framework-specific package name, then parse refs
   const resolvedComponents = components.map((c) => {
     if (c === "routes") {
@@ -55,15 +84,107 @@ export async function addCommand(components: string[], opts: AddOptions) {
   const refs = resolvedComponents.map(parseComponentRef);
   const fetcher = new RegistryFetcher(config.registries);
 
+  // --- Disambiguation: resolve ambiguous names before dependency resolution ---
   const s = p.spinner();
   s.start("Resolving dependencies...");
 
+  // Build a map of pre-resolved types for explicitly requested components
+  const preResolvedTypes = new Map<string, ComponentType>();
+  let expandedNames = [...resolvedComponents];
+
+  try {
+    // Fetch all registry indices
+    const namespacesToFetch = Object.keys(config.registries);
+    const allIndexItems: Array<{ name: string; type: ComponentType; namespace: string }> = [];
+
+    for (const namespace of namespacesToFetch) {
+      try {
+        const index = await fetcher.fetchIndex(namespace);
+        for (const item of index.items) {
+          allIndexItems.push({ name: item.name, type: item.type, namespace });
+        }
+      } catch {
+        // Skip failing registries during disambiguation
+      }
+    }
+
+    // Check each explicit component for ambiguity
+    const newExpandedNames: string[] = [];
+    for (const name of resolvedComponents) {
+      const ref = refs.find((r) => r.name === name) ?? { namespace: "@kitn", name, version: undefined };
+      let matches = allIndexItems.filter((i) => i.name === name && (ref.namespace === "@kitn" || i.namespace === ref.namespace));
+
+      if (typeFilter) {
+        const filteredType = toComponentType(typeFilter);
+        matches = matches.filter((m) => m.type === filteredType);
+      }
+
+      if (matches.length === 0) {
+        // No matches — let the resolution phase produce the error
+        newExpandedNames.push(name);
+      } else if (matches.length === 1) {
+        preResolvedTypes.set(name, matches[0].type);
+        newExpandedNames.push(name);
+      } else {
+        // Multiple types for the same name
+        const uniqueTypes = [...new Set(matches.map((m) => m.type))];
+        if (uniqueTypes.length === 1) {
+          preResolvedTypes.set(name, uniqueTypes[0]);
+          newExpandedNames.push(name);
+        } else {
+          // Need disambiguation
+          s.stop("Disambiguation needed");
+
+          if (!process.stdin.isTTY) {
+            const typeNames = uniqueTypes.map((t) => t.replace("kitn:", "")).join(", ");
+            p.log.error(
+              `Multiple components named ${pc.bold(name)} found (${typeNames}). Specify the type: ${pc.cyan(`kitn add ${uniqueTypes[0].replace("kitn:", "")} ${name}`)}`
+            );
+            process.exit(1);
+          }
+
+          const selected = await p.multiselect({
+            message: `Multiple types found for ${pc.bold(name)}. Which do you want to install?`,
+            options: uniqueTypes.map((t) => ({
+              value: t,
+              label: `${name} ${pc.dim(`(${t.replace("kitn:", "")})`)}`,
+            })),
+          });
+
+          if (p.isCancel(selected)) {
+            p.cancel("Cancelled.");
+            process.exit(0);
+          }
+
+          for (const type of selected as ComponentType[]) {
+            preResolvedTypes.set(name, type);
+            newExpandedNames.push(name);
+          }
+
+          s.start("Resolving dependencies...");
+        }
+      }
+    }
+    expandedNames = newExpandedNames;
+  } catch (err: any) {
+    s.stop(pc.red("Failed to resolve dependencies"));
+    p.log.error(err.message);
+    process.exit(1);
+  }
+
+  // --- Dependency resolution with type-aware fetching ---
   let resolved: RegistryItem[];
   try {
-    resolved = await resolveDependencies(resolvedComponents, async (name) => {
+    resolved = await resolveDependencies(expandedNames, async (name) => {
       const ref = refs.find((r) => r.name === name) ?? { namespace: "@kitn", name, version: undefined };
       const index = await fetcher.fetchIndex(ref.namespace);
-      const indexItem = index.items.find((i) => i.name === name);
+
+      // Use pre-resolved type for explicit names, first-match for transitive deps
+      const preResolved = preResolvedTypes.get(name);
+      const indexItem = preResolved
+        ? index.items.find((i) => i.name === name && i.type === preResolved)
+        : index.items.find((i) => i.name === name);
+
       if (!indexItem) throw new Error(`Component '${name}' not found in ${ref.namespace} registry`);
       const dir = typeToDir[indexItem.type];
       return fetcher.fetchItem(name, dir as any, ref.namespace, ref.version);
@@ -77,7 +198,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
   s.stop(`Resolved ${resolved.length} component(s)`);
 
   p.log.info("Components to install:\n" + resolved.map((item) => {
-    const isExplicit = resolvedComponents.includes(item.name) || components.includes(item.name);
+    const isExplicit = expandedNames.includes(item.name) || components.includes(item.name);
     const label = isExplicit ? item.name : `${item.name} ${pc.dim("(dependency)")}`;
     return `  ${pc.cyan(label)}`;
   }).join("\n"));

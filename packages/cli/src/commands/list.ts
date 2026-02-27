@@ -1,6 +1,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { readConfig } from "../utils/config.js";
+import { resolveTypeAlias } from "../utils/type-aliases.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
 import type { RegistryIndex } from "../registry/schema.js";
 
@@ -13,19 +14,6 @@ interface ListOptions {
 
 type IndexItemWithNamespace = RegistryIndex["items"][number] & { namespace: string };
 
-const TYPE_ALIASES: Record<string, string> = {
-  agent: "agent",
-  agents: "agent",
-  tool: "tool",
-  tools: "tool",
-  skill: "skill",
-  skills: "skill",
-  storage: "storage",
-  storages: "storage",
-  package: "package",
-  packages: "package",
-};
-
 export async function listCommand(typeFilter: string | undefined, opts: ListOptions) {
   const cwd = process.cwd();
   const config = await readConfig(cwd);
@@ -36,7 +24,7 @@ export async function listCommand(typeFilter: string | undefined, opts: ListOpti
 
   // Resolve type filter from positional arg or --type flag
   const rawType = typeFilter ?? opts.type;
-  const resolvedType = rawType ? TYPE_ALIASES[rawType.toLowerCase()] : undefined;
+  const resolvedType = rawType ? resolveTypeAlias(rawType) : undefined;
   if (rawType && !resolvedType) {
     p.log.error(`Unknown type ${pc.bold(rawType)}. Valid types: agent, tool, skill, storage, package`);
     process.exit(1);

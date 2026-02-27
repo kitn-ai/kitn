@@ -69,11 +69,17 @@ kitn add weather-agent@1.2.0
 # Overwrite existing files without prompting
 kitn add weather-agent --overwrite
 
-# Filter interactive selection by type
-kitn add --type agent
+# Type-first syntax — specify the type before the name
+kitn add agent weather
+kitn add tool weather
+
+# Filter by type with the --type flag
+kitn add --type agent weather
 ```
 
 Components from the default `@kitn` registry don't need a namespace prefix. Components from other registries use `@namespace/name` format.
+
+When multiple components share the same name but differ in type (e.g., a `weather` agent and a `weather` tool), you'll be prompted to choose which to install. Use the type-first syntax or `--type` flag to skip the prompt.
 
 Third-party components install into a namespace subdirectory (e.g. `src/ai/agents/acme/custom-agent.ts`).
 
@@ -82,7 +88,7 @@ Third-party components install into a namespace subdirectory (e.g. `src/ai/agent
 | Flag | Description |
 |------|-------------|
 | `-o, --overwrite` | Overwrite existing files without prompting |
-| `-t, --type <type>` | Filter components by type when browsing |
+| `-t, --type <type>` | Filter by component type during resolution |
 
 When a file already exists and differs from the registry version, you'll see a unified diff and be prompted to keep your version or overwrite.
 

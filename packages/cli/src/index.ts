@@ -24,10 +24,10 @@ program
 
 program
   .command("add")
-  .description("Add components from the kitn registry")
-  .argument("[components...]", "component names to install")
+  .description("Add components from the registry (supports type-first: kitn add agent <name>)")
+  .argument("[components...]", "component names or type followed by names")
   .option("-o, --overwrite", "overwrite existing files without prompting")
-  .option("-t, --type <type>", "filter by component type")
+  .option("-t, --type <type>", "filter by component type during resolution")
   .action(async (components: string[], opts) => {
     const { addCommand } = await import("./commands/add.js");
     await addCommand(components, opts);

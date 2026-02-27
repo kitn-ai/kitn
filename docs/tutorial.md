@@ -89,7 +89,7 @@ Create `src/index.ts`:
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { z } from "zod";
-import { createAIPlugin } from "@kitn/routes";
+import { createAIPlugin } from "@kitn/hono-routes";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 
 // Import the components you installed via `kitn add`
@@ -309,7 +309,7 @@ When you mount the plugin with `app.route("/api", plugin.router)`, you get these
 
 - **Add file storage** to persist conversations across restarts:
   ```typescript
-  import { createAIPlugin, createFileStorage } from "@kitn/routes";
+  import { createAIPlugin, createFileStorage } from "@kitn/hono-routes";
 
   const plugin = createAIPlugin({
     getModel: (id) => openrouter(id ?? MODEL),

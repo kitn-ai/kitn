@@ -1,0 +1,29 @@
+{
+  "name": "weather-tool",
+  "type": "kitn:tool",
+  "description": "Get current weather information for any location using Open-Meteo API",
+  "dependencies": [
+    "ai",
+    "zod"
+  ],
+  "registryDependencies": [
+    "core"
+  ],
+  "envVars": {},
+  "files": [
+    "weather.ts"
+  ],
+  "docs": "The weather tool auto-registers on import. Use it directly or assign it to an agent.",
+  "categories": [
+    "weather",
+    "api"
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-25",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

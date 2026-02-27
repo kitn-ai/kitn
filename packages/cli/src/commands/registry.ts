@@ -1,10 +1,13 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { readConfig, writeConfig } from "../utils/config.js";
+import { readConfig, writeConfig, getRegistryUrl } from "../utils/config.js";
+import type { RegistryEntry } from "../utils/config.js";
 
 interface RegistryAddOptions {
   cwd?: string;
   overwrite?: boolean;
+  homepage?: string;
+  description?: string;
 }
 
 interface RegistryRemoveOptions {
@@ -38,11 +41,21 @@ export async function registryAddCommand(
     throw new Error(`Registry '${namespace}' is already configured. Use --overwrite to replace.`);
   }
 
-  config.registries[namespace] = url;
+  // Store as rich entry if homepage or description provided, otherwise plain URL
+  if (opts.homepage || opts.description) {
+    const entry: RegistryEntry = { url };
+    if (opts.homepage) entry.homepage = opts.homepage;
+    if (opts.description) entry.description = opts.description;
+    config.registries[namespace] = entry;
+  } else {
+    config.registries[namespace] = url;
+  }
   await writeConfig(cwd, config);
 
   p.log.success(`Added registry ${pc.bold(namespace)}`);
   p.log.message(pc.dim(`  ${url}`));
+  if (opts.homepage) p.log.message(pc.dim(`  Homepage: ${opts.homepage}`));
+  if (opts.description) p.log.message(pc.dim(`  ${opts.description}`));
 }
 
 export async function registryRemoveCommand(
@@ -85,18 +98,25 @@ export async function registryRemoveCommand(
 
 export async function registryListCommand(
   opts: RegistryListOptions = {},
-): Promise<Array<{ namespace: string; url: string }>> {
+): Promise<Array<{ namespace: string; url: string; homepage?: string; description?: string }>> {
   const cwd = opts.cwd ?? process.cwd();
   const config = await readConfig(cwd);
   if (!config) throw new Error("No kitn.json found. Run `kitn init` first.");
 
-  const entries = Object.entries(config.registries).map(([namespace, url]) => ({ namespace, url }));
+  const entries = Object.entries(config.registries).map(([namespace, value]) => {
+    const url = getRegistryUrl(value);
+    const homepage = typeof value === "object" ? value.homepage : undefined;
+    const description = typeof value === "object" ? value.description : undefined;
+    return { namespace, url, homepage, description };
+  });
 
   if (entries.length === 0) {
     p.log.message(pc.dim("  No registries configured."));
   } else {
-    for (const { namespace, url } of entries) {
+    for (const { namespace, url, homepage, description } of entries) {
       p.log.message(`  ${pc.bold(namespace.padEnd(16))} ${pc.dim(url)}`);
+      if (description) p.log.message(`  ${" ".repeat(16)} ${description}`);
+      if (homepage) p.log.message(`  ${" ".repeat(16)} ${pc.dim(homepage)}`);
     }
   }
 

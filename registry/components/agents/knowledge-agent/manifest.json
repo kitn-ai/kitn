@@ -1,0 +1,29 @@
+{
+  "name": "knowledge-agent",
+  "type": "kitn:agent",
+  "description": "Movie knowledge and recommendation agent powered by TMDB",
+  "dependencies": [
+    "ai"
+  ],
+  "registryDependencies": [
+    "core",
+    "movies-tool"
+  ],
+  "envVars": {},
+  "files": [
+    "knowledge-agent.ts"
+  ],
+  "docs": "Uses movies-tool to search and get movie details. Provides recommendations in an engaging film-critic style.",
+  "categories": [
+    "movies",
+    "entertainment"
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-25",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

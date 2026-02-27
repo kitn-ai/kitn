@@ -4,7 +4,7 @@ A working REST API built with kitn, demonstrating agents, tools, an orchestrator
 
 ## What This Example Demonstrates
 
-- Creating a `@kitn/routes` plugin with `createAIPlugin`
+- Creating a `@kitn/hono-routes` plugin with `createAIPlugin`
 - Registering tools with both AI and direct-call execution
 - Registering agents that use those tools
 - Adding a guard function to reject certain inputs
@@ -201,4 +201,4 @@ Each skill is a directory containing a `README.md` with YAML front matter (`desc
 
 ## Further Reading
 
-See the [main kitn README](../../README.md) for full documentation on the `@kitn/routes` package, client SDK, and architecture overview.
+See the [main kitn README](../../README.md) for full documentation on the `@kitn/hono-routes` package, client SDK, and architecture overview.

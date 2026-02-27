@@ -1,0 +1,28 @@
+{
+  "name": "compact-agent",
+  "type": "kitn:agent",
+  "description": "Conversation compaction agent that summarizes verbose conversations into concise context blocks",
+  "dependencies": [
+    "ai"
+  ],
+  "registryDependencies": [
+    "core"
+  ],
+  "envVars": {},
+  "files": [
+    "compact-agent.ts"
+  ],
+  "docs": "A tool-less agent that compresses long conversations into compact context blocks preserving all essential information.",
+  "categories": [
+    "utility",
+    "summarization"
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-25",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

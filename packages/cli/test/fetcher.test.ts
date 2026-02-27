@@ -35,4 +35,16 @@ describe("RegistryFetcher", () => {
     const fetcher = new RegistryFetcher(registries);
     expect(() => fetcher.resolveUrl("test", "agents", "@unknown")).toThrow("No registry configured for @unknown");
   });
+
+  test("resolves URL from rich registry entry object", () => {
+    const fetcher = new RegistryFetcher({
+      "@kitn": {
+        url: "https://kitn.example.com/r/{type}/{name}.json",
+        homepage: "https://kitn.ai",
+        description: "Official components",
+      },
+    });
+    const url = fetcher.resolveUrl("weather-agent", "agents", "@kitn");
+    expect(url).toBe("https://kitn.example.com/r/agents/weather-agent.json");
+  });
 });

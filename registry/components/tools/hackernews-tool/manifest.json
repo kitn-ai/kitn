@@ -1,0 +1,30 @@
+{
+  "name": "hackernews-tool",
+  "type": "kitn:tool",
+  "description": "Fetch top stories and story details from Hacker News via Firebase API",
+  "dependencies": [
+    "ai",
+    "zod"
+  ],
+  "registryDependencies": [
+    "core"
+  ],
+  "envVars": {},
+  "files": [
+    "hackernews.ts"
+  ],
+  "docs": "Provides two tools: hackernewsTopStoriesTool (fetch trending stories) and hackernewsStoryDetailTool (get story details with top comments).",
+  "categories": [
+    "hackernews",
+    "api",
+    "news"
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-25",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

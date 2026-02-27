@@ -14,7 +14,8 @@
     "dev:voice": "bun run --cwd examples/voice dev",
     "build": "bun run --filter '*' build",
     "test": "bun run --filter '*' test",
-    "typecheck": "bun run --filter '*' typecheck"
+    "typecheck": "bun run --filter '*' typecheck",
+    "build:registry": "bun run --cwd registry scripts/build-registry.ts"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

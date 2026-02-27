@@ -18,7 +18,7 @@ bun add hono @hono/zod-openapi ai zod
 
 ```ts
 import { Hono } from "hono";
-import { createAIPlugin, createFileStorage } from "@kitn/routes";
+import { createAIPlugin, createFileStorage } from "@kitn/hono-routes";
 import { tool } from "ai";
 import { z } from "zod";
 import { openai } from "@ai-sdk/openai";
@@ -139,7 +139,7 @@ Structured data extractors that run on tool results. Register extractors on `plu
 Two built-in storage implementations are included:
 
 ```ts
-import { createFileStorage, createMemoryStorage } from "@kitn/routes";
+import { createFileStorage, createMemoryStorage } from "@kitn/hono-routes";
 
 // File-based (JSON files in a directory)
 const storage = createFileStorage({ dataDir: "./data" });
@@ -161,7 +161,7 @@ interface StorageProvider {
 }
 ```
 
-Each sub-store interface is exported from `@kitn/routes` and documented with JSDoc including usage contracts (e.g., return `null` on not-found, auto-create on first write).
+Each sub-store interface is exported from `@kitn/hono-routes` and documented with JSDoc including usage contracts (e.g., return `null` on not-found, auto-create on first write).
 
 ## API Routes
 

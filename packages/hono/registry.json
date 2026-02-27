@@ -1,7 +1,7 @@
 {
   "$schema": "https://kitn.dev/schema/registry.json",
   "type": "kitn:package",
-  "installDir": "routes",
+  "installDir": "hono-routes",
   "registryDependencies": ["core"],
   "tsconfig": {
     "@kitnai/hono": ["./index.ts"]

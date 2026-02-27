@@ -1,6 +1,6 @@
 # kitn Getting Started
 
-Minimal example showing how to use kitn components with `@kitn/routes`.
+Minimal example showing how to use kitn components with `@kitn/hono-routes`.
 
 This project contains a weather agent and tool as if installed via `kitn add weather-agent`.
 

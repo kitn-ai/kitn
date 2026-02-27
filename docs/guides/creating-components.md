@@ -41,7 +41,7 @@ kitn add @yourname/my-api-tool
 | `kitn:storage` | Persistence adapter (conversations, memory, etc.) | `.ts` |
 | `kitn:package` | Multi-file package (full `src/` directory with `package.json`) | `src/**/*.ts` |
 
-Use `kitn:agent`, `kitn:tool`, `kitn:skill`, or `kitn:storage` for standalone components (one or a few files). Use `kitn:package` for larger libraries like `@kitn/core` or `@kitn/routes` that have their own `package.json`.
+Use `kitn:agent`, `kitn:tool`, `kitn:skill`, or `kitn:storage` for standalone components (one or a few files). Use `kitn:package` for larger libraries like `@kitn/core` or `@kitn/hono-routes` that have their own `package.json`.
 
 ---
 
@@ -170,11 +170,11 @@ When there is no `package.json`, the `name`, `version`, and `description` fields
   "installDir": "routes",
   "registryDependencies": ["core"],
   "tsconfig": {
-    "@kitn/routes": ["./index.ts"]
+    "@kitn/hono-routes": ["./index.ts"]
   },
   "exclude": ["lib/auth.ts"],
   "categories": ["http", "hono"],
-  "docs": "Import with: import { ... } from '@kitn/routes'"
+  "docs": "Import with: import { ... } from '@kitn/hono-routes'"
 }
 ```
 
@@ -508,7 +508,7 @@ Authors can submit a PR to `kitn-ai/registry` to list their registry URL in a pu
 
 ## Working with Packages
 
-The `kitn:package` type is for multi-file libraries that have their own `package.json`. This is how `@kitn/core` and `@kitn/routes` are published to the kitn registry.
+The `kitn:package` type is for multi-file libraries that have their own `package.json`. This is how `@kitn/core` and `@kitn/hono-routes` are published to the kitn registry.
 
 ### Package vs standalone
 

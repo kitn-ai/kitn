@@ -41,7 +41,7 @@ kitn add @yourname/my-api-tool
 | `kitn:storage` | Persistence adapter (conversations, memory, etc.) | `.ts` |
 | `kitn:package` | Multi-file package (full `src/` directory with `package.json`) | `src/**/*.ts` |
 
-Use `kitn:agent`, `kitn:tool`, `kitn:skill`, or `kitn:storage` for standalone components (one or a few files). Use `kitn:package` for larger libraries like `@kitnai/core` or `@kitnai/hono` that have their own `package.json`.
+Use `kitn:agent`, `kitn:tool`, `kitn:skill`, or `kitn:storage` for standalone components (one or a few files). Use `kitn:package` for larger libraries like `@kitn/core` or `@kitn/routes` that have their own `package.json`.
 
 ---
 
@@ -75,7 +75,7 @@ weather-agent/
 **Agent** — exports an `AgentConfig` with system prompt and empty tools array:
 
 ```ts
-import type { AgentConfig } from "@kitnai/core";
+import type { AgentConfig } from "@kitn/core";
 
 export const weatherAgentConfig: AgentConfig = {
   name: "weather-agent",
@@ -119,7 +119,7 @@ Describe what this skill does and how to use it.
 **Storage** — exports a factory function returning a `StorageProvider`:
 
 ```ts
-import type { StorageProvider } from "@kitnai/core";
+import type { StorageProvider } from "@kitn/core";
 
 export function createRedisStore(config?: Record<string, unknown>): StorageProvider {
   // TODO: implement storage provider
@@ -170,11 +170,11 @@ When there is no `package.json`, the `name`, `version`, and `description` fields
   "installDir": "routes",
   "registryDependencies": ["core"],
   "tsconfig": {
-    "@kitnai/hono": ["./index.ts"]
+    "@kitn/routes": ["./index.ts"]
   },
   "exclude": ["lib/auth.ts"],
   "categories": ["http", "hono"],
-  "docs": "Import with: import { ... } from '@kitnai/hono'"
+  "docs": "Import with: import { ... } from '@kitn/routes'"
 }
 ```
 
@@ -508,7 +508,7 @@ Authors can submit a PR to `kitn-ai/registry` to list their registry URL in a pu
 
 ## Working with Packages
 
-The `kitn:package` type is for multi-file libraries that have their own `package.json`. This is how `@kitnai/core` and `@kitnai/hono` are published to the kitn registry.
+The `kitn:package` type is for multi-file libraries that have their own `package.json`. This is how `@kitn/core` and `@kitn/routes` are published to the kitn registry.
 
 ### Package vs standalone
 
@@ -517,7 +517,7 @@ The `kitn:package` type is for multi-file libraries that have their own `package
 | Files | Listed explicitly in `files` array | Auto-discovered from `src/` |
 | Metadata | All in `registry.json` | Derived from `package.json` |
 | Install | Single file per alias directory | Preserves directory structure under `base` alias |
-| TSConfig | Not applicable | Adds path aliases for `@kitnai/*` imports |
+| TSConfig | Not applicable | Adds path aliases for `@kitn/*` imports |
 
 ### Example: Publishing a package
 

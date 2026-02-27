@@ -43,7 +43,7 @@ function generateRegistryJson(
 
 function generateAgentSource(name: string): string {
   const camel = toCamelCase(name);
-  return `import { registerAgent } from "@kitnai/core";
+  return `import { registerAgent } from "@kitn/core";
 
 const SYSTEM_PROMPT = "You are a helpful assistant.";
 
@@ -58,7 +58,7 @@ registerAgent({
 
 function generateToolSource(name: string): string {
   const camel = toCamelCase(name);
-  return `import { registerTool } from "@kitnai/core";
+  return `import { registerTool } from "@kitn/core";
 import { tool } from "ai";
 import { z } from "zod";
 
@@ -97,7 +97,7 @@ Describe what this skill does and how to use it.
 
 function generateStorageSource(name: string): string {
   const camel = toCamelCase("create-" + name);
-  return `import type { StorageProvider } from "@kitnai/core";
+  return `import type { StorageProvider } from "@kitn/core";
 
 export function ${camel}(config?: Record<string, unknown>): StorageProvider {
   // TODO: implement storage provider

@@ -25,7 +25,7 @@ describe("createAIPlugin", () => {
     });
 
     expect(ai).toBeDefined();
-    expect(ai.app).toBeDefined();
+    expect(ai.router).toBeDefined();
     expect(ai.agents).toBeDefined();
     expect(ai.tools).toBeDefined();
     expect(ai.cards).toBeDefined();

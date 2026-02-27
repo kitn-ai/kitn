@@ -16,7 +16,6 @@ import {
 import { configureOpenAPI } from "./lib/configure-openapi.js";
 
 // Route factories
-import { createHealthRoutes } from "./routes/health/health.route.js";
 import { createAgentsRoutes } from "./routes/agents/agents.routes.js";
 import { createToolsRoutes } from "./routes/tools/tools.routes.js";
 import { createGenerateRoutes } from "./routes/generate/generate.routes.js";
@@ -45,7 +44,12 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
     agents,
     tools,
     storage,
-    model: config.model,
+    model: config.model ?? (() => {
+      throw new Error(
+        "No AI model configured. Set the model option in your plugin config.\n" +
+        "See: https://sdk.vercel.ai/providers/ai-sdk-providers",
+      );
+    }),
     voice,
     cards,
     maxDelegationDepth: config.maxDelegationDepth ?? DEFAULTS.MAX_DELEGATION_DEPTH,
@@ -81,13 +85,6 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
     return c.json({ error: "Internal Server Error" }, 500);
   });
 
-  app.notFound((c) => {
-    return c.json({ error: "Not Found" }, 404);
-  });
-
-  // Health check
-  app.route("/health", createHealthRoutes(ctx));
-
   // Mount API routes
   app.route("/generate", createGenerateRoutes(ctx));
   app.route("/tools", createToolsRoutes(ctx));
@@ -106,11 +103,8 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   configureOpenAPI(app, config.openapi);
 
   return {
-    app,
-    agents,
-    tools,
-    cards,
-    voice,
+    ...ctx,
+    router: app,
     async initialize() {
       // Load persisted prompt overrides
       const overrides = await storage.prompts.loadOverrides();

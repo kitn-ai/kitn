@@ -11,7 +11,7 @@ describe("command routes", () => {
   test("GET /commands returns empty list initially", async () => {
     const plugin = createTestPlugin();
     await plugin.initialize();
-    const res = await plugin.app.request("/commands");
+    const res = await plugin.router.request("/commands");
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.commands).toEqual([]);
@@ -21,7 +21,7 @@ describe("command routes", () => {
     const plugin = createTestPlugin();
     await plugin.initialize();
 
-    const res = await plugin.app.request("/commands", {
+    const res = await plugin.router.request("/commands", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -40,13 +40,13 @@ describe("command routes", () => {
     const plugin = createTestPlugin();
     await plugin.initialize();
 
-    await plugin.app.request("/commands", {
+    await plugin.router.request("/commands", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "test-cmd", description: "D", system: "S" }),
     });
 
-    const res = await plugin.app.request("/commands/test-cmd");
+    const res = await plugin.router.request("/commands/test-cmd");
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.name).toBe("test-cmd");
@@ -55,14 +55,14 @@ describe("command routes", () => {
   test("GET /commands/:name returns 404 for missing", async () => {
     const plugin = createTestPlugin();
     await plugin.initialize();
-    const res = await plugin.app.request("/commands/missing");
+    const res = await plugin.router.request("/commands/missing");
     expect(res.status).toBe(404);
   });
 
   test("POST /commands/:name/run returns 404 for missing command", async () => {
     const plugin = createTestPlugin();
     await plugin.initialize();
-    const res = await plugin.app.request("/commands/missing/run", {
+    const res = await plugin.router.request("/commands/missing/run", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: "hello" }),
@@ -74,16 +74,16 @@ describe("command routes", () => {
     const plugin = createTestPlugin();
     await plugin.initialize();
 
-    await plugin.app.request("/commands", {
+    await plugin.router.request("/commands", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "to-delete", description: "D", system: "S" }),
     });
 
-    const del = await plugin.app.request("/commands/to-delete", { method: "DELETE" });
+    const del = await plugin.router.request("/commands/to-delete", { method: "DELETE" });
     expect(del.status).toBe(200);
 
-    const get = await plugin.app.request("/commands/to-delete");
+    const get = await plugin.router.request("/commands/to-delete");
     expect(get.status).toBe(404);
   });
 });

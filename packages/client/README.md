@@ -26,7 +26,7 @@ bun add @kitnai/client
 Parse server-sent events from any `fetch` response. Each yielded object has `event`, `data`, and an optional `id`.
 
 ```ts
-import { parseSseStream } from "@kitnai/client";
+import { parseSseStream } from "@kitn/client";
 
 const response = await fetch("/api/agent", {
   method: "POST",
@@ -54,7 +54,7 @@ for await (const event of parseSseStream(response)) {
 Splits text into progressively larger chunks, fires all TTS synthesis requests in parallel (pipelined), and schedules each result for gapless playback as it resolves. The first chunk is a single sentence for fast time-to-first-audio.
 
 ```ts
-import { chunkedSpeak, AudioScheduler } from "@kitnai/client";
+import { chunkedSpeak, AudioScheduler } from "@kitn/client";
 
 const scheduler = new AudioScheduler();
 let stopped = false;
@@ -80,7 +80,7 @@ await chunkedSpeak(
 Manages Web Audio API nodes for gapless playback of sequential audio blobs. Trims leading silence from each chunk to eliminate gaps between segments.
 
 ```ts
-import { AudioScheduler } from "@kitnai/client";
+import { AudioScheduler } from "@kitn/client";
 
 const scheduler = new AudioScheduler();
 
@@ -103,7 +103,7 @@ scheduler.stop();
 Wraps the MediaRecorder API with start/stop/cancel lifecycle and an optional state-change callback. Framework-agnostic -- wire `onStateChange` to your UI framework's reactivity system.
 
 ```ts
-import { AudioRecorder } from "@kitnai/client";
+import { AudioRecorder } from "@kitn/client";
 
 const recorder = new AudioRecorder({
   mimeType: "audio/webm",

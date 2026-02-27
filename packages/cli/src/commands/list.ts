@@ -88,6 +88,8 @@ export async function listCommand(typeFilter: string | undefined, opts: ListOpti
   for (const item of allItems) {
     const group = item.type.replace("kitn:", "");
     if (resolvedType && group !== resolvedType) continue;
+    // Hide packages from default view — they're installed by `kitn init`
+    if (!resolvedType && group === "package") continue;
     if (!typeGroups.has(group)) typeGroups.set(group, []);
     typeGroups.get(group)!.push(item);
   }
@@ -157,7 +159,8 @@ export async function listCommand(typeFilter: string | undefined, opts: ListOpti
     console.log(pc.dim(`\n  No ${resolvedType} components found.`));
   }
 
-  const parts = [`${installedCount} installed`, `${allItems.length - installedCount} available`];
+  const totalShown = [...typeGroups.values()].reduce((sum, items) => sum + items.length, 0);
+  const parts = [`${installedCount} installed`, `${totalShown - installedCount} available`];
   if (updateCount > 0) parts.push(pc.yellow(`${updateCount} update${updateCount === 1 ? "" : "s"}`));
   console.log(`\n  ${pc.dim(parts.join("  ·  "))}\n`);
 }

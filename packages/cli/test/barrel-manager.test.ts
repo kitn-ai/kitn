@@ -10,7 +10,7 @@ describe("barrel-manager", () => {
   test("createBarrelFile generates initial barrel content", () => {
     const content = createBarrelFile();
     expect(content).toContain("export { registerWithPlugin }");
-    expect(content).toContain("@kitnai/core");
+    expect(content).toContain("@kitn/core");
   });
 
   test("addImportToBarrel adds import before export line", () => {

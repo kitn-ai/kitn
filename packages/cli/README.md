@@ -24,7 +24,7 @@ pnpm dlx @kitnai/cli init
 
 ### `kitn init`
 
-Initialize kitn in your project. Creates a `kitn.json` configuration file.
+Initialize kitn in your project. Creates `kitn.json`, installs the core engine and Hono routes, and sets up tsconfig path aliases.
 
 ```bash
 kitn init
@@ -32,10 +32,9 @@ kitn init
 
 Prompts for:
 - **Runtime**: bun, node, or deno
-- **Framework**: hono, cloudflare, elysia, fastify, express
 - **Install path**: Base directory for kitn components (defaults to `src/ai`)
 
-Then run `kitn add core` to install the engine and `kitn add routes` for HTTP routes.
+After answering, the CLI automatically installs the core engine and HTTP routes into your project.
 
 ### `kitn add [components...]`
 
@@ -92,7 +91,7 @@ kitn list --registry @myteam
 | Flag | Description |
 |------|-------------|
 | `-i, --installed` | Only show installed components |
-| `-t, --type <type>` | Filter by type (`agent`, `tool`, `skill`, `storage`, `package`) |
+| `-t, --type <type>` | Filter by type (`agent`, `tool`, `skill`, `storage`) |
 | `-r, --registry <namespace>` | Only show components from this registry |
 
 Shows installed version, latest registry version, and an update indicator when a newer version is available.
@@ -191,7 +190,7 @@ Created by `kitn init`. Controls where components are installed and which regist
 | Field | Description |
 |-------|-------------|
 | `runtime` | `bun`, `node`, or `deno` |
-| `framework` | `hono`, `cloudflare`, `elysia`, `fastify`, or `express` |
+| `framework` | `hono` |
 | `aliases` | Directory paths for each component type |
 | `registries` | Named registries with URL templates |
 | `installed` | Auto-managed tracking of installed components (don't edit manually) |

@@ -55,8 +55,8 @@ export interface CompactionConfig {
 
 /** Core configuration — framework-agnostic. */
 export interface CoreConfig {
-  /** Returns a LanguageModel for the given model ID (or default) */
-  model: (model?: string) => LanguageModel;
+  /** Returns a LanguageModel for the given model ID (or default). Optional — only needed for agent chat. */
+  model?: (model?: string) => LanguageModel;
   /** Storage provider. Defaults to in-memory (ephemeral) if omitted. */
   storage?: StorageProvider;
   /** Maximum delegation nesting depth (default: 3) */

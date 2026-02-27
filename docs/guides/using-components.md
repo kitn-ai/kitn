@@ -47,7 +47,7 @@ All components are registered with an `AIPluginInstance` created by `createAIPlu
 ```ts
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { createAIPlugin, createFileStorage } from "@kitnai/hono";
+import { createAIPlugin, createFileStorage } from "@kitn/routes";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 
 // 1. Create the plugin
@@ -65,7 +65,7 @@ const plugin = createAIPlugin({
 // 5. Mount and start
 const app = new Hono();
 app.use("/*", cors());
-app.route("/api", plugin.app);
+app.route("/api", plugin.router);
 await plugin.initialize();
 
 export default { port: 4000, fetch: app.fetch };
@@ -115,7 +115,7 @@ interface ToolExample {
 ```ts
 import { tool } from "ai";
 import { z } from "zod";
-import type { AIPluginInstance } from "@kitnai/hono";
+import type { AIPluginInstance } from "@kitn/routes";
 
 // The AI SDK tool (used by agents during generation)
 export const weatherTool = tool({
@@ -202,7 +202,7 @@ interface GuardResult {
 Registry agents export a config object. You wire them into the server by creating handlers and registering:
 
 ```ts
-import type { AIPluginInstance } from "@kitnai/hono";
+import type { AIPluginInstance } from "@kitn/routes";
 import { WEATHER_AGENT_CONFIG } from "./agents/weather-agent.js";
 
 export function registerWeatherAgent(plugin: AIPluginInstance) {
@@ -394,7 +394,7 @@ import { readFileSync } from "fs";
 const skillContent = readFileSync("./src/skills/README.md", "utf-8");
 
 // After plugin.initialize(), use the storage directly
-await plugin.app.storage?.skills.createSkill("eli5", skillContent);
+await plugin.router.storage?.skills.createSkill("eli5", skillContent);
 ```
 
 If you're using `createFileStorage({ dataDir: "./data" })`, you can also place skill files directly in `data/skills/<name>/README.md` — they'll be available immediately.
@@ -438,7 +438,7 @@ interface StorageProvider {
 ### Built-in storage options
 
 ```ts
-import { createFileStorage, createMemoryStorage } from "@kitnai/hono";
+import { createFileStorage, createMemoryStorage } from "@kitn/routes";
 
 // File-based (persistent) — stores JSON files under dataDir/
 const storage = createFileStorage({ dataDir: "./data" });
@@ -518,7 +518,7 @@ The memory store is also exposed as a built-in tool that agents can call. Each a
 Card extractors transform tool results into structured UI data. They're optional and used by frontends to render rich cards (e.g., weather cards, recipe cards).
 
 ```ts
-import type { AIPluginInstance } from "@kitnai/hono";
+import type { AIPluginInstance } from "@kitn/routes";
 
 plugin.cards.register((toolName, result) => {
   if (toolName === "getWeather" && result?.temperature) {

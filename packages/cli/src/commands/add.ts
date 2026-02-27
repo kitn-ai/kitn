@@ -12,7 +12,7 @@ import {
   generateDiff,
   FileStatus,
 } from "../installers/file-writer.js";
-import { installDependencies } from "../installers/dep-installer.js";
+import { installDependencies, installDevDependencies } from "../installers/dep-installer.js";
 import { collectEnvVars, handleEnvVars } from "../installers/env-writer.js";
 import { rewriteKitnImports } from "../installers/import-rewriter.js";
 import { createBarrelFile, addImportToBarrel } from "../installers/barrel-manager.js";
@@ -86,8 +86,10 @@ export async function addCommand(components: string[], opts: AddOptions) {
   const updated: string[] = [];
   const skipped: string[] = [];
   const allDeps: string[] = [];
+  const allDevDeps: string[] = [];
   for (const item of resolved) {
     if (item.dependencies) allDeps.push(...item.dependencies);
+    if (item.devDependencies) allDevDeps.push(...item.devDependencies);
 
     if (item.type === "kitn:package") {
       // Package install — multi-file, preserved directory structure
@@ -288,12 +290,15 @@ export async function addCommand(components: string[], opts: AddOptions) {
   await writeConfig(cwd, config);
 
   const uniqueDeps = [...new Set(allDeps)];
-  if (uniqueDeps.length > 0) {
+  const uniqueDevDeps = [...new Set(allDevDeps)].filter((d) => !uniqueDeps.includes(d));
+  const totalDeps = uniqueDeps.length + uniqueDevDeps.length;
+  if (totalDeps > 0) {
     const pm = await detectPackageManager(cwd);
     if (pm) {
-      s.start(`Installing ${uniqueDeps.length} npm dependenc${uniqueDeps.length === 1 ? "y" : "ies"}...`);
+      s.start(`Installing ${totalDeps} npm dependenc${totalDeps === 1 ? "y" : "ies"}...`);
       try {
-        installDependencies(pm, uniqueDeps, cwd);
+        if (uniqueDeps.length > 0) installDependencies(pm, uniqueDeps, cwd);
+        if (uniqueDevDeps.length > 0) installDevDependencies(pm, uniqueDevDeps, cwd);
         s.stop("Dependencies installed");
       } catch {
         s.stop(pc.yellow("Some dependencies failed to install"));

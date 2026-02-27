@@ -67,4 +67,61 @@ describe("tsconfig patcher", () => {
     expect(parsed.compilerOptions.strict).toBe(true);
     expect(parsed.compilerOptions.target).toBe("ES2022");
   });
+
+  test("sets target to ES2022 when missing", () => {
+    const input = JSON.stringify({ compilerOptions: { strict: true } }, null, 2);
+    const result = patchTsconfig(input, { "@kitn/*": ["./src/ai/*"] });
+    const parsed = JSON.parse(result);
+    expect(parsed.compilerOptions.target).toBe("ES2022");
+  });
+
+  test("upgrades low target to ES2022", () => {
+    const input = JSON.stringify({ compilerOptions: { target: "es6" } }, null, 2);
+    const result = patchTsconfig(input, { "@kitn/*": ["./src/ai/*"] });
+    const parsed = JSON.parse(result);
+    expect(parsed.compilerOptions.target).toBe("ES2022");
+  });
+
+  test("preserves target ES2023 or higher", () => {
+    const input = JSON.stringify({ compilerOptions: { target: "ES2023" } }, null, 2);
+    const result = patchTsconfig(input, { "@kitn/*": ["./src/ai/*"] });
+    const parsed = JSON.parse(result);
+    expect(parsed.compilerOptions.target).toBe("ES2023");
+  });
+
+  test("preserves target ESNext", () => {
+    const input = JSON.stringify({ compilerOptions: { target: "ESNext" } }, null, 2);
+    const result = patchTsconfig(input, { "@kitn/*": ["./src/ai/*"] });
+    const parsed = JSON.parse(result);
+    expect(parsed.compilerOptions.target).toBe("ESNext");
+  });
+
+  test("adds skipLibCheck when missing", () => {
+    const input = JSON.stringify({ compilerOptions: {} }, null, 2);
+    const result = patchTsconfig(input, { "@kitn/*": ["./src/ai/*"] });
+    const parsed = JSON.parse(result);
+    expect(parsed.compilerOptions.skipLibCheck).toBe(true);
+  });
+
+  test("does not override explicit skipLibCheck: false", () => {
+    const input = JSON.stringify({ compilerOptions: { skipLibCheck: false } }, null, 2);
+    const result = patchTsconfig(input, { "@kitn/*": ["./src/ai/*"] });
+    const parsed = JSON.parse(result);
+    expect(parsed.compilerOptions.skipLibCheck).toBe(false);
+  });
+
+  test("adds moduleResolution and module when missing", () => {
+    const input = JSON.stringify({ compilerOptions: {} }, null, 2);
+    const result = patchTsconfig(input, { "@kitn/*": ["./src/ai/*"] });
+    const parsed = JSON.parse(result);
+    expect(parsed.compilerOptions.moduleResolution).toBe("bundler");
+    expect(parsed.compilerOptions.module).toBe("ESNext");
+  });
+
+  test("preserves existing moduleResolution", () => {
+    const input = JSON.stringify({ compilerOptions: { moduleResolution: "nodenext" } }, null, 2);
+    const result = patchTsconfig(input, { "@kitn/*": ["./src/ai/*"] });
+    const parsed = JSON.parse(result);
+    expect(parsed.compilerOptions.moduleResolution).toBe("nodenext");
+  });
 });

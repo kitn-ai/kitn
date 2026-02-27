@@ -20,7 +20,7 @@ describe("componentConfigSchema", () => {
       type: "kitn:package",
       installDir: "routes",
       registryDependencies: ["core"],
-      tsconfig: { "@kitnai/hono": ["./index.ts"] },
+      tsconfig: { "@kitnai/hono-adapter": ["./index.ts"] },
       exclude: ["lib/auth.ts"],
       categories: ["http"],
     });

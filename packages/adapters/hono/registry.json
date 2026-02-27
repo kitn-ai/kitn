@@ -1,0 +1,9 @@
+{
+  "$schema": "https://kitn.dev/schema/registry.json",
+  "type": "kitn:package",
+  "installDir": "adapters/hono",
+  "registryDependencies": ["core"],
+  "exclude": ["lib/auth.ts"],
+  "docs": "Add to your Hono server:\n\n  import { ai } from '@kitn/adapters/hono';\n  app.route('/api', ai.router);\n\nSee src/ai/adapters/hono/plugin.ts to configure your AI provider and register agents.",
+  "categories": ["http", "hono"]
+}

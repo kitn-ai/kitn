@@ -1,8 +1,8 @@
 {
-  "name": "hono-adapter",
+  "name": "hono",
   "type": "kitn:package",
   "description": "Plain Hono HTTP adapter with routes for kitn AI agents",
-  "sourceDir": "../../../../packages/hono/src",
+  "sourceDir": "packages/adapters/hono/src",
   "installDir": "adapters/hono",
   "dependencies": ["hono"],
   "registryDependencies": ["core"],

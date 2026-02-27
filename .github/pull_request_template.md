@@ -14,7 +14,9 @@
 ## Packages affected
 
 - [ ] `@kitnai/core`
-- [ ] `@kitnai/hono`
+- [ ] `@kitnai/hono-adapter`
+- [ ] `@kitnai/hono-openapi-adapter`
+- [ ] `@kitnai/elysia-adapter`
 - [ ] `@kitnai/client`
 - [ ] `@kitnai/cli`
 - [ ] Examples

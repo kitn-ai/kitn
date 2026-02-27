@@ -3,7 +3,7 @@
  * Run with: bun test packages/ai/test/plugin.test.ts
  */
 import { describe, test, expect, afterAll } from "bun:test";
-import { createAIPlugin } from "@kitnai/hono-openapi";
+import { createAIPlugin } from "@kitnai/hono-openapi-adapter";
 import { createFileStorage, CardRegistry } from "@kitnai/core";
 import { makeMockModel } from "./helpers.js";
 import { tool } from "ai";

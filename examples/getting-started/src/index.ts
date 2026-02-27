@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { serve } from "@hono/node-server";
 import { z } from "zod";
-import { createAIPlugin } from "@kitnai/hono";
+import { createAIPlugin } from "@kitnai/hono-adapter";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { weatherTool } from "./tools/weather.js";
 import { WEATHER_AGENT_CONFIG } from "./agents/weather-agent.js";

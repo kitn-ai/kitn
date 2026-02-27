@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kitnai/hono": "workspace:*",
+    "@kitnai/hono-adapter": "workspace:*",
     "@openrouter/ai-sdk-provider": "^2.2.3",
     "@t3-oss/env-core": "^0.13.10",
     "ai": "^6.0.91",

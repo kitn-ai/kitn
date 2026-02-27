@@ -304,10 +304,10 @@ Scans for `registry.json` files, reads source code, and produces deployable regi
 ```bash
 kitn build                             # scan cwd for all registry.json files
 kitn build .                           # build the current directory
-kitn build packages/hono               # build one component
+kitn build packages/adapters/hono      # build one component
 kitn build packages/*                  # build all packages (glob)
 kitn build components/agents/*         # build all agents
-kitn build packages/hono packages/core # build specific list
+kitn build packages/adapters/hono packages/core # build specific list
 kitn build --output ./my-registry/r    # custom output directory
 ```
 

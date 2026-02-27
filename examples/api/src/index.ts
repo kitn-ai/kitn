@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { createAIPlugin, createFileStorage, OpenAIVoiceProvider } from "@kitnai/hono";
+import { createAIPlugin, createFileStorage, OpenAIVoiceProvider } from "@kitnai/hono-adapter";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { env, printConfig, voiceEnabled } from "./env.js";
 import { registerEchoTool } from "./tools/echo.js";

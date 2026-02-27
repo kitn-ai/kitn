@@ -1,8 +1,8 @@
 {
-  "name": "elysia-adapter",
+  "name": "elysia",
   "type": "kitn:package",
   "description": "Elysia adapter with routes for kitn AI agents",
-  "sourceDir": "../../../../packages/elysia-adapter/src",
+  "sourceDir": "packages/adapters/elysia/src",
   "installDir": "adapters/elysia",
   "dependencies": ["elysia"],
   "registryDependencies": ["core"],

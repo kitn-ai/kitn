@@ -30,12 +30,12 @@ const typeToDir: Record<ComponentType, string> = {
 
 /**
  * Rewrite monorepo package imports to user-facing tsconfig aliases.
- * e.g. `@kitnai/core` → `@kitn/core`, `@kitnai/hono` → `@kitn/routes`
+ * e.g. `@kitnai/core` → `@kitn/core`, `@kitnai/hono-adapter` → `@kitn/adapters/hono`
  */
 const PACKAGE_IMPORT_REWRITES: Record<string, string> = {
   "@kitnai/core": "@kitn/core",
-  "@kitnai/hono": "@kitn/adapters/hono",
-  "@kitnai/hono-openapi": "@kitn/adapters/hono-openapi",
+  "@kitnai/hono-adapter": "@kitn/adapters/hono",
+  "@kitnai/hono-openapi-adapter": "@kitn/adapters/hono-openapi",
   "@kitnai/elysia-adapter": "@kitn/adapters/elysia",
 };
 
@@ -130,23 +130,42 @@ if (import.meta.main) {
   const { join } = await import("path");
 
   const ROOT = new URL("..", import.meta.url).pathname;
+  const REPO_ROOT = new URL("../..", import.meta.url).pathname;
   const COMPONENTS_DIR = join(ROOT, "components");
   const OUTPUT_DIR = join(ROOT, "r");
 
   const allItems: RegistryItem[] = [];
   const existingVersions = new Map<string, string[]>();
 
-  for (const typeDir of ["agents", "tools", "skills", "storage", "package"]) {
-    const dir = join(COMPONENTS_DIR, typeDir);
+  /** Recursively find all directories containing a manifest.json. */
+  async function findManifestDirs(base: string): Promise<string[]> {
+    const results: string[] = [];
     let entries: string[];
     try {
-      entries = await readdir(dir);
+      entries = await readdir(base);
     } catch {
-      continue;
+      return results;
     }
-
     for (const entry of entries) {
-      const componentDir = join(dir, entry);
+      const full = join(base, entry);
+      const s = await (await import("fs/promises")).stat(full);
+      if (!s.isDirectory()) continue;
+      try {
+        await access(join(full, "manifest.json"));
+        results.push(full);
+      } catch {
+        // No manifest here — recurse into subdirectories
+        results.push(...await findManifestDirs(full));
+      }
+    }
+    return results;
+  }
+
+  for (const typeDir of ["agents", "tools", "skills", "storage", "package"]) {
+    const dir = join(COMPONENTS_DIR, typeDir);
+    const manifestDirs = await findManifestDirs(dir);
+
+    for (const componentDir of manifestDirs) {
       const manifestPath = join(componentDir, "manifest.json");
 
       let manifestRaw: string;
@@ -164,7 +183,7 @@ if (import.meta.main) {
 
       if (manifest.sourceDir) {
         // Package: read all .ts files recursively from sourceDir
-        const srcDir = join(componentDir, manifest.sourceDir);
+        const srcDir = join(REPO_ROOT, manifest.sourceDir);
         const exclude = new Set(manifest.exclude ?? []);
         const tsFiles = await readDirRecursive(srcDir);
         for (const relPath of tsFiles) {

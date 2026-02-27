@@ -1,8 +1,8 @@
 {
-  "name": "hono-openapi-adapter",
+  "name": "hono-openapi",
   "type": "kitn:package",
   "description": "OpenAPI Hono adapter — zod-openapi routes with /doc JSON spec endpoint",
-  "sourceDir": "../../../../packages/hono-openapi/src",
+  "sourceDir": "packages/adapters/hono-openapi/src",
   "installDir": "adapters/hono-openapi",
   "dependencies": ["hono", "@hono/zod-openapi"],
   "registryDependencies": ["core"],

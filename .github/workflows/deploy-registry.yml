@@ -7,9 +7,11 @@ on:
       - 'registry/**'
       - 'packages/core/src/**'
       - 'packages/core/registry.json'
-      - 'packages/hono/src/**'
-      - 'packages/hono/registry.json'
-      - 'packages/elysia-adapter/src/**'
+      - 'packages/adapters/hono/src/**'
+      - 'packages/adapters/hono/registry.json'
+      - 'packages/adapters/hono-openapi/src/**'
+      - 'packages/adapters/hono-openapi/registry.json'
+      - 'packages/adapters/elysia/src/**'
   workflow_dispatch:
 
 permissions:

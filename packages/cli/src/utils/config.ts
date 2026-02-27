@@ -47,13 +47,13 @@ export function getRegistryUrl(entry: string | RegistryEntry): string {
 }
 
 const FRAMEWORK_TO_ADAPTER: Record<string, string> = {
-  hono: "hono-adapter",
-  elysia: "elysia-adapter",
+  hono: "hono",
+  elysia: "elysia",
 };
 
 export function resolveRoutesAlias(config: KitnConfig): string {
   const fw = config.framework ?? "hono";
-  return FRAMEWORK_TO_ADAPTER[fw] ?? `${fw}-adapter`;
+  return FRAMEWORK_TO_ADAPTER[fw] ?? fw;
 }
 
 const CONFIG_FILE = "kitn.json";

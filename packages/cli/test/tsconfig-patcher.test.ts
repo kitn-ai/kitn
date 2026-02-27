@@ -44,11 +44,11 @@ describe("tsconfig patcher", () => {
     const input = '{ "compilerOptions": {} }';
     const result = patchTsconfig(input, {
       "@kitnai/core": ["./src/ai/core/index.ts"],
-      "@kitnai/hono": ["./src/ai/routes/index.ts"],
+      "@kitnai/hono-adapter": ["./src/ai/routes/index.ts"],
     });
     const parsed = JSON.parse(result);
     expect(parsed.compilerOptions.paths["@kitnai/core"]).toEqual(["./src/ai/core/index.ts"]);
-    expect(parsed.compilerOptions.paths["@kitnai/hono"]).toEqual(["./src/ai/routes/index.ts"]);
+    expect(parsed.compilerOptions.paths["@kitnai/hono-adapter"]).toEqual(["./src/ai/routes/index.ts"]);
   });
 
   test("handles JSONC with comments and trailing commas", () => {

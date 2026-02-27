@@ -1,5 +1,5 @@
 /**
- * Shared test helpers for @kitnai/hono test suite.
+ * Shared test helpers for @kitnai/hono-adapter test suite.
  */
 import { tool } from "ai";
 import { z } from "zod";

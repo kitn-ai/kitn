@@ -20,7 +20,9 @@ A TypeScript framework for building multi-agent AI systems. Kitn gives you agent
 | Package | Description |
 |---------|-------------|
 | `@kitnai/core` | Framework-agnostic engine — agents, tools, storage, memory, events, voice |
-| `@kitnai/hono` | Hono adapter — plugin factory, OpenAPI routes, Scalar docs |
+| `@kitnai/hono-adapter` | Plain Hono adapter — routes, plugin factory |
+| `@kitnai/hono-openapi-adapter` | OpenAPI Hono adapter — zod-openapi routes, /doc spec |
+| `@kitnai/elysia-adapter` | Elysia adapter |
 | `@kitnai/client` | Browser utilities — SSE parsing, audio recording, chunked TTS playback |
 | `@kitnai/cli` | CLI for the component registry — add, list, diff, update components |
 
@@ -162,7 +164,10 @@ All routes require an `X-API-Key` header unless noted.
 kitn/
   packages/
     core/           # @kitnai/core — framework-agnostic engine
-    hono/           # @kitnai/hono — Hono adapter
+    adapters/
+      hono/         # @kitnai/hono-adapter — plain Hono adapter
+      hono-openapi/ # @kitnai/hono-openapi-adapter — OpenAPI Hono adapter
+      elysia/       # @kitnai/elysia-adapter — Elysia adapter
     client/         # @kitnai/client — browser utilities
     cli/            # @kitnai/cli — component registry CLI
   examples/

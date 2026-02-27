@@ -1,5 +1,5 @@
 {
-  "name": "@kitnai/hono-openapi",
+  "name": "@kitnai/hono-openapi-adapter",
   "version": "0.1.0",
   "type": "module",
   "description": "OpenAPI Hono adapter for kitn AI agents — Hono + zod-openapi routes with /doc JSON spec",
@@ -7,7 +7,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/kitn-ai/kitn",
-    "directory": "packages/hono-openapi"
+    "directory": "packages/adapters/hono-openapi"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -1,15 +1,15 @@
 ---
 name: add-hono-route
-description: Add a new API route to @kitnai/hono following the established pattern
+description: Add a new API route to @kitnai/hono-adapter following the established pattern
 ---
 
 # Add a Hono Route
 
-Follow these steps to add a new API route domain to `@kitnai/hono`.
+Follow these steps to add a new API route domain to `@kitnai/hono-adapter`.
 
 ## 1. Create route directory
 
-Create `packages/hono/src/routes/<domain>/` with two files.
+Create `packages/adapters/hono/src/routes/<domain>/` with two files.
 
 ## 2. (Optional) Add shared schemas to core
 
@@ -86,7 +86,7 @@ export function create<Domain>Routes(ctx: PluginContext) {
 
 ## 5. Mount in plugin.ts
 
-Edit `packages/hono/src/plugin.ts`:
+Edit `packages/adapters/hono/src/plugin.ts`:
 
 1. Add import: `import { create<Domain>Routes } from "./routes/<domain>/<domain>.routes.js";`
 2. Add mount: `app.route("/<domain>", create<Domain>Routes(ctx));` (after existing `app.route` calls)
@@ -100,6 +100,6 @@ bun run test
 
 ## Reference files
 
-- Route pattern: `packages/hono/src/routes/memory/memory.routes.ts`
-- Handler pattern: `packages/hono/src/routes/memory/memory.handlers.ts`
-- Plugin mount point: `packages/hono/src/plugin.ts`
+- Route pattern: `packages/adapters/hono/src/routes/memory/memory.routes.ts`
+- Handler pattern: `packages/adapters/hono/src/routes/memory/memory.handlers.ts`
+- Plugin mount point: `packages/adapters/hono/src/plugin.ts`

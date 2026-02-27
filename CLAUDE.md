@@ -1,6 +1,6 @@
 # kitn
 
-TypeScript monorepo for multi-agent AI systems. Bun workspaces, 4 packages, 4 examples.
+TypeScript monorepo for multi-agent AI systems. Bun workspaces, 5 packages, 4 examples.
 
 ## Commands
 
@@ -16,7 +16,7 @@ bun run dev:voice                    # voice client on :5174
 
 # Per-package
 bun run --cwd packages/core test
-bun run --cwd packages/hono build
+bun run --cwd packages/adapters/hono build
 bun test path/to/test.ts             # single test file
 ```
 
@@ -24,8 +24,11 @@ bun test path/to/test.ts             # single test file
 
 ```
 packages/
-  core/       @kitnai/core   — framework-agnostic engine (agents, tools, storage, memory, voice)
-  hono/       @kitnai/hono   — Hono adapter (OpenAPI routes, plugin factory, Scalar docs)
+  core/       @kitnai/core             — framework-agnostic engine (agents, tools, storage, memory, voice)
+  adapters/
+    hono/           @kitnai/hono-adapter         — plain Hono adapter (routes, plugin factory)
+    hono-openapi/   @kitnai/hono-openapi-adapter — OpenAPI Hono adapter (zod-openapi routes, /doc spec)
+    elysia/         @kitnai/elysia-adapter       — Elysia adapter
   client/     @kitnai/client — browser utilities (SSE parsing, audio recording, TTS playback)
   cli/        @kitnai/cli    — CLI for the component registry (add, list, diff, update)
 examples/
@@ -35,14 +38,14 @@ examples/
   getting-started/ Minimal getting-started example
 ```
 
-> **Note:** The `@kitnai/*` names above are internal workspace package names. User projects import from the published npm scope: `@kitn/core` (maps to `@kitnai/core`) and `@kitn/routes` (maps to `@kitnai/hono`).
+> **Note:** The `@kitnai/*` names above are internal workspace package names. User projects import from the published npm scope: `@kitn/core` (maps to `@kitnai/core`) and `@kitn/adapters/hono` (maps to `@kitnai/hono-adapter`).
 
-**Dependency graph:** `hono` depends on `core`. `cli` and `client` are standalone.
+**Dependency graph:** adapters depend on `core`. `cli` and `client` are standalone.
 
 ## Architecture
 
 - **`@kitnai/core`** is framework-agnostic — no HTTP types, pure TypeScript
-- **`@kitnai/hono`** is a thin adapter that mounts OpenAPI routes onto a Hono app
+- **`@kitnai/hono-adapter`** is a thin adapter that mounts routes onto a Hono app
 - **`PluginContext`** is the central context object passed to all route factories. It holds registries (agents, tools, cards), storage, voice manager, model getter, and config.
 - **`StorageProvider`** aggregates 7 sub-stores: `conversations`, `memory`, `skills`, `tasks`, `prompts`, `audio`, `commands`
 - Implementations: `createFileStorage()` for file-based JSON, `createMemoryStorage()` for in-memory
@@ -52,20 +55,20 @@ examples/
 These conventions apply **within the monorepo** (for developers working on kitn itself):
 
 - Always use `.js` extension in relative imports (TypeScript compiles to JS)
-- Use `@kitnai/core` and `@kitnai/hono` for cross-package imports within the monorepo
+- Use `@kitnai/core` and `@kitnai/hono-adapter` for cross-package imports within the monorepo
 - Use `ai` package for Vercel AI SDK types and functions (e.g. `tool()`, `streamText()`)
 
-User projects import from the published npm packages: `@kitn/core` and `@kitn/routes`.
+User projects import from the published npm packages: `@kitn/core` and `@kitn/adapters/hono`.
 
 ## Hono Route Pattern
 
 Routes follow a `createXxxRoutes(ctx)` factory pattern split across two files:
 
-1. **`<domain>.routes.ts`** — `createXxxRoutes(ctx: PluginContext)` returns an `OpenAPIHono` router with `createRoute()` + zod schemas
+1. **`<domain>.routes.ts`** — `createXxxRoutes(ctx: PluginContext)` returns a Hono router with route definitions + zod schemas
 2. **`<domain>.handlers.ts`** — `createXxxHandlers(ctx: PluginContext)` returns named handler functions
-3. **Mount in `packages/hono/src/plugin.ts`**: `app.route("/<domain>", createXxxRoutes(ctx))`
+3. **Mount in `packages/adapters/hono/src/plugin.ts`**: `app.route("/<domain>", createXxxRoutes(ctx))`
 
-Reference: `packages/hono/src/routes/memory/` (memory.routes.ts + memory.handlers.ts)
+Reference: `packages/adapters/hono/src/routes/memory/` (memory.routes.ts + memory.handlers.ts)
 
 ## CLI Command Pattern
 

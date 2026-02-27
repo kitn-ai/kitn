@@ -143,19 +143,20 @@ The build script (`scripts/build-registry.ts`):
 1. Scans `components/{agents,tools,skills,storage,package}/` for `manifest.json` files
 2. For regular components: reads the files listed in `manifest.files`
 3. For packages: recursively reads all `.ts` files from `manifest.sourceDir`, applying `exclude` patterns
-4. Rewrites monorepo imports (`@kitnai/core` → `@kitn/core`, `@kitnai/hono` → `@kitn/routes`)
+4. Rewrites monorepo imports (`@kitnai/core` → `@kitn/core`, `@kitnai/hono-adapter` → `@kitn/adapters/hono`)
 5. Writes latest + versioned JSON to `r/`
 6. Generates `r/registry.json` index by scanning existing `@version` files to build the `versions` array
 
 ### Import rewriting
 
-The registry components use the published package names (`@kitn/core`, `@kitn/routes`), not the monorepo workspace names. The build script handles this automatically:
+The registry components use the published package names (`@kitn/core`, `@kitn/adapters/hono`), not the monorepo workspace names. The build script handles this automatically:
 
 | Monorepo import | Registry output |
 |----------------|-----------------|
 | `@kitnai/core` | `@kitn/core` |
-| `@kitnai/hono` | `@kitn/routes` |
-| `@kitnai/hono-openapi` | `@kitn/routes` |
+| `@kitnai/hono-adapter` | `@kitn/adapters/hono` |
+| `@kitnai/hono-openapi-adapter` | `@kitn/adapters/hono-openapi` |
+| `@kitnai/elysia-adapter` | `@kitn/adapters/elysia` |
 
 ### Versioned file immutability
 
@@ -167,7 +168,7 @@ Package components (`kitn:package`) like `core`, `hono`, and `hono-openapi` work
 
 ### The problem they solve
 
-The actual framework source code lives in `packages/core/src/`, `packages/hono/src/`, etc. These are developed and tested as normal TypeScript packages in the monorepo. But the registry needs to distribute that same code as copy-to-project files (like shadcn-ui). Package manifests bridge this gap — they tell the build script where to find the source, and the build script bundles it into a self-contained JSON artifact.
+The actual framework source code lives in `packages/core/src/`, `packages/adapters/hono/src/`, etc. These are developed and tested as normal TypeScript packages in the monorepo. But the registry needs to distribute that same code as copy-to-project files (like shadcn-ui). Package manifests bridge this gap — they tell the build script where to find the source, and the build script bundles it into a self-contained JSON artifact.
 
 ### Manifest → Build → Serve → Install
 

@@ -2,7 +2,7 @@
   "name": "core",
   "type": "kitn:package",
   "description": "Framework-agnostic AI agent engine — agents, tools, storage, streaming, events, voice",
-  "sourceDir": "../../../../packages/core/src",
+  "sourceDir": "packages/core/src",
   "installDir": "core",
   "dependencies": ["ai", "zod"],
   "devDependencies": ["@asteasolutions/zod-to-openapi"],

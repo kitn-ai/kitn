@@ -15,10 +15,13 @@
     "build": "bun run --filter '*' build",
     "test": "bun run --filter '*' test",
     "typecheck": "bun run --filter '*' typecheck",
-    "build:registry": "bun run --cwd registry scripts/build-registry.ts"
+    "build:registry": "bun run --cwd registry scripts/build-registry.ts",
+    "bump:registry": "bun run --cwd registry scripts/bump-version.ts"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "@types/bun": "^1.3.9"
+    "@clack/prompts": "^0.10.0",
+    "@types/bun": "^1.3.9",
+    "picocolors": "^1.1.1",
+    "typescript": "^5.9.3"
   }
 }

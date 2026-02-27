@@ -1,13 +1,17 @@
 {
-  "name": "hono",
+  "name": "hono-openapi",
   "type": "kitn:package",
-  "description": "Plain Hono HTTP adapter with routes for kitn AI agents",
-  "sourceDir": "../../../../packages/hono/src",
+  "description": "OpenAPI Hono adapter — zod-openapi routes with /doc JSON spec endpoint",
+  "sourceDir": "../../../../packages/hono-openapi/src",
   "installDir": "routes",
-  "dependencies": ["hono"],
+  "dependencies": ["hono", "@hono/zod-openapi"],
   "registryDependencies": ["core"],
   "exclude": ["lib/auth.ts"],
-  "docs": "Routes installed to your project. Import with: import { ... } from '@kitn/routes'",
+  "tsconfig": {
+    "@kitn/routes": ["./index.ts"]
+  },
+  "docs": "OpenAPI routes with zod schemas and /doc JSON spec endpoint. Import with: import { ... } from '@kitn/routes'",
+  "categories": ["http", "hono", "openapi"],
   "version": "1.1.0",
   "changelog": [
     { "version": "1.1.0", "date": "2026-02-27", "type": "breaking", "note": "Remove initialize() — plugin no longer requires await plugin.initialize() at startup. Prompt overrides are lazy-loaded." },

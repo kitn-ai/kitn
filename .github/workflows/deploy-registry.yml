@@ -9,6 +9,7 @@ on:
       - 'packages/core/registry.json'
       - 'packages/hono/src/**'
       - 'packages/hono/registry.json'
+      - 'packages/elysia-adapter/src/**'
   workflow_dispatch:
 
 permissions:

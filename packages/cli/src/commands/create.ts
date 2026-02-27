@@ -1,7 +1,11 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { join } from "path";
-import { mkdir, writeFile } from "fs/promises";
+import { join, relative } from "path";
+import { existsSync } from "fs";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { readConfig, getInstallPath } from "../utils/config.js";
+import { checkFileStatus, FileStatus, writeComponentFile } from "../installers/file-writer.js";
+import { createBarrelFile, addImportToBarrel } from "../installers/barrel-manager.js";
 
 const VALID_TYPES = ["agent", "tool", "skill", "storage"] as const;
 type ComponentType = (typeof VALID_TYPES)[number];
@@ -15,30 +19,6 @@ function toTitleCase(str: string): string {
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
-}
-
-function generateRegistryJson(
-  type: ComponentType,
-  name: string,
-  sourceFile: string
-): object {
-  const base: Record<string, unknown> = {
-    $schema: "https://kitn.dev/schema/registry.json",
-    name,
-    type: `kitn:${type}`,
-    version: "0.1.0",
-    description: "",
-    files: [sourceFile],
-    categories: [],
-  };
-
-  if (type === "tool") {
-    base.dependencies = ["ai", "zod"];
-  } else if (type === "agent" || type === "storage") {
-    base.dependencies = [];
-  }
-
-  return base;
 }
 
 function generateAgentSource(name: string): string {
@@ -64,7 +44,7 @@ import { z } from "zod";
 
 export const ${camel} = tool({
   description: "",
-  parameters: z.object({
+  inputSchema: z.object({
     input: z.string().describe("Input parameter"),
   }),
   execute: async ({ input }) => {
@@ -106,21 +86,21 @@ export function ${camel}(config?: Record<string, unknown>): StorageProvider {
 `;
 }
 
-async function dirExists(path: string): Promise<boolean> {
-  try {
-    const { stat } = await import("fs/promises");
-    const s = await stat(path);
-    return s.isDirectory();
-  } catch {
-    return false;
-  }
-}
+const typeToKitnType: Record<ComponentType, "kitn:agent" | "kitn:tool" | "kitn:skill" | "kitn:storage"> = {
+  agent: "kitn:agent",
+  tool: "kitn:tool",
+  skill: "kitn:skill",
+  storage: "kitn:storage",
+};
 
-export async function createComponent(
+// Types that get auto-wired into the barrel file
+const BARREL_TYPES: ComponentType[] = ["agent", "tool", "skill"];
+
+export async function createComponentInProject(
   type: string,
   name: string,
   opts?: { cwd?: string }
-): Promise<{ dir: string; files: string[] }> {
+): Promise<{ filePath: string; barrelUpdated: boolean }> {
   if (!VALID_TYPES.includes(type as ComponentType)) {
     throw new Error(
       `Invalid component type: "${type}". Valid types: ${VALID_TYPES.join(", ")}`
@@ -128,23 +108,27 @@ export async function createComponent(
   }
 
   const cwd = opts?.cwd ?? process.cwd();
-  const dir = join(cwd, name);
-
-  if (await dirExists(dir)) {
-    throw new Error(`Directory "${name}" already exists`);
+  const config = await readConfig(cwd);
+  if (!config) {
+    throw new Error(
+      `No kitn.json found in ${cwd}. Run ${pc.bold("kitn init")} first.`
+    );
   }
 
-  await mkdir(dir, { recursive: true });
-
   const validType = type as ComponentType;
-  const sourceFile = validType === "skill" ? "README.md" : `${name}.ts`;
-  const registryJson = generateRegistryJson(validType, name, sourceFile);
+  const kitnType = typeToKitnType[validType];
+  const fileName = validType === "skill" ? `${name}.md` : `${name}.ts`;
 
-  await writeFile(
-    join(dir, "registry.json"),
-    JSON.stringify(registryJson, null, 2) + "\n"
-  );
+  const filePath = join(cwd, getInstallPath(config, kitnType, fileName));
 
+  // Check file doesn't already exist
+  const dummyContent = ""; // only need to check existence
+  const status = await checkFileStatus(filePath, dummyContent);
+  if (status !== FileStatus.New) {
+    throw new Error(`File already exists: ${filePath}`);
+  }
+
+  // Generate source
   let source: string;
   switch (validType) {
     case "agent":
@@ -161,25 +145,52 @@ export async function createComponent(
       break;
   }
 
-  await writeFile(join(dir, sourceFile), source);
+  // Write the component file
+  await writeComponentFile(filePath, source);
 
-  return { dir, files: ["registry.json", sourceFile] };
+  // Wire into barrel file for agents, tools, and skills
+  let barrelUpdated = false;
+  if (BARREL_TYPES.includes(validType)) {
+    const baseDir = config.aliases.base ?? "src/ai";
+    const barrelPath = join(cwd, baseDir, "index.ts");
+
+    // Read or create barrel file
+    let barrelContent: string;
+    if (existsSync(barrelPath)) {
+      barrelContent = await readFile(barrelPath, "utf-8");
+    } else {
+      barrelContent = createBarrelFile();
+      await mkdir(join(cwd, baseDir), { recursive: true });
+    }
+
+    // Compute relative import path from barrel to the component
+    const importPath = "./" + relative(join(cwd, baseDir), filePath).replace(/\.ts$/, ".js");
+    const updatedBarrel = addImportToBarrel(barrelContent, importPath);
+
+    if (updatedBarrel !== barrelContent) {
+      await writeFile(barrelPath, updatedBarrel);
+      barrelUpdated = true;
+    }
+  }
+
+  return { filePath, barrelUpdated };
 }
 
 export async function createCommand(type: string, name: string) {
   p.intro(pc.bgCyan(pc.black(" kitn create ")));
 
   try {
-    const { dir, files } = await createComponent(type, name);
+    const { filePath, barrelUpdated } = await createComponentInProject(type, name);
 
     p.log.success(`Created ${pc.bold(type)} component ${pc.cyan(name)}`);
-    for (const file of files) {
-      p.log.message(`  ${pc.green("+")} ${file}`);
+    p.log.message(`  ${pc.green("+")} ${filePath}`);
+
+    if (barrelUpdated) {
+      p.log.message(`  ${pc.green("+")} barrel file updated`);
     }
 
-    const editFile = files.find((f) => f !== "registry.json") ?? files[0];
     p.outro(
-      `Edit ${pc.cyan(`${name}/${editFile}`)}, then run ${pc.bold("kitn build")}`
+      `Edit ${pc.cyan(filePath)} to customize your ${type}.`
     );
   } catch (err: any) {
     p.log.error(err.message);

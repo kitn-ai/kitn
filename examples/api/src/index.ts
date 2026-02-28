@@ -154,16 +154,31 @@ app.use("/api/*", async (c, next) => {
 
 app.route("/api", plugin.router);
 
-// MCP endpoint — stateless mode requires a fresh server + transport per request
+// MCP endpoint — stateless mode requires a fresh server + transport per request.
+// The SDK transport rejects requests unless Accept includes both application/json
+// and text/event-stream. Rewrite the request with the required header so that
+// plain curl/fetch calls work without needing to set it manually.
 app.all("/mcp", async (c) => {
+  const accept = c.req.header("accept") ?? "";
+  const needsJson = !accept.includes("application/json");
+  const needsSse = !accept.includes("text/event-stream");
+
+  let raw = c.req.raw;
+  if (needsJson || needsSse) {
+    const parts = [accept, needsJson && "application/json", needsSse && "text/event-stream"]
+      .filter(Boolean)
+      .join(", ");
+    raw = new Request(raw, { headers: new Headers([...raw.headers.entries(), ["accept", parts]]) });
+  }
+
   const { server } = createMCPServer(plugin, mcpConfig);
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
   await server.connect(transport);
   if (c.req.method === "POST") {
     const body = await c.req.json();
-    return transport.handleRequest(c.req.raw, { parsedBody: body });
+    return transport.handleRequest(raw, { parsedBody: body });
   }
-  return transport.handleRequest(c.req.raw);
+  return transport.handleRequest(raw);
 });
 
 printConfig();

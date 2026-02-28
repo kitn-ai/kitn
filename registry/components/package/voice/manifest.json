@@ -1,0 +1,22 @@
+{
+  "name": "voice",
+  "type": "kitn:package",
+  "description": "Voice plugin for kitn — TTS, STT, and full voice conversation with any OpenAI-compatible provider",
+  "sourceDir": "packages/voice/src",
+  "installDir": "voice",
+  "dependencies": ["@kitn/voice"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "OPENAI_API_KEY": {
+      "description": "OpenAI API key for voice (TTS + STT)",
+      "required": false,
+      "secret": true
+    }
+  },
+  "docs": "Voice plugin installed. Import with: import { createVoice, OpenAIVoiceProvider } from '@kitn/voice'",
+  "categories": ["voice", "audio"],
+  "version": "1.0.0",
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-02-28", "type": "initial", "note": "Initial release — extracted from core" }
+  ]
+}

@@ -491,8 +491,9 @@ export async function addCommand(components: string[], opts: AddOptions) {
             case "kitn:tool": return "tools";
             case "kitn:skill": return "skills";
             case "kitn:storage": return "storage";
+            case "kitn:cron": return "crons";
           }
-        })() as "agents" | "tools" | "skills" | "storage";
+        })() as "agents" | "tools" | "skills" | "storage" | "crons";
 
         const fileName = file.path.split("/").pop()!;
         const installPath = getInstallPath(config, item.type as Exclude<ComponentType, "kitn:package">, fileName, ns);
@@ -563,7 +564,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
   }
 
   // Barrel management — auto-wire imports for barrel-eligible components
-  const BARREL_ELIGIBLE: Set<string> = new Set(["kitn:agent", "kitn:tool", "kitn:skill"]);
+  const BARREL_ELIGIBLE: Set<string> = new Set(["kitn:agent", "kitn:tool", "kitn:skill", "kitn:cron"]);
   const baseDir = config.aliases.base ?? "src/ai";
   const barrelPath = join(cwd, baseDir, "index.ts");
   const barrelDir = join(cwd, baseDir);

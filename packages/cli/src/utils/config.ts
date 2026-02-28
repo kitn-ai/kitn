@@ -2,7 +2,7 @@ import { readFile, writeFile, unlink } from "fs/promises";
 import { join } from "path";
 import { z } from "zod";
 
-const componentType = z.enum(["kitn:agent", "kitn:tool", "kitn:skill", "kitn:storage", "kitn:package"]);
+const componentType = z.enum(["kitn:agent", "kitn:tool", "kitn:skill", "kitn:storage", "kitn:package", "kitn:cron"]);
 type ComponentType = z.infer<typeof componentType>;
 
 const installedComponentSchema = z.object({
@@ -37,6 +37,7 @@ export const configSchema = z.object({
     tools: z.string(),
     skills: z.string(),
     storage: z.string(),
+    crons: z.string().optional(),
   }),
   registries: z.record(z.string(), registryValueSchema),
 });
@@ -102,13 +103,14 @@ export async function writeLock(projectDir: string, lock: LockFile): Promise<voi
   await writeFile(join(projectDir, LOCK_FILE), JSON.stringify(lock, null, 2) + "\n");
 }
 
-type RequiredAliasKey = "agents" | "tools" | "skills" | "storage";
+type RequiredAliasKey = "agents" | "tools" | "skills" | "storage" | "crons";
 
 const typeToAliasKey: Record<Exclude<ComponentType, "kitn:package">, RequiredAliasKey> = {
   "kitn:agent": "agents",
   "kitn:tool": "tools",
   "kitn:skill": "skills",
   "kitn:storage": "storage",
+  "kitn:cron": "crons",
 };
 
 type SingleFileComponentType = Exclude<ComponentType, "kitn:package">;
@@ -120,7 +122,8 @@ export function getInstallPath(
   namespace?: string,
 ): string {
   const aliasKey = typeToAliasKey[type];
-  const base = config.aliases[aliasKey];
+  const baseAlias = config.aliases.base ?? "src/ai";
+  const base = config.aliases[aliasKey] ?? join(baseAlias, aliasKey);
   if (namespace && namespace !== "@kitn") {
     const nsDir = namespace.replace("@", "");
     return join(base, nsDir, fileName);

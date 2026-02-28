@@ -6,6 +6,7 @@ const DEFAULT_ALIASES = {
   tools: "src/tools",
   skills: "src/skills",
   storage: "src/storage",
+  crons: "src/crons",
 };
 
 describe("import-rewriter", () => {
@@ -33,6 +34,7 @@ describe("import-rewriter", () => {
       tools: "lib/ai/tools",
       skills: "lib/ai/skills",
       storage: "lib/ai/storage",
+      crons: "lib/ai/crons",
     };
     const input = `import { weatherTool } from "@kitn/tools/weather.js";`;
     const result = rewriteKitnImports(input, "kitn:agent", "weather-agent.ts", customAliases);
@@ -45,6 +47,7 @@ describe("import-rewriter", () => {
       tools: "src/shared/tools",
       skills: "src/skills",
       storage: "src/storage",
+      crons: "src/crons",
     };
     const input = `import { weatherTool } from "@kitn/tools/weather.js";`;
     const result = rewriteKitnImports(input, "kitn:agent", "weather-agent.ts", customAliases);

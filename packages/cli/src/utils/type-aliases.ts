@@ -11,6 +11,8 @@ export const TYPE_ALIASES: Record<string, string> = {
   storages: "storage",
   package: "package",
   packages: "package",
+  cron: "cron",
+  crons: "cron",
 };
 
 const SHORT_TO_COMPONENT: Record<string, ComponentType> = {
@@ -19,6 +21,7 @@ const SHORT_TO_COMPONENT: Record<string, ComponentType> = {
   skill: "kitn:skill",
   storage: "kitn:storage",
   package: "kitn:package",
+  cron: "kitn:cron",
 };
 
 /** Resolve a user-provided type string (e.g. "agents") to its canonical short form (e.g. "agent"). */

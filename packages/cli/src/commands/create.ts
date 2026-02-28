@@ -7,7 +7,7 @@ import { readConfig, getInstallPath } from "../utils/config.js";
 import { checkFileStatus, FileStatus, writeComponentFile } from "../installers/file-writer.js";
 import { createBarrelFile, addImportToBarrel } from "../installers/barrel-manager.js";
 
-const VALID_TYPES = ["agent", "tool", "skill", "storage"] as const;
+const VALID_TYPES = ["agent", "tool", "skill", "storage", "cron"] as const;
 type ComponentType = (typeof VALID_TYPES)[number];
 
 function toCamelCase(str: string): string {
@@ -86,15 +86,46 @@ export function ${camel}(config?: Record<string, unknown>): StorageProvider {
 `;
 }
 
-const typeToKitnType: Record<ComponentType, "kitn:agent" | "kitn:tool" | "kitn:skill" | "kitn:storage"> = {
+function generateCronSource(name: string): string {
+  const camel = toCamelCase(name);
+  return `import { registerTool } from "@kitn/core";
+import { tool } from "ai";
+import { z } from "zod";
+
+// Cron job: ${name}
+// This file defines tools for a cron job. Register the cron via the API:
+// POST /api/crons { name: "${name}", schedule: "0 6 * * *", agentName: "...", input: "..." }
+
+export const ${camel} = tool({
+  description: "Execute the ${name} cron task",
+  parameters: z.object({
+    input: z.string().describe("Task input"),
+  }),
+  execute: async ({ input }) => {
+    // TODO: implement
+    return { result: input };
+  },
+});
+
+registerTool({
+  name: "${name}",
+  description: "",
+  inputSchema: z.object({ input: z.string() }),
+  tool: ${camel},
+});
+`;
+}
+
+const typeToKitnType: Record<ComponentType, "kitn:agent" | "kitn:tool" | "kitn:skill" | "kitn:storage" | "kitn:cron"> = {
   agent: "kitn:agent",
   tool: "kitn:tool",
   skill: "kitn:skill",
   storage: "kitn:storage",
+  cron: "kitn:cron",
 };
 
 // Types that get auto-wired into the barrel file
-const BARREL_TYPES: ComponentType[] = ["agent", "tool", "skill"];
+const BARREL_TYPES: ComponentType[] = ["agent", "tool", "skill", "cron"];
 
 export async function createComponentInProject(
   type: string,
@@ -142,6 +173,9 @@ export async function createComponentInProject(
       break;
     case "storage":
       source = generateStorageSource(name);
+      break;
+    case "cron":
+      source = generateCronSource(name);
       break;
   }
 

@@ -75,6 +75,9 @@ export type {
   AudioEntry,
   CommandRegistration,
   CommandStore,
+  CronJob,
+  CronExecution,
+  CronStore,
 } from "./storage/interfaces.js";
 export { createFileStorage } from "./storage/file-storage/index.js";
 export type { FileStorageOptions } from "./storage/file-storage/index.js";
@@ -100,6 +103,13 @@ export type { CompactionResult } from "./utils/compaction.js";
 
 // ── Conversation helpers ──
 export { loadConversationWithCompaction } from "./utils/conversation-helpers.js";
+
+// ── Crons ──
+export { getNextRun, validateCron } from "./crons/index.js";
+export { executeCronJob } from "./crons/index.js";
+export type { CronScheduler } from "./crons/index.js";
+export { createInternalScheduler } from "./crons/index.js";
+export type { InternalSchedulerOptions } from "./crons/index.js";
 
 // ── Schemas ──
 import "./schemas/setup-openapi.js";

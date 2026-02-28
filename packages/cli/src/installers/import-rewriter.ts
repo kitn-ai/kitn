@@ -1,14 +1,15 @@
 import { relative, dirname, join, posix } from "path";
 
-type AliasKey = "agents" | "tools" | "skills" | "storage";
+type AliasKey = "agents" | "tools" | "skills" | "storage" | "crons";
 
-const KNOWN_TYPES: readonly AliasKey[] = ["agents", "tools", "skills", "storage"];
+const KNOWN_TYPES: readonly AliasKey[] = ["agents", "tools", "skills", "storage", "crons"];
 
 const TYPE_TO_ALIAS_KEY: Record<string, AliasKey> = {
   "kitn:agent": "agents",
   "kitn:tool": "tools",
   "kitn:skill": "skills",
   "kitn:storage": "storage",
+  "kitn:cron": "crons",
 };
 
 /**
@@ -21,12 +22,13 @@ export function rewriteKitnImports(
   content: string,
   fileType: string,
   fileName: string,
-  aliases: Record<AliasKey, string>,
+  aliases: Record<string, string | undefined>,
 ): string {
   const sourceAliasKey = TYPE_TO_ALIAS_KEY[fileType];
   if (!sourceAliasKey) return content;
 
   const sourceDir = aliases[sourceAliasKey];
+  if (!sourceDir) return content;
 
   // Match import/export ... from "@kitn/<type>/<path>"
   return content.replace(
@@ -37,6 +39,9 @@ export function rewriteKitnImports(
       }
 
       const targetDir = aliases[type as AliasKey];
+      if (!targetDir) {
+        return `${prefix}@kitn/${type}/${targetPath}${quote}`;
+      }
       const targetFile = join(targetDir, targetPath);
       let rel = relative(sourceDir, targetFile);
 

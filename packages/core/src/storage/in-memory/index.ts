@@ -14,6 +14,7 @@ import type {
 } from "../interfaces.js";
 import { createInMemoryMemoryStore } from "./memory-store.js";
 import { createCommandStore } from "./command-store.js";
+import { createCronStore } from "./cron-store.js";
 import { parseFrontmatter, parsePhase, buildSkill, KEBAB_CASE } from "../skill-helpers.js";
 
 // ── Conversation Store ──
@@ -330,5 +331,6 @@ export function createMemoryStorage(): StorageProvider {
     prompts: createPromptStore(),
     audio: createAudioStore(),
     commands: createCommandStore(),
+    crons: createCronStore(),
   };
 }

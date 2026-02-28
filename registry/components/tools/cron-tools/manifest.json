@@ -1,0 +1,18 @@
+{
+  "name": "cron-tools",
+  "type": "kitn:tool",
+  "description": "CRUD tools for managing cron jobs — create, list, update, delete scheduled tasks",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "files": ["cron-tools.ts"],
+  "docs": "Provides a createCronTools(ctx) factory that returns AI SDK tools bound to PluginContext storage. Also exports standalone tools and registerTool() calls for auto-registration.",
+  "categories": ["scheduling", "cron"],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-28",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

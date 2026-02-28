@@ -1,0 +1,32 @@
+{
+  "name": "bullmq-scheduler",
+  "type": "kitn:cron",
+  "description": "CronScheduler using BullMQ — Redis-backed job scheduling with concurrency control and retries",
+  "dependencies": ["bullmq"],
+  "registryDependencies": ["core"],
+  "files": ["bullmq-scheduler.ts"],
+  "envVars": {
+    "REDIS_HOST": {
+      "description": "Redis server hostname (default: localhost)",
+      "required": false
+    },
+    "REDIS_PORT": {
+      "description": "Redis server port (default: 6379)",
+      "required": false
+    },
+    "REDIS_PASSWORD": {
+      "description": "Redis server password",
+      "required": false,
+      "secret": true
+    }
+  },
+  "categories": ["scheduling", "cron", "redis"],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-28",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

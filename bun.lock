@@ -15,7 +15,11 @@
       "name": "@kitnai/example-api",
       "version": "1.0.0",
       "dependencies": {
+        "@ai-sdk/mcp": "^1.0.22",
         "@kitnai/hono-adapter": "workspace:*",
+        "@kitnai/mcp-client": "workspace:*",
+        "@kitnai/mcp-server-adapter": "workspace:*",
+        "@modelcontextprotocol/sdk": "^1.27.0",
         "@openrouter/ai-sdk-provider": "^2.2.3",
         "@t3-oss/env-core": "^0.13.10",
         "ai": "^6.0.91",

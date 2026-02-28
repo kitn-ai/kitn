@@ -19,6 +19,7 @@ export const env = createEnv({
     VOICE_STT_MODEL: z.string().default("gpt-4o-mini-transcribe"),
     VOICE_DEFAULT_SPEAKER: z.string().default("alloy"),
     VOICE_RETAIN_AUDIO: z.coerce.boolean().default(false),
+    MCP_CONTEXT7: z.coerce.boolean().default(false),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: false,
@@ -49,6 +50,8 @@ export function printConfig() {
   console.log(`    Voice              : ${voiceEnabled ? `active (${env.VOICE_PROVIDER})` : "no API key"}`);
   console.log(`    Brave Search       : ${status(env.BRAVE_API_KEY)}`);
   console.log(`    Cron Scheduler     : active (internal)`);
+  console.log(`    MCP Server         : active (/mcp)`);
+  console.log(`    MCP Client (C7)    : ${env.MCP_CONTEXT7 ? "active" : "disabled"}`);
   console.log("");
 
   if (voiceEnabled) {

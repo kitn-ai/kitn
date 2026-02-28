@@ -1,6 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { createAIPlugin, createFileStorage, createInternalScheduler, OpenAIVoiceProvider } from "@kitnai/hono-adapter";
+import { createMCPServer } from "@kitnai/mcp-server-adapter";
+import { connectMCPServers } from "@kitnai/mcp-client";
+import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { env, printConfig, voiceEnabled } from "./env.js";
 import { registerEchoTool } from "./tools/echo.js";
@@ -16,6 +19,7 @@ const plugin = createAIPlugin({
   storage: createFileStorage({ dataDir: "./data" }),
   resilience: { maxRetries: 2, baseDelayMs: 500 },
   compaction: { threshold: 20, preserveRecent: 4 },
+  hooks: { level: "summary" },
   // Enable /crons API routes (actual scheduling handled by InternalScheduler below)
   cronScheduler: { async schedule() {}, async unschedule() {} },
   ...(voiceEnabled && {
@@ -77,6 +81,23 @@ await plugin.storage.commands.save({
   tools: ["echo"],
 });
 
+// Subscribe to lifecycle hooks
+plugin.on("agent:start", (e) => {
+  console.log(`[hooks] Agent started: ${e.agentName} (conversation: ${e.conversationId})`);
+});
+plugin.on("agent:end", (e) => {
+  console.log(`[hooks] Agent completed: ${e.agentName} in ${e.duration}ms (${e.usage.totalTokens} tokens)`);
+});
+plugin.on("agent:error", (e) => {
+  console.error(`[hooks] Agent error: ${e.agentName}:`, e.error);
+});
+plugin.on("cron:executed", (e) => {
+  console.log(`[hooks] Cron executed: ${e.cronId} (${e.status}) in ${e.duration}ms`);
+});
+plugin.on("job:end", (e) => {
+  console.log(`[hooks] Job completed: ${e.jobId} (agent: ${e.agentName})`);
+});
+
 // Start the internal cron scheduler
 const scheduler = createInternalScheduler(plugin, {
   onComplete: (job, exec) => console.log(`[cron] Completed: ${job.name} (${exec.id})`),
@@ -98,14 +119,50 @@ if (!existingJobs.some((j: { name: string }) => j.name === "hourly-news-digest")
   console.log("[cron] Seeded sample job: hourly-news-digest (runs every hour)");
 }
 
+// MCP Server — expose kitn tools and agents via Model Context Protocol
+const mcpServer = createMCPServer(plugin, {
+  name: "kitn-api",
+  version: "1.0.0",
+  agents: ["general"],
+});
+const mcpTransport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+await mcpServer.server.connect(mcpTransport);
+
+// MCP Client — optionally connect to external MCP servers
+if (env.MCP_CONTEXT7) {
+  try {
+    const mcp = await connectMCPServers(plugin, {
+      servers: [{
+        name: "context7",
+        transport: { type: "stdio", command: "npx", args: ["-y", "@context7/mcp"] },
+      }],
+    });
+    console.log("[mcp] Connected to Context7 MCP — documentation tools available");
+    process.on("beforeExit", () => mcp.close());
+  } catch (err) {
+    console.warn("[mcp] Failed to connect to Context7 MCP:", (err as Error).message);
+  }
+}
+
 // Build the app
 const app = new Hono();
 app.use("/*", cors());
 app.route("/api", plugin.router);
 
+// MCP endpoint — POST for requests, GET for SSE streams, DELETE for cleanup
+app.all("/mcp", async (c) => {
+  if (c.req.method === "POST") {
+    const body = await c.req.json();
+    return mcpTransport.handleRequest(c.req.raw, { parsedBody: body });
+  }
+  return mcpTransport.handleRequest(c.req.raw);
+});
+
 printConfig();
 console.log(`[kitn-api] Running on http://localhost:${env.PORT}`);
 console.log(`[kitn-api] API docs: http://localhost:${env.PORT}/api/reference`);
+console.log(`[kitn-api] MCP server: http://localhost:${env.PORT}/mcp`);
+console.log(`[kitn-api] Async jobs: POST /api/agents/:name?async=true → GET /api/jobs/:id`);
 
 export default {
   port: env.PORT,

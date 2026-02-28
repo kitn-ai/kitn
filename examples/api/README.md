@@ -9,6 +9,8 @@ The comprehensive example — every kitn feature wired up manually in one Hono s
 - **Orchestrator** — autonomous agent routing
 - **Cron scheduling** — InternalScheduler with sample hourly job
 - **Commands** — stored command definitions via the commands API
+- **MCP Server** — expose tools and agents via Model Context Protocol at `/mcp`
+- **MCP Client** — consume external MCP servers as tool sources (optional, e.g. Context7 docs)
 - **Voice** — OpenAI and Groq TTS/STT providers (optional)
 - **File storage** — conversations, memory, skills, commands, crons persisted to `data/`
 - **Resilience** — automatic retries with exponential backoff
@@ -213,6 +215,50 @@ curl -X PATCH http://localhost:4000/api/agents/general \
   -d '{"reset": true}'
 ```
 
+### MCP Server
+
+The server exposes kitn tools and agents via the Model Context Protocol at `/mcp`. Any MCP-compatible client (Claude Desktop, Cursor, etc.) can connect to it.
+
+```bash
+# Initialize — send an MCP request to list available tools
+curl http://localhost:4000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/list",
+    "params": {}
+  }'
+
+# Call a tool via MCP
+curl http://localhost:4000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/call",
+    "params": {
+      "name": "getWeather",
+      "arguments": { "location": "London" }
+    }
+  }'
+```
+
+### MCP Client (optional)
+
+When `MCP_CONTEXT7=true`, the server connects to the [Context7](https://context7.com) MCP server at startup, making documentation lookup tools available to agents.
+
+```bash
+# Enable in .env
+MCP_CONTEXT7=true
+
+# The general agent can now use Context7 tools
+curl -N http://localhost:4000/api/agents/general \
+  -H "X-API-Key: demo" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Look up the Hono framework documentation for routing"}'
+```
+
 ## Configuration
 
 Environment variables are validated at startup. The server exits with a clear error if required values are missing.
@@ -226,6 +272,7 @@ Environment variables are validated at startup. The server exits with a clear er
 | `BRAVE_API_KEY` | No | — | Enables web search tool |
 | `OPENAI_API_KEY` | No | — | Enables OpenAI voice (TTS/STT) |
 | `GROQ_API_KEY` | No | — | Enables Groq voice (Whisper STT) |
+| `MCP_CONTEXT7` | No | `false` | Enables Context7 MCP client (documentation tools) |
 
 ## Further Reading
 

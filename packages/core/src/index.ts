@@ -104,6 +104,10 @@ export type { CompactionResult } from "./utils/compaction.js";
 // ── Conversation helpers ──
 export { loadConversationWithCompaction } from "./utils/conversation-helpers.js";
 
+// ── Crons ──
+export { getNextRun, validateCron } from "./crons/index.js";
+export type { CronScheduler } from "./crons/index.js";
+
 // ── Schemas ──
 import "./schemas/setup-openapi.js";
 export { generateRequestSchema, generateResponseSchema } from "./schemas/generate.schemas.js";

@@ -5,6 +5,7 @@ import type { ToolRegistry } from "./registry/tool-registry.js";
 import type { StorageProvider } from "./storage/interfaces.js";
 import type { VoiceManager } from "./voice/voice-manager.js";
 import type { CardRegistry } from "./utils/card-registry.js";
+import type { CronScheduler } from "./crons/scheduler.js";
 
 /**
  * Framework-agnostic request interface.
@@ -80,5 +81,6 @@ export interface PluginContext {
   maxDelegationDepth: number;
   defaultMaxSteps: number;
   config: CoreConfig;
+  cronScheduler?: CronScheduler;
 }
 

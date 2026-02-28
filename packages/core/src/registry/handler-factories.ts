@@ -10,10 +10,15 @@ export function generateConversationId(existing?: string) {
 interface RegistryHandlerConfig {
   tools: Record<string, any>;
   maxSteps?: number;
+  agentName?: string;
 }
 
 export function makeRegistryStreamHandler(config: RegistryHandlerConfig, ctx: PluginContext): AgentHandler {
   return async (req: AgentRequest, { systemPrompt, memoryContext, body: preParsedBody }) => {
+    const startTime = performance.now();
+    const agentName = config.agentName ?? "unknown";
+    const scopeId = req.header("x-scope-id") ?? undefined;
+
     const { streamAgentResponse } = await import("../streaming/stream-helpers.js");
     const body = preParsedBody ?? await req.json<any>();
     const { message, messages, conversationId: cid, model } = body;
@@ -41,6 +46,14 @@ export function makeRegistryStreamHandler(config: RegistryHandlerConfig, ctx: Pl
         ? { messages }
         : { prompt: message };
 
+    ctx.hooks?.emit("agent:start", {
+      agentName,
+      input: message,
+      conversationId: convId,
+      scopeId,
+      timestamp: Date.now(),
+    });
+
     return streamAgentResponse(ctx, {
       system,
       tools: config.tools,
@@ -48,7 +61,7 @@ export function makeRegistryStreamHandler(config: RegistryHandlerConfig, ctx: Pl
       model,
       maxSteps: config.maxSteps,
       conversationId: convId,
-      onStreamComplete: async ({ text }) => {
+      onStreamComplete: async ({ text, toolCalls }) => {
         if (text) {
           await ctx.storage.conversations.append(convId, {
             role: "assistant",
@@ -56,6 +69,17 @@ export function makeRegistryStreamHandler(config: RegistryHandlerConfig, ctx: Pl
             timestamp: new Date().toISOString(),
           });
         }
+        ctx.hooks?.emit("agent:end", {
+          agentName,
+          input: message,
+          output: text,
+          toolsUsed: toolCalls,
+          usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          duration: performance.now() - startTime,
+          conversationId: convId,
+          scopeId,
+          timestamp: Date.now(),
+        });
       },
     });
   };
@@ -63,10 +87,13 @@ export function makeRegistryStreamHandler(config: RegistryHandlerConfig, ctx: Pl
 
 export function makeRegistryJsonHandler(config: RegistryHandlerConfig, ctx: PluginContext): AgentHandler {
   return async (req: AgentRequest, { systemPrompt, memoryContext, body: preParsedBody }) => {
+    const startTime = performance.now();
     const { runAgent } = await import("../agents/run-agent.js");
     const body = preParsedBody ?? await req.json<any>();
     const { message, conversationId: cid, model } = body;
     const convId = generateConversationId(cid);
+    const agentName = config.agentName ?? "unknown";
+    const scopeId = req.header("x-scope-id") ?? undefined;
 
     const system = memoryContext
       ? `${systemPrompt}\n\n## Memory Context\n${memoryContext}`
@@ -83,27 +110,64 @@ export function makeRegistryJsonHandler(config: RegistryHandlerConfig, ctx: Plug
       });
     }
 
-    const result = await runAgent(
-      ctx,
-      { system, tools: config.tools },
-      message,
-      model,
-      config.maxSteps,
-    );
-
-    // Persist assistant response
-    if (result.response) {
-      await ctx.storage.conversations.append(convId, {
-        role: "assistant",
-        content: result.response,
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    return new Response(JSON.stringify({ ...result, conversationId: convId }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    ctx.hooks?.emit("agent:start", {
+      agentName,
+      input: message,
+      conversationId: convId,
+      scopeId,
+      timestamp: Date.now(),
     });
+
+    try {
+      const result = await runAgent(
+        ctx,
+        { system, tools: config.tools },
+        message,
+        model,
+        config.maxSteps,
+      );
+
+      // Persist assistant response
+      if (result.response) {
+        await ctx.storage.conversations.append(convId, {
+          role: "assistant",
+          content: result.response,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      ctx.hooks?.emit("agent:end", {
+        agentName,
+        input: message,
+        output: result.response ?? "",
+        toolsUsed: result.toolsUsed,
+        usage: {
+          promptTokens: result.usage.inputTokens,
+          completionTokens: result.usage.outputTokens,
+          totalTokens: result.usage.totalTokens,
+        },
+        duration: performance.now() - startTime,
+        conversationId: convId,
+        scopeId,
+        timestamp: Date.now(),
+      });
+
+      return new Response(JSON.stringify({ ...result, conversationId: convId }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (err) {
+      ctx.hooks?.emit("agent:error", {
+        agentName,
+        input: message,
+        error: err instanceof Error ? err.message : String(err),
+        duration: performance.now() - startTime,
+        conversationId: convId,
+        scopeId,
+        timestamp: Date.now(),
+      });
+      throw err;
+    }
   };
 }
 

@@ -235,7 +235,7 @@ Generate or regenerate AI coding assistant rules files (e.g. `AGENTS.md`, `.curs
 kitn rules
 ```
 
-Fetches the latest rules template from the registry and writes files for each AI tool selected during `kitn init`. If no `aiTools` selection exists in `kitn.json`, prompts for one.
+Prompts you to select which AI coding tools you use, then fetches the latest rules template from the registry and generates the corresponding files. Works in any directory — uses project aliases from `kitn.json` if available, otherwise uses defaults.
 
 ### `kitn build`
 
@@ -329,7 +329,6 @@ Created by `kitn init`. Controls where components are installed and which regist
 | `framework` | `hono` |
 | `aliases` | Directory paths for each component type |
 | `registries` | Named registries — each value is a URL string or an object with `url`, `homepage`, `description` |
-| `aiTools` | (optional) Selected AI coding tools for `kitn rules` — e.g. `["claude-code", "cursor"]` |
 
 > Installed component tracking (file paths, content hashes, versions) is stored separately in `kitn.lock`. This file is auto-managed — don't edit it manually.
 

@@ -2,8 +2,7 @@ import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { join } from "path";
-import { readConfig, writeConfig } from "../utils/config.js";
-import type { KitnConfig } from "../utils/config.js";
+import { readConfig, writeConfig, DEFAULT_REGISTRY_URL } from "../utils/config.js";
 import { patchProjectTsconfig } from "../installers/tsconfig-patcher.js";
 import { createBarrelFile } from "../installers/barrel-manager.js";
 import { addCommand } from "./add.js";
@@ -188,7 +187,7 @@ export async function initCommand(opts: InitOptions = {}) {
     },
     registries: {
       "@kitn": {
-        url: "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
+        url: DEFAULT_REGISTRY_URL,
         homepage: "https://kitn.ai",
         description: "Official kitn AI agent components",
       },
@@ -253,11 +252,7 @@ export async function initCommand(opts: InitOptions = {}) {
     }
 
     if (selectedToolIds.length > 0) {
-      // Save aiTools to kitn.json
-      const updatedConfig: KitnConfig = { ...config, aiTools: selectedToolIds };
-      await writeConfig(cwd, updatedConfig);
-
-      const written = await generateRulesFiles(cwd, updatedConfig, selectedToolIds);
+      const written = await generateRulesFiles(cwd, config, selectedToolIds);
       for (const filePath of written) {
         p.log.success(`Created ${pc.bold(filePath)}`);
       }

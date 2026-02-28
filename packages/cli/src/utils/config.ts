@@ -27,6 +27,25 @@ export type RegistryEntry = z.infer<typeof registryEntrySchema>;
 // Registries can be a plain URL string (backward compat) or a rich entry object
 const registryValueSchema = z.union([z.string(), registryEntrySchema]);
 
+export const DEFAULT_REGISTRY_URL = "https://kitn-ai.github.io/kitn/r/{type}/{name}.json";
+
+export const DEFAULT_REGISTRIES: Record<string, z.infer<typeof registryValueSchema>> = {
+  "@kitn": {
+    url: DEFAULT_REGISTRY_URL,
+    homepage: "https://kitn.ai",
+    description: "Official kitn AI agent components",
+  },
+};
+
+export const DEFAULT_ALIASES = {
+  base: "src/ai",
+  agents: "src/ai/agents",
+  tools: "src/ai/tools",
+  skills: "src/ai/skills",
+  storage: "src/ai/storage",
+  crons: "src/ai/crons",
+} as const;
+
 export const configSchema = z.object({
   $schema: z.string().optional(),
   runtime: z.enum(["bun", "node", "deno"]),
@@ -40,7 +59,6 @@ export const configSchema = z.object({
     crons: z.string().optional(),
   }),
   registries: z.record(z.string(), registryValueSchema),
-  aiTools: z.array(z.string()).optional(),
 });
 
 export type KitnConfig = z.infer<typeof configSchema>;

@@ -1,0 +1,14 @@
+{
+  "name": "mcp-client",
+  "type": "kitn:package",
+  "description": "MCP client — consume external MCP servers as tool sources for kitn agents",
+  "sourceDir": "packages/mcp-client/src",
+  "installDir": "mcp-client",
+  "dependencies": ["@ai-sdk/mcp"],
+  "registryDependencies": ["core"],
+  "docs": "Connect to external MCP servers:\n\n  import { connectMCPServers } from '@kitn/mcp-client';\n  const mcp = await connectMCPServers(plugin, {\n    servers: [{ name: 'github', transport: { type: 'http', url: '...' } }],\n  });\n\nMCP tools are registered with namespaced names (e.g. github:createIssue).\nSee src/ai/mcp-client/client.ts for configuration options.",
+  "version": "1.0.0",
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-02-28", "type": "initial", "note": "Initial release — connect to MCP servers and register tools" }
+  ]
+}

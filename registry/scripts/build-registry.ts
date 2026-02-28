@@ -39,6 +39,8 @@ const PACKAGE_IMPORT_REWRITES: Record<string, string> = {
   "@kitnai/hono-adapter": "@kitn/adapters/hono",
   "@kitnai/hono-openapi-adapter": "@kitn/adapters/hono-openapi",
   "@kitnai/elysia-adapter": "@kitn/adapters/elysia",
+  "@kitnai/mcp-server-adapter": "@kitn/adapters/mcp-server",
+  "@kitnai/mcp-client": "@kitn/mcp-client",
 };
 
 function rewritePackageImports(content: string): string {

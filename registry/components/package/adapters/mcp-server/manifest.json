@@ -1,0 +1,14 @@
+{
+  "name": "mcp-server",
+  "type": "kitn:package",
+  "description": "MCP server adapter — expose kitn tools and agents via Model Context Protocol",
+  "sourceDir": "packages/adapters/mcp-server/src",
+  "installDir": "adapters/mcp-server",
+  "dependencies": ["@modelcontextprotocol/sdk"],
+  "registryDependencies": ["core"],
+  "docs": "Expose your kitn tools as an MCP server:\n\n  import { createMCPServer } from '@kitn/adapters/mcp-server';\n  const mcp = createMCPServer(plugin, { name: 'my-server' });\n  await mcp.connectStdio();\n\nSee src/ai/adapters/mcp-server/server.ts for configuration options.",
+  "version": "1.0.0",
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-02-28", "type": "initial", "note": "Initial release — tool and agent exposure via MCP" }
+  ]
+}

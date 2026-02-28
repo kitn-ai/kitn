@@ -182,7 +182,7 @@ export async function initCommand(opts: InitOptions = {}) {
     : `app.route("/api", ai.router);`;
   p.note(
     [
-      `import { ai } from "./${baseDir.replace(/^src\//, "")}/plugin";`,
+      `import { ai } from "@kitn/plugin";`,
       ``,
       mountCode,
     ].join("\n"),

@@ -604,7 +604,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
     if (!barrelExisted) {
       p.note(
         [
-          `import { ai } from "./${baseDir.replace(/^src\//, "")}/plugin";`,
+          `import { ai } from "@kitn/plugin";`,
           ``,
           `app.route("/api", ai.router);`,
         ].join("\n"),

@@ -22,6 +22,7 @@ import { createSkillsRoutes } from "./routes/skills.js";
 import { createConversationsRoutes } from "./routes/conversations.js";
 import { createVoiceRoutes } from "./routes/voice.js";
 import { createCommandsRoutes } from "./routes/commands.js";
+import { createCronRoutes } from "./routes/crons.js";
 
 export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   if (config.memoryStore) {
@@ -93,6 +94,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   app.use(createSkillsRoutes(ctx));
   app.use(createConversationsRoutes(ctx));
   app.use(createCommandsRoutes(ctx));
+  app.use(createCronRoutes(ctx));
 
   // Conditionally mount voice routes
   if (voice) {

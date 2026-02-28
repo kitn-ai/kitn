@@ -1,0 +1,40 @@
+{
+  "version": "1.0.0",
+  "tools": [
+    {
+      "id": "claude-code",
+      "name": "Claude Code",
+      "filePath": "AGENTS.md",
+      "format": "plain",
+      "description": "Also works with any tool that reads AGENTS.md"
+    },
+    {
+      "id": "cursor",
+      "name": "Cursor",
+      "filePath": ".cursor/rules/kitn.mdc",
+      "format": "mdc",
+      "frontmatter": {
+        "description": "kitn AI agent framework conventions and patterns",
+        "globs": "src/ai/**/*.ts, kitn.json"
+      }
+    },
+    {
+      "id": "github-copilot",
+      "name": "GitHub Copilot",
+      "filePath": ".github/copilot-instructions.md",
+      "format": "plain"
+    },
+    {
+      "id": "cline",
+      "name": "Cline",
+      "filePath": ".clinerules",
+      "format": "plain"
+    },
+    {
+      "id": "windsurf",
+      "name": "Windsurf",
+      "filePath": ".windsurfrules",
+      "format": "plain"
+    }
+  ]
+}

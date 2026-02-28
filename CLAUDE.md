@@ -94,6 +94,10 @@ Reference: `packages/cli/src/commands/list.ts` (simple), `packages/cli/src/comma
 - Test files: `test/` directories or co-located `*.test.ts`
 - Run single: `bun test path/to/test.ts`
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, PR workflow, and how to create registry components.
+
 ## Key Types
 
 - `PluginContext` — central context (registries, storage, model getter)

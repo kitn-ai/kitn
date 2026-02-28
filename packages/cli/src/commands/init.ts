@@ -3,9 +3,14 @@ import pc from "picocolors";
 import { mkdir, writeFile } from "fs/promises";
 import { join } from "path";
 import { readConfig, writeConfig } from "../utils/config.js";
+import type { KitnConfig } from "../utils/config.js";
 import { patchProjectTsconfig } from "../installers/tsconfig-patcher.js";
 import { createBarrelFile } from "../installers/barrel-manager.js";
 import { addCommand } from "./add.js";
+import {
+  fetchRulesConfig,
+  generateRulesFiles,
+} from "../installers/rules-generator.js";
 
 function getPluginTemplate(framework: string): string {
   const adapterName = framework === "hono-openapi" ? "hono-openapi" : framework;
@@ -176,6 +181,48 @@ export async function initCommand(opts: InitOptions = {}) {
   await writeFile(pluginPath, getPluginTemplate(framework));
 
   p.log.success(`Created ${pc.bold(baseDir + "/plugin.ts")} — configure your AI provider there`);
+
+  // --- Generate AI coding tool rules files ---
+  try {
+    const rulesConfig = await fetchRulesConfig(config.registries);
+
+    let selectedToolIds: string[];
+
+    if (opts.yes) {
+      // Auto mode: generate all rules files
+      selectedToolIds = rulesConfig.tools.map((t) => t.id);
+    } else {
+      const selected = await p.multiselect({
+        message: "Which AI coding tools do you use?",
+        options: rulesConfig.tools.map((t) => ({
+          value: t.id,
+          label: t.name,
+          hint: t.description,
+        })),
+        required: false,
+      });
+
+      if (p.isCancel(selected)) {
+        selectedToolIds = [];
+      } else {
+        selectedToolIds = selected as string[];
+      }
+    }
+
+    if (selectedToolIds.length > 0) {
+      // Save aiTools to kitn.json
+      const updatedConfig: KitnConfig = { ...config, aiTools: selectedToolIds };
+      await writeConfig(cwd, updatedConfig);
+
+      const written = await generateRulesFiles(cwd, updatedConfig, selectedToolIds);
+      for (const filePath of written) {
+        p.log.success(`Created ${pc.bold(filePath)}`);
+      }
+    }
+  } catch {
+    // Don't fail init if rules generation fails
+    p.log.warn("Could not generate AI coding tool rules (non-fatal).");
+  }
 
   const mountCode = framework === "elysia"
     ? `app.use(new Elysia({ prefix: "/api" }).use(ai.router));`

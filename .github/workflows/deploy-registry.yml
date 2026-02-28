@@ -45,6 +45,7 @@ jobs:
           mkdir -p _site/r
           cp -r registry/r/* _site/r/
           cp registry/index.html _site/index.html
+          cp registry/r/llms.txt _site/llms.txt
 
       - uses: actions/upload-pages-artifact@v3
         with:

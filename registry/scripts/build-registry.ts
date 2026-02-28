@@ -246,4 +246,59 @@ if (import.meta.main) {
   const index = buildRegistryIndex(allItems, existingVersions);
   await writeFile(join(OUTPUT_DIR, "registry.json"), JSON.stringify(index, null, 2) + "\n");
   console.log(`\n✓ Registry index: ${allItems.length} components`);
+
+  // --- Copy rules config + template into registry output ---
+  const RULES_SRC = join(ROOT, "rules");
+  const RULES_OUT = join(OUTPUT_DIR, "rules");
+  await mkdir(RULES_OUT, { recursive: true });
+
+  const rulesConfigSrc = await readFile(join(RULES_SRC, "config.json"), "utf-8");
+  await writeFile(join(RULES_OUT, "config.json"), rulesConfigSrc);
+  console.log("✓ Copied rules/config.json");
+
+  const rulesTemplateSrc = await readFile(join(RULES_SRC, "template.md"), "utf-8");
+  await writeFile(join(RULES_OUT, "template.md"), rulesTemplateSrc);
+  console.log("✓ Copied rules/template.md");
+
+  // --- Generate llms.txt from template with default paths ---
+  const defaultAliases: Record<string, string> = {
+    "{base}": "src/ai",
+    "{agents}": "src/ai/agents",
+    "{tools}": "src/ai/tools",
+    "{skills}": "src/ai/skills",
+    "{storage}": "src/ai/storage",
+    "{crons}": "src/ai/crons",
+  };
+
+  let llmsContent = `# kitn
+
+> kitn is a TypeScript framework for building multi-agent AI systems. Components are distributed as source code via a registry (like shadcn/ui for AI agents).
+
+## Overview
+
+- Build multi-agent AI systems with TypeScript
+- Component registry: \`kitn add <name>\` fetches source into your project
+- Framework-agnostic core with adapters for Hono, Elysia, and more
+- Vercel AI SDK integration for tools, streaming, and model providers
+- Self-registration pattern: agents and tools register at import time
+
+## Links
+
+- Documentation: https://kitn.ai
+- Registry: https://kitn-ai.github.io/kitn/r/registry.json
+- GitHub: https://github.com/kitn-ai/kitn
+- npm: https://www.npmjs.com/package/@kitn/cli
+
+---
+
+`;
+
+  let renderedTemplate = rulesTemplateSrc;
+  for (const [placeholder, value] of Object.entries(defaultAliases)) {
+    renderedTemplate = renderedTemplate.replaceAll(placeholder, value);
+  }
+  llmsContent += renderedTemplate;
+
+  await writeFile(join(OUTPUT_DIR, "llms.txt"), llmsContent);
+  console.log("✓ Generated llms.txt");
 }

@@ -88,6 +88,29 @@ program
   });
 
 program
+  .command("link")
+  .description("Wire a tool to an agent")
+  .argument("[type]", "component type (tool)")
+  .argument("[name]", "component name")
+  .option("--to <agent>", "target agent name")
+  .option("--as <key>", "key name in the tools object")
+  .action(async (type: string | undefined, name: string | undefined, opts) => {
+    const { linkCommand } = await import("./commands/link.js");
+    await linkCommand(type, name, opts);
+  });
+
+program
+  .command("unlink")
+  .description("Unwire a tool from an agent")
+  .argument("[type]", "component type (tool)")
+  .argument("[name]", "component name")
+  .option("--from <agent>", "target agent name")
+  .action(async (type: string | undefined, name: string | undefined, opts) => {
+    const { unlinkCommand } = await import("./commands/unlink.js");
+    await unlinkCommand(type, name, opts);
+  });
+
+program
   .command("info")
   .description("Show details about a component")
   .argument("<component>", "component name (e.g. weather-agent, @acme/tool@1.0.0)")
@@ -102,6 +125,14 @@ program
   .action(async () => {
     const { checkCommand } = await import("./commands/check.js");
     await checkCommand(VERSION);
+  });
+
+program
+  .command("rules")
+  .description("Regenerate AI coding tool rules files")
+  .action(async () => {
+    const { rulesCommand } = await import("./commands/rules.js");
+    await rulesCommand();
   });
 
 const registry = program

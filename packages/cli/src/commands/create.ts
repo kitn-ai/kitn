@@ -4,22 +4,12 @@ import { join, relative } from "path";
 import { existsSync } from "fs";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import { readConfig, getInstallPath } from "../utils/config.js";
+import { toCamelCase, toTitleCase } from "../utils/naming.js";
 import { checkFileStatus, FileStatus, writeComponentFile } from "../installers/file-writer.js";
 import { createBarrelFile, addImportToBarrel } from "../installers/barrel-manager.js";
 
 const VALID_TYPES = ["agent", "tool", "skill", "storage", "cron"] as const;
 type ComponentType = (typeof VALID_TYPES)[number];
-
-function toCamelCase(str: string): string {
-  return str.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-}
-
-function toTitleCase(str: string): string {
-  return str
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-}
 
 function generateAgentSource(name: string): string {
   const camel = toCamelCase(name);

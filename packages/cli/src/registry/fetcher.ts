@@ -1,7 +1,7 @@
 import type { RegistryItem, RegistryIndex } from "./schema.js";
 import type { RegistryEntry } from "../utils/config.js";
 
-type TypeDir = "agents" | "tools" | "skills" | "storage" | "package";
+type TypeDir = "agents" | "tools" | "skills" | "storage" | "package" | "crons";
 type FetchFn = (url: string) => Promise<RegistryItem>;
 type RegistryValue = string | RegistryEntry;
 

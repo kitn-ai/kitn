@@ -11,10 +11,10 @@ import type {
   PromptOverride,
   AudioStore,
   AudioEntry,
-  CronStore,
 } from "../interfaces.js";
 import { createInMemoryMemoryStore } from "./memory-store.js";
 import { createCommandStore } from "./command-store.js";
+import { createCronStore } from "./cron-store.js";
 import { parseFrontmatter, parsePhase, buildSkill, KEBAB_CASE } from "../skill-helpers.js";
 
 // ── Conversation Store ──
@@ -312,25 +312,6 @@ function createAudioStore(): AudioStore {
       }
       return deleted;
     },
-  };
-}
-
-// ── Cron Store (stub — replaced by Task 2) ──
-
-function createCronStore(): CronStore {
-  const notImplemented = () => {
-    throw new Error("In-memory CronStore not yet implemented");
-  };
-  return {
-    create: notImplemented,
-    get: notImplemented,
-    list: notImplemented,
-    update: notImplemented,
-    delete: notImplemented,
-    addExecution: notImplemented,
-    listExecutions: notImplemented,
-    updateExecution: notImplemented,
-    getDueJobs: notImplemented,
   };
 }
 

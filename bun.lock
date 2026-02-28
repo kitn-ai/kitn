@@ -170,6 +170,7 @@
         "@kitnai/hono-adapter": "workspace:*",
         "ai": "^4",
         "hono": "^4",
+        "zod": "^3",
       },
       "devDependencies": {
         "@types/bun": "^1.3.9",

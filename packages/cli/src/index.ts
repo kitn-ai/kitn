@@ -139,4 +139,8 @@ registry
   });
 
 await program.parseAsync();
-printUpdateNotice();
+// Skip the deferred update notice if `kitn check` already handled it
+const ranCommand = program.args[0];
+if (ranCommand !== "check") {
+  printUpdateNotice();
+}

@@ -2,12 +2,20 @@ import type { AIPluginInstance } from "@kitnai/hono-adapter";
 import { createPlanTool } from "../tools/create-plan.js";
 import { buildSystemPrompt, type PromptContext } from "../prompts/system.js";
 
-// Keywords that indicate a kitn-related request
-const ALLOWED_KEYWORDS = [
+// Component-type keywords — the request must mention what kind of thing they want
+const COMPONENT_KEYWORDS = [
   "agent", "tool", "skill", "storage", "component", "cron",
+];
+
+// Action keywords — only pass the guard when combined with a component keyword
+const ACTION_KEYWORDS = [
   "add", "create", "remove", "install", "uninstall", "link", "unlink",
   "scaffold", "setup", "set up", "build", "wire", "connect",
-  "available", "registry", "what can", "what do you have",
+];
+
+// Standalone keywords — these pass the guard on their own (informational queries)
+const STANDALONE_KEYWORDS = [
+  "available", "registry", "what can", "what do you have", "kitn",
 ];
 
 export interface GuardResult {
@@ -17,11 +25,19 @@ export interface GuardResult {
 
 export async function assistantGuard(query: string): Promise<GuardResult> {
   const lower = query.toLowerCase();
-  const hasKeyword = ALLOWED_KEYWORDS.some((kw) => lower.includes(kw));
 
-  if (hasKeyword) {
+  // Standalone keywords always pass (e.g. "what's available?", "kitn components")
+  if (STANDALONE_KEYWORDS.some((kw) => lower.includes(kw))) {
     return { allowed: true };
   }
+
+  // Component keywords always pass (e.g. "I want an agent", "add a tool")
+  if (COMPONENT_KEYWORDS.some((kw) => lower.includes(kw))) {
+    return { allowed: true };
+  }
+
+  // Action keywords alone are too broad ("build me a React app" should be rejected)
+  // They only pass when combined with a component keyword (already handled above)
 
   return {
     allowed: false,

@@ -61,7 +61,9 @@ Call the createPlan tool exactly once with the complete plan.`);
 - Don't suggest code changes or implementation details
 - Don't explain how components work internally
 - Keep the summary concise (one sentence)
-- Order steps logically: removes/unlinks before adds, adds before creates, creates before links`);
+- Order steps logically: removes/unlinks before adds, adds before creates, creates before links
+- Framework packages (core, hono, hono-openapi, elysia) are NOT tools — never link them to agents
+- Only link actual tools (type kitn:tool) to agents`);
 
   return sections.join("\n\n");
 }

@@ -40,4 +40,29 @@ describe("assistantGuard", () => {
     expect(result.allowed).toBe(false);
     expect(result.reason).toBeDefined();
   });
+
+  test("rejects action keywords without component keywords", async () => {
+    const result = await assistantGuard("Build me a React frontend");
+    expect(result.allowed).toBe(false);
+  });
+
+  test("rejects generic build requests", async () => {
+    const result = await assistantGuard("Create a REST API for my app");
+    expect(result.allowed).toBe(false);
+  });
+
+  test("allows action + component keyword combo", async () => {
+    const result = await assistantGuard("Build me an agent for customer support");
+    expect(result.allowed).toBe(true);
+  });
+
+  test("allows standalone registry queries", async () => {
+    const result = await assistantGuard("What do you have available?");
+    expect(result.allowed).toBe(true);
+  });
+
+  test("rejects deploy/infrastructure requests", async () => {
+    const result = await assistantGuard("Help me deploy my app to AWS");
+    expect(result.allowed).toBe(false);
+  });
 });

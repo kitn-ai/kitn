@@ -2,3 +2,6 @@ export type { VoiceProvider, TranscribeOptions, TranscribeResult, SpeakOptions, 
 export { VoiceManager } from "./voice-manager.js";
 export { OpenAIVoiceProvider } from "./openai-voice-provider.js";
 export type { OpenAIVoiceProviderConfig } from "./openai-voice-provider.js";
+export type { AudioStore, AudioEntry } from "./audio-store.js";
+export { createMemoryAudioStore } from "./audio-store-memory.js";
+export { createFileAudioStore } from "./audio-store-file.js";

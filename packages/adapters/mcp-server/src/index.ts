@@ -1,1 +1,3 @@
-// MCP Server adapter — exports will be added as implementation progresses
+export { createMCPServer } from "./server.js";
+export type { MCPServerConfig } from "./types.js";
+export { toolResultToMCP, toolErrorToMCP } from "./bridge.js";

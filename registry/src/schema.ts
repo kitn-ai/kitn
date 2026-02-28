@@ -93,7 +93,7 @@ export type InstalledComponent = z.infer<typeof installedComponentSchema>;
 export const runtimeType = z.enum(["bun", "node", "deno"]);
 
 // Framework type
-export const frameworkType = z.enum(["hono", "cloudflare", "elysia", "fastify", "express"]);
+export const frameworkType = z.enum(["hono", "hono-openapi", "cloudflare", "elysia", "fastify", "express"]);
 
 // kitn.json config
 export const configSchema = z.object({

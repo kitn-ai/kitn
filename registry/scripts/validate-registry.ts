@@ -116,6 +116,23 @@ async function main() {
     }
   }
 
+  // Also load package manifests for dependency resolution (but don't validate their imports)
+  try {
+    const packageDir = join(COMPONENTS_DIR, "package");
+    const packageEntries = await readdir(packageDir);
+    for (const entry of packageEntries) {
+      try {
+        const raw = await readFile(join(packageDir, entry, "manifest.json"), "utf-8");
+        const manifest = JSON.parse(raw);
+        manifests.set(manifest.name, manifest);
+      } catch {
+        continue;
+      }
+    }
+  } catch {
+    // No package directory — that's fine
+  }
+
   // Phase 2: Validate imports
   let errors = 0;
   let filesChecked = 0;

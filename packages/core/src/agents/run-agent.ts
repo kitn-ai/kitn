@@ -19,17 +19,20 @@ interface AgentConfig {
 export async function runAgent(
   ctx: PluginContext,
   config: AgentConfig,
-  message: string,
+  input: string | Array<{ role: "user" | "assistant"; content: string }>,
   model?: string,
   maxSteps = ctx.defaultMaxSteps,
 ) {
   const startTime = performance.now();
   const abortSignal = getAbortSignal();
+  const inputConfig = typeof input === "string"
+    ? { prompt: input }
+    : { messages: input };
   const result = await withResilience({
     fn: (overrideModel) => generateText({
       model: ctx.model(overrideModel ?? model),
       system: config.system,
-      prompt: message,
+      ...inputConfig,
       tools: config.tools,
       stopWhen: stepCountIs(maxSteps),
       abortSignal,

@@ -99,9 +99,10 @@ export function makeRegistryJsonHandler(config: RegistryHandlerConfig, ctx: Plug
       ? `${systemPrompt}\n\n## Memory Context\n${memoryContext}`
       : systemPrompt;
 
-    // Persist user message
+    // Load conversation history or persist first user message
+    let historyMessages: Array<{ role: "user" | "assistant"; content: string }> | undefined;
     if (cid) {
-      await loadConversationWithCompaction(ctx, cid, message);
+      historyMessages = await loadConversationWithCompaction(ctx, cid, message);
     } else if (message) {
       await ctx.storage.conversations.append(convId, {
         role: "user",
@@ -119,10 +120,11 @@ export function makeRegistryJsonHandler(config: RegistryHandlerConfig, ctx: Plug
     });
 
     try {
+      const input = historyMessages ?? message;
       const result = await runAgent(
         ctx,
         { system, tools: config.tools },
-        message,
+        input,
         model,
         config.maxSteps,
       );

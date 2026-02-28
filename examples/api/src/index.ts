@@ -119,15 +119,8 @@ if (!existingJobs.some((j: { name: string }) => j.name === "hourly-news-digest")
   console.log("[cron] Seeded sample job: hourly-news-digest (runs every hour)");
 }
 
-// MCP Server — expose kitn tools and agents via Model Context Protocol
-const mcpServer = createMCPServer(plugin, {
-  name: "kitn-api",
-  version: "1.0.0",
-  agents: ["general"],
-});
-const mcpTransport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-await mcpServer.server.connect(mcpTransport);
-
+// MCP Server config — stateless mode creates a fresh server + transport per request
+const mcpConfig = { name: "kitn-api", version: "1.0.0", agents: ["general"] as string[] };
 // MCP Client — optionally connect to external MCP servers
 if (env.MCP_CONTEXT7) {
   try {
@@ -147,15 +140,28 @@ if (env.MCP_CONTEXT7) {
 // Build the app
 const app = new Hono();
 app.use("/*", cors());
+
+// API key auth middleware — protects /api routes
+app.use("/api/*", async (c, next) => {
+  const key = c.req.header("X-API-Key");
+  if (key !== env.API_KEY) {
+    return c.json({ error: "Unauthorized — set X-API-Key header" }, 401);
+  }
+  await next();
+});
+
 app.route("/api", plugin.router);
 
-// MCP endpoint — POST for requests, GET for SSE streams, DELETE for cleanup
+// MCP endpoint — stateless mode requires a fresh server + transport per request
 app.all("/mcp", async (c) => {
+  const { server } = createMCPServer(plugin, mcpConfig);
+  const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+  await server.connect(transport);
   if (c.req.method === "POST") {
     const body = await c.req.json();
-    return mcpTransport.handleRequest(c.req.raw, { parsedBody: body });
+    return transport.handleRequest(c.req.raw, { parsedBody: body });
   }
-  return mcpTransport.handleRequest(c.req.raw);
+  return transport.handleRequest(c.req.raw);
 });
 
 printConfig();

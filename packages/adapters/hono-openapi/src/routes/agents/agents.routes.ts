@@ -257,6 +257,18 @@ export function createAgentsRoutes(ctx: PluginContext) {
       const agent = ctx.agents.get(name);
       if (!agent) return c.json({ error: `Agent not found: ${name}` }, 404);
 
+      // Parse body once — reuse in all code paths below
+      const body = await c.req.json();
+      const message: string = body.message ?? "";
+
+      // Check guard before any execution
+      if (agent.guard) {
+        const guardResult = await agent.guard(message, name);
+        if (!guardResult.allowed) {
+          return c.json({ error: `Guard blocked: ${guardResult.reason ?? "query not allowed"}` }, 403);
+        }
+      }
+
       const format = (c.req.query("format") ?? agent.defaultFormat) as "json" | "sse";
       const handler = format === "sse" ? agent.sseHandler : agent.jsonHandler;
 
@@ -267,7 +279,6 @@ export function createAgentsRoutes(ctx: PluginContext) {
 
       const scopeId = c.req.header("X-Scope-Id") || undefined;
       const systemPrompt = await ctx.agents.getResolvedPrompt(name) ?? "";
-      const body = await c.req.json();
 
       let memoryContext: string | undefined;
       if (body.memoryIds && Array.isArray(body.memoryIds) && body.memoryIds.length > 0) {

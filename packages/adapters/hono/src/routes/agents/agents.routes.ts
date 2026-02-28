@@ -102,12 +102,22 @@ export function createAgentsRoutes(ctx: PluginContext) {
     const agent = ctx.agents.get(name);
     if (!agent) return c.json({ error: `Agent not found: ${name}` }, 404);
 
+    // Parse body once — reuse in all code paths below
+    const body = await c.req.json<any>();
+    const message: string = body.message ?? "";
+
+    // Check guard before any execution
+    if (agent.guard) {
+      const guardResult = await agent.guard(message, name);
+      if (!guardResult.allowed) {
+        return c.json({ error: `Guard blocked: ${guardResult.reason ?? "query not allowed"}` }, 403);
+      }
+    }
+
     // ── Async execution path ──
     // When ?async=true, create a Job and return HTTP 202 immediately.
     // The agent runs in the background; callers poll /jobs/:id or stream /jobs/:id/stream.
     if (c.req.query("async") === "true") {
-      const body = await c.req.json<any>();
-      const message: string = body.message ?? "";
       const conversationId = generateConversationId(body.conversationId);
       const scopeId = c.req.header("x-scope-id") ?? undefined;
 
@@ -133,7 +143,7 @@ export function createAgentsRoutes(ctx: PluginContext) {
       return c.json({ jobId: job.id, conversationId }, 202);
     }
 
-    // ── Synchronous execution path (unchanged) ──
+    // ── Synchronous execution path ──
     const format = (c.req.query("format") ?? agent.defaultFormat) as "json" | "sse";
     const handler = format === "sse" ? agent.sseHandler : agent.jsonHandler;
 
@@ -144,7 +154,6 @@ export function createAgentsRoutes(ctx: PluginContext) {
 
     const scopeId = c.req.header("X-Scope-Id") || undefined;
     const systemPrompt = await ctx.agents.getResolvedPrompt(name) ?? "";
-    const body = await c.req.json();
 
     let memoryContext: string | undefined;
     if (body.memoryIds && Array.isArray(body.memoryIds) && body.memoryIds.length > 0) {

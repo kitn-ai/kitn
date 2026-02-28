@@ -18,7 +18,15 @@ export async function loadConversationWithCompaction(
 ): Promise<Array<{ role: "user" | "assistant"; content: string }> | undefined> {
   emitStatus({ code: STATUS_CODES.LOADING_CONTEXT, message: "Loading conversation history", metadata: { conversationId } });
   let conv = await ctx.storage.conversations.get(conversationId);
-  if (!conv) return undefined;
+  if (!conv) {
+    // First message for this conversation — persist so subsequent requests find it
+    await ctx.storage.conversations.append(conversationId, {
+      role: "user",
+      content: newUserMessage,
+      timestamp: new Date().toISOString(),
+    });
+    return undefined;
+  }
 
   // Auto-compact if enabled and threshold exceeded
   const compactionConfig = ctx.config.compaction;

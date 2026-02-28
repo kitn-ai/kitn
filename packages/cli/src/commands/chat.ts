@@ -2,21 +2,29 @@ import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { readConfig, readLock } from "../utils/config.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
+import { readUserConfig } from "./config.js";
 import type { ChatPlan, PlanStep } from "./chat-types.js";
 
 const DEFAULT_SERVICE_URL = "https://chat.kitn.dev";
 
 /**
  * Resolve the chat service URL.
- * Priority: KITN_CHAT_URL env var > config.chatService.url > default
+ * Priority: urlOverride (--url flag) > KITN_CHAT_URL env > user config (~/.kitn/config.json) > project config (kitn.json chatService.url) > default
  */
-export function resolveServiceUrl(chatServiceConfig?: { url?: string }): string {
-  if (process.env.KITN_CHAT_URL) {
-    return process.env.KITN_CHAT_URL;
-  }
-  if (chatServiceConfig?.url) {
-    return chatServiceConfig.url;
-  }
+export async function resolveServiceUrl(
+  urlOverride?: string,
+  chatServiceConfig?: { url?: string },
+): Promise<string> {
+  if (urlOverride) return urlOverride;
+  if (process.env.KITN_CHAT_URL) return process.env.KITN_CHAT_URL;
+
+  // User-level config (~/.kitn/config.json)
+  const userConfig = await readUserConfig();
+  if (userConfig["chat-url"]) return userConfig["chat-url"];
+
+  // Project-level config (kitn.json)
+  if (chatServiceConfig?.url) return chatServiceConfig.url;
+
   return DEFAULT_SERVICE_URL;
 }
 
@@ -58,7 +66,7 @@ function formatStepLabel(step: PlanStep): string {
   }
 }
 
-export async function chatCommand(message: string | undefined): Promise<void> {
+export async function chatCommand(message: string | undefined, opts?: { url?: string }): Promise<void> {
   const cwd = process.cwd();
   const config = await readConfig(cwd);
   if (!config) {
@@ -106,7 +114,7 @@ export async function chatCommand(message: string | undefined): Promise<void> {
   // --- Call service ---
   s.start("Thinking...");
 
-  const serviceUrl = resolveServiceUrl(config.chatService);
+  const serviceUrl = await resolveServiceUrl(opts?.url, config.chatService);
   const payload = buildRequestPayload(message, { registryIndex, installed });
 
   let response: Response;

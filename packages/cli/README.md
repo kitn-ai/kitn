@@ -237,6 +237,64 @@ kitn rules
 
 Prompts you to select which AI coding tools you use, then fetches the latest rules template from the registry and generates the corresponding files. Works in any directory — uses project aliases from `kitn.json` if available, otherwise uses defaults.
 
+### `kitn chat <message>`
+
+AI-powered scaffolding assistant. Describe what you need in plain English and the assistant will generate a plan to add, create, link, or remove components.
+
+```bash
+# Basic usage
+kitn chat "I want a weather agent with a tool"
+
+# Override the chat service URL
+kitn chat "add a calculator tool" --url http://localhost:4002
+```
+
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--url <url>` | Chat service URL (overrides config and default) |
+
+The chat service URL is resolved in this order:
+1. `--url` flag
+2. `KITN_CHAT_URL` environment variable
+3. User config (`~/.kitn/config.json` `chat-url` key)
+4. Project config (`kitn.json` `chatService.url`)
+5. Default: `https://chat.kitn.dev`
+
+### `kitn config`
+
+Manage user-level configuration stored at `~/.kitn/config.json`.
+
+```bash
+# Set a config value
+kitn config set chat-url https://chat.acme.com
+kitn config set api-key sk_my_secret_key
+
+# Get a config value
+kitn config get chat-url
+
+# List all config values
+kitn config list
+```
+
+**Subcommands:**
+
+| Subcommand | Description |
+|------------|-------------|
+| `set <key> <value>` | Set a config value |
+| `get <key>` | Get a config value |
+| `list` | List all config values |
+
+**Valid keys:**
+
+| Key | Description |
+|-----|-------------|
+| `chat-url` | Chat service URL for `kitn chat` |
+| `api-key` | API key for authenticated chat service requests |
+
+API key values are masked in output for security.
+
 ### `kitn build`
 
 Build registry JSON from components that have `registry.json` manifests.

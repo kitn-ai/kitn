@@ -18,22 +18,27 @@ describe("resolveServiceUrl", () => {
     }
   });
 
-  test("returns default URL when no config", () => {
-    expect(resolveServiceUrl(undefined)).toBe("https://chat.kitn.dev");
+  test("returns default URL when no config", async () => {
+    expect(await resolveServiceUrl()).toBe("https://chat.kitn.dev");
   });
 
-  test("returns config URL when set", () => {
-    expect(resolveServiceUrl({ url: "http://localhost:4002" })).toBe("http://localhost:4002");
+  test("returns config URL when set", async () => {
+    expect(await resolveServiceUrl(undefined, { url: "http://localhost:4002" })).toBe("http://localhost:4002");
   });
 
-  test("prefers KITN_CHAT_URL env var", () => {
+  test("prefers KITN_CHAT_URL env var", async () => {
     process.env.KITN_CHAT_URL = "http://custom:9000";
-    expect(resolveServiceUrl({ url: "http://localhost:4002" })).toBe("http://custom:9000");
+    expect(await resolveServiceUrl(undefined, { url: "http://localhost:4002" })).toBe("http://custom:9000");
   });
 
-  test("uses env var over default when no config", () => {
+  test("uses env var over default when no config", async () => {
     process.env.KITN_CHAT_URL = "http://env-only:8080";
-    expect(resolveServiceUrl(undefined)).toBe("http://env-only:8080");
+    expect(await resolveServiceUrl()).toBe("http://env-only:8080");
+  });
+
+  test("urlOverride takes highest priority", async () => {
+    process.env.KITN_CHAT_URL = "http://env:9000";
+    expect(await resolveServiceUrl("http://flag:3000", { url: "http://config:4002" })).toBe("http://flag:3000");
   });
 });
 

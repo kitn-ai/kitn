@@ -139,9 +139,10 @@ program
   .command("chat")
   .description("AI-powered scaffolding assistant — describe what you need in plain English")
   .argument("<message>", "what you want to build (e.g. \"I want a weather agent\")")
-  .action(async (message: string) => {
+  .option("--url <url>", "chat service URL (overrides config and default)")
+  .action(async (message: string, opts: { url?: string }) => {
     const { chatCommand } = await import("./commands/chat.js");
-    await chatCommand(message);
+    await chatCommand(message, opts);
   });
 
 const registry = program
@@ -177,6 +178,37 @@ registry
   .action(async () => {
     const { registryListCommand } = await import("./commands/registry.js");
     await registryListCommand();
+  });
+
+const config = program
+  .command("config")
+  .description("Manage user-level configuration");
+
+config
+  .command("set")
+  .description("Set a config value")
+  .argument("<key>", "config key (chat-url, api-key)")
+  .argument("<value>", "config value")
+  .action(async (key: string, value: string) => {
+    const { configSetCommand } = await import("./commands/config.js");
+    await configSetCommand(key, value);
+  });
+
+config
+  .command("get")
+  .description("Get a config value")
+  .argument("<key>", "config key")
+  .action(async (key: string) => {
+    const { configGetCommand } = await import("./commands/config.js");
+    await configGetCommand(key);
+  });
+
+config
+  .command("list")
+  .description("List all config values")
+  .action(async () => {
+    const { configListCommand } = await import("./commands/config.js");
+    await configListCommand();
   });
 
 await program.parseAsync();

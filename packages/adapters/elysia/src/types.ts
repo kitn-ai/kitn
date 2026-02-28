@@ -6,11 +6,13 @@ import type {
   AgentRegistration,
   MemoryStore,
   OrchestratorAgentConfig,
+  CronScheduler,
 } from "@kitnai/core";
 
 export interface AIPluginConfig extends CoreConfig {
   voice?: VoiceConfig;
   memoryStore?: MemoryStore;
+  cronScheduler?: CronScheduler;
 }
 
 export interface VoiceConfig {

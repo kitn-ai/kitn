@@ -42,6 +42,8 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   const cards = new CardRegistry();
   const voice = config.voice ? new VoiceManager() : undefined;
 
+  const cronScheduler = config.cronScheduler;
+
   const ctx: PluginContext = {
     agents,
     tools,
@@ -54,6 +56,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
     }),
     voice,
     cards,
+    cronScheduler,
     maxDelegationDepth: config.maxDelegationDepth ?? DEFAULTS.MAX_DELEGATION_DEPTH,
     defaultMaxSteps: config.defaultMaxSteps ?? DEFAULTS.MAX_STEPS,
     config,
@@ -95,7 +98,10 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   app.route("/skills", createSkillsRoutes(ctx));
   app.route("/conversations", createConversationsRoutes(ctx));
   app.route("/commands", createCommandsRoutes(ctx));
-  app.route("/crons", createCronRoutes(ctx));
+  // Conditionally mount cron routes
+  if (cronScheduler) {
+    app.route("/crons", createCronRoutes(ctx));
+  }
 
   // Conditionally mount voice routes
   if (voice) {

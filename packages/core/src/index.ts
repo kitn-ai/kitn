@@ -75,6 +75,9 @@ export type {
   AudioEntry,
   CommandRegistration,
   CommandStore,
+  CronJob,
+  CronExecution,
+  CronStore,
 } from "./storage/interfaces.js";
 export { createFileStorage } from "./storage/file-storage/index.js";
 export type { FileStorageOptions } from "./storage/file-storage/index.js";

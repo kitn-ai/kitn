@@ -11,6 +11,7 @@ import type {
   PromptOverride,
   AudioStore,
   AudioEntry,
+  CronStore,
 } from "../interfaces.js";
 import { createInMemoryMemoryStore } from "./memory-store.js";
 import { createCommandStore } from "./command-store.js";
@@ -314,6 +315,25 @@ function createAudioStore(): AudioStore {
   };
 }
 
+// ── Cron Store (stub — replaced by Task 2) ──
+
+function createCronStore(): CronStore {
+  const notImplemented = () => {
+    throw new Error("In-memory CronStore not yet implemented");
+  };
+  return {
+    create: notImplemented,
+    get: notImplemented,
+    list: notImplemented,
+    update: notImplemented,
+    delete: notImplemented,
+    addExecution: notImplemented,
+    listExecutions: notImplemented,
+    updateExecution: notImplemented,
+    getDueJobs: notImplemented,
+  };
+}
+
 // ── Combined Provider ──
 
 /**
@@ -330,5 +350,6 @@ export function createMemoryStorage(): StorageProvider {
     prompts: createPromptStore(),
     audio: createAudioStore(),
     commands: createCommandStore(),
+    crons: createCronStore(),
   };
 }

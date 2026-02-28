@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import type { StorageProvider } from "../interfaces.js";
+import type { StorageProvider, CronStore } from "../interfaces.js";
 import { createConversationStore } from "./conversation-store.js";
 import { createMemoryStore } from "./memory-store.js";
 import { createSkillStore } from "./skill-store.js";
@@ -13,6 +13,24 @@ export interface FileStorageOptions {
   dataDir: string;
 }
 
+// Stub CronStore — replaced by Task 3 (file-based CronStore)
+function createStubCronStore(): CronStore {
+  const notImplemented = () => {
+    throw new Error("File-based CronStore not yet implemented");
+  };
+  return {
+    create: notImplemented,
+    get: notImplemented,
+    list: notImplemented,
+    update: notImplemented,
+    delete: notImplemented,
+    addExecution: notImplemented,
+    listExecutions: notImplemented,
+    updateExecution: notImplemented,
+    getDueJobs: notImplemented,
+  };
+}
+
 export function createFileStorage(options: FileStorageOptions): StorageProvider {
   const dataDir = resolve(options.dataDir);
 
@@ -24,5 +42,6 @@ export function createFileStorage(options: FileStorageOptions): StorageProvider 
     prompts: createPromptStore(dataDir),
     audio: createAudioStore(dataDir),
     commands: createCommandStore(dataDir),
+    crons: createStubCronStore(),
   };
 }

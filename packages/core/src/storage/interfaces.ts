@@ -250,6 +250,82 @@ export interface CommandStore {
   delete(name: string, scopeId?: string): Promise<void>;
 }
 
+// ── Cron Store ──
+
+/** A scheduled job definition — recurring (cron expression) or one-off (specific datetime) */
+export interface CronJob {
+  id: string;
+  name: string;
+  description: string;
+
+  /** Cron expression for recurring jobs: "0 6 * * *" (mutually exclusive with runAt) */
+  schedule?: string;
+  /** ISO datetime for one-off jobs: "2026-03-07T17:00:00Z" (mutually exclusive with schedule) */
+  runAt?: string;
+
+  /** Name of the registered agent to invoke */
+  agentName: string;
+  /** Input message sent to the agent */
+  input: string;
+  /** Optional model override */
+  model?: string;
+  /** Timezone for schedule evaluation (IANA, e.g. "America/New_York"). Default: UTC */
+  timezone?: string;
+
+  enabled: boolean;
+
+  /** ISO datetime of the next scheduled run (computed from schedule or runAt) */
+  nextRun?: string;
+  /** ISO datetime of the last completed run */
+  lastRun?: string;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A single execution record for a cron job */
+export interface CronExecution {
+  id: string;
+  cronId: string;
+  startedAt: string;
+  completedAt?: string;
+  status: "running" | "completed" | "failed";
+  /** Brief result summary */
+  summary?: string;
+  /** Error message if failed */
+  error?: string;
+}
+
+/**
+ * Stores cron job definitions and execution history.
+ *
+ * Jobs can be recurring (with a `schedule` cron expression) or one-off (with a `runAt` datetime).
+ * All methods accept an optional `scopeId` for multi-tenant scoping.
+ * Return `null` from `get()` when not found (do not throw).
+ */
+export interface CronStore {
+  /** Create a new cron job. */
+  create(input: Omit<CronJob, "id" | "createdAt" | "updatedAt">, scopeId?: string): Promise<CronJob>;
+  /** Get a cron job by ID. Returns `null` if not found. */
+  get(id: string, scopeId?: string): Promise<CronJob | null>;
+  /** List all cron jobs. */
+  list(scopeId?: string): Promise<CronJob[]>;
+  /** Update a cron job. Returns the updated job. */
+  update(id: string, updates: Partial<Omit<CronJob, "id" | "createdAt">>, scopeId?: string): Promise<CronJob>;
+  /** Delete a cron job. Returns `true` if it existed. */
+  delete(id: string, scopeId?: string): Promise<boolean>;
+
+  /** Record an execution start/result. */
+  addExecution(input: Omit<CronExecution, "id">, scopeId?: string): Promise<CronExecution>;
+  /** List executions for a cron job, newest first. */
+  listExecutions(cronId: string, limit?: number, scopeId?: string): Promise<CronExecution[]>;
+  /** Update an execution record (e.g. mark completed). */
+  updateExecution(id: string, updates: Partial<Omit<CronExecution, "id" | "cronId">>, scopeId?: string): Promise<CronExecution>;
+
+  /** Get all enabled jobs that are due to run (nextRun <= now, or runAt <= now for one-offs that haven't run). */
+  getDueJobs(now: Date, scopeId?: string): Promise<CronJob[]>;
+}
+
 // ── Combined Storage Provider ──
 
 /**
@@ -280,4 +356,5 @@ export interface StorageProvider {
   prompts: PromptStore;
   audio: AudioStore;
   commands: CommandStore;
+  crons: CronStore;
 }

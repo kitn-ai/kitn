@@ -27,6 +27,7 @@ const typeToDir: Record<ComponentType, string> = {
   "kitn:skill": "skills",
   "kitn:storage": "storage",
   "kitn:package": "package",
+  "kitn:cron": "crons",
 };
 
 /**
@@ -164,7 +165,7 @@ if (import.meta.main) {
     return results;
   }
 
-  for (const typeDir of ["agents", "tools", "skills", "storage", "package"]) {
+  for (const typeDir of ["agents", "tools", "skills", "storage", "package", "crons"]) {
     const dir = join(COMPONENTS_DIR, typeDir);
     const manifestDirs = await findManifestDirs(dir);
 

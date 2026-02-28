@@ -7,6 +7,7 @@ export const componentType = z.enum([
   "kitn:skill",
   "kitn:storage",
   "kitn:package",
+  "kitn:cron",
 ]);
 export type ComponentType = z.infer<typeof componentType>;
 
@@ -106,6 +107,7 @@ export const configSchema = z.object({
     tools: z.string(),
     skills: z.string(),
     storage: z.string(),
+    crons: z.string().optional(),
   }),
   registries: z.record(z.string(), z.string()),
 });
@@ -121,4 +123,5 @@ export const typeToAliasKey: Partial<Record<ComponentType, keyof KitnConfig["ali
   "kitn:tool": "tools",
   "kitn:skill": "skills",
   "kitn:storage": "storage",
+  "kitn:cron": "crons",
 };

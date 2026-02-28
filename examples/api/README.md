@@ -84,6 +84,7 @@ examples/api/
 |---|---|---|
 | `general` | General-purpose assistant | echo, weather, calculator, web search, Hacker News |
 | `guarded` | Input guard demo — blocks messages containing "blocked" | echo |
+| `docs` | Documentation lookup (requires `MCP_CONTEXT7=true`) | Context7 resolve + query |
 | `orchestrator` | Routes queries to the best specialist agent | (delegates) |
 
 ## Tools

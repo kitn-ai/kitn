@@ -2,9 +2,9 @@ import { createMCPClient } from "@ai-sdk/mcp";
 import type { PluginContext } from "@kitnai/core";
 import type { MCPClientConfig, MCPConnection, ServerConfig } from "./types.js";
 
-/** Create a namespaced tool name: "serverName:toolName". */
+/** Create a namespaced tool name: "serverName_toolName". */
 export function namespaceTool(serverName: string, toolName: string): string {
-  return `${serverName}:${toolName}`;
+  return `${serverName}_${toolName}`;
 }
 
 /** Build a kitn ToolRegistration from an MCP tool. */
@@ -53,7 +53,7 @@ async function connectServer(
 
 /**
  * Connect to external MCP servers and register their tools into kitn's ToolRegistry.
- * Tools are namespaced by server name (e.g. "github:createIssue").
+ * Tools are namespaced by server name (e.g. "github_createIssue").
  */
 export async function connectMCPServers(
   ctx: PluginContext,

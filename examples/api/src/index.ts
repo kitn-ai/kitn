@@ -13,6 +13,7 @@ import { registerHackernewsTools } from "./tools/hackernews.js";
 import { registerWebSearchTool } from "./tools/web-search.js";
 import { registerGeneralAgent } from "./agents/general.js";
 import { registerGuardedAgent } from "./agents/guarded.js";
+import { registerDocsAgent } from "./agents/docs.js";
 
 const plugin = createAIPlugin({
   model: (id) => openrouter(id ?? env.DEFAULT_MODEL),
@@ -131,6 +132,7 @@ if (env.MCP_CONTEXT7) {
       }],
     });
     console.log("[mcp] Connected to Context7 MCP — documentation tools available");
+    registerDocsAgent(plugin);
     process.on("beforeExit", () => mcp.close());
   } catch (err) {
     console.warn("[mcp] Failed to connect to Context7 MCP:", (err as Error).message);

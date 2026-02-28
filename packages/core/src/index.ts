@@ -118,3 +118,26 @@ export { agentRequestSchema, agentResponseSchema, approveRequestSchema, agentPat
 export { memoryEntrySchema, memorySaveSchema } from "./schemas/memory.schemas.js";
 export { skillMetaSchema, skillSchema, skillCreateSchema, skillUpdateSchema } from "./schemas/skills.schemas.js";
 export { speakRequestSchema, transcribeResponseSchema, speakersResponseSchema, converseResponseHeadersSchema } from "./schemas/voice.schemas.js";
+
+// ── Lifecycle hooks ──
+export { createLifecycleHooks } from "./hooks/index.js";
+export type {
+  LifecycleHookEmitter,
+  LifecycleHookConfig,
+  LifecycleHookLevel,
+  LifecycleEventMap,
+  LifecycleEventName,
+  WildcardEvent,
+  TokenUsage,
+  AgentStartEvent,
+  AgentEndEvent,
+  AgentErrorEvent,
+  JobStartEvent,
+  JobEndEvent,
+  JobCancelledEvent,
+  CronExecutedEvent,
+  ToolExecuteEvent,
+  DelegateStartEvent,
+  DelegateEndEvent,
+  ModelCallEvent,
+} from "./hooks/index.js";

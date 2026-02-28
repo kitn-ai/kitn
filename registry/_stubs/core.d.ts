@@ -21,5 +21,15 @@ export interface ToolSelfRegConfig {
   category?: string;
 }
 
+export interface StorageProvider {
+  conversations: any;
+  memory: any;
+  skills: any;
+  tasks: any;
+  prompts: any;
+  audio: any;
+  commands: any;
+}
+
 export function registerAgent(config: AgentSelfRegConfig): void;
 export function registerTool(config: ToolSelfRegConfig): void;

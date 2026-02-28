@@ -3,6 +3,7 @@ import {
   registryItemSchema,
   registryIndexSchema,
   configSchema,
+  lockSchema,
   type RegistryItem,
   type RegistryIndex,
   type KitnConfig,
@@ -34,7 +35,7 @@ describe("registryItemSchema", () => {
       description: "Search the web using Brave",
       dependencies: ["zod"],
       registryDependencies: [],
-      envVars: { BRAVE_SEARCH_API_KEY: "Get from https://brave.com" },
+      envVars: { BRAVE_SEARCH_API_KEY: { description: "Get from https://brave.com", required: true, secret: true } },
       files: [
         {
           path: "tools/web-search.ts",
@@ -94,25 +95,45 @@ describe("configSchema", () => {
     expect(configSchema.parse(config)).toBeDefined();
   });
 
-  it("validates config with installed section", () => {
-    const config: KitnConfig = {
-      runtime: "node",
-      aliases: {
-        agents: "src/agents",
-        tools: "src/tools",
-        skills: "src/skills",
-        storage: "src/storage",
-      },
-      registries: {},
-      installed: {
-        "weather-agent": {
-          version: "1.0.0",
-          installedAt: "2026-02-24T10:30:00Z",
-          files: ["src/agents/weather-agent.ts"],
-          hash: "a1b2c3d4",
-        },
+  it("rejects config missing required aliases", () => {
+    expect(() =>
+      configSchema.parse({
+        runtime: "bun",
+        aliases: { agents: "src/agents" },
+        registries: {},
+      })
+    ).toThrow();
+  });
+});
+
+describe("lockSchema", () => {
+  it("validates a lock file with installed components", () => {
+    const lock = {
+      "weather-agent": {
+        registry: "@kitn",
+        type: "kitn:agent",
+        version: "1.0.0",
+        installedAt: "2026-02-24T10:30:00Z",
+        files: ["src/agents/weather-agent.ts"],
+        hash: "a1b2c3d4",
       },
     };
-    expect(configSchema.parse(config)).toBeDefined();
+    expect(lockSchema.parse(lock)).toBeDefined();
+  });
+
+  it("validates a lock entry without optional type field", () => {
+    const lock = {
+      "weather-agent": {
+        version: "1.0.0",
+        installedAt: "2026-02-24T10:30:00Z",
+        files: ["src/agents/weather-agent.ts"],
+        hash: "a1b2c3d4",
+      },
+    };
+    expect(lockSchema.parse(lock)).toBeDefined();
+  });
+
+  it("validates an empty lock file", () => {
+    expect(lockSchema.parse({})).toEqual({});
   });
 });

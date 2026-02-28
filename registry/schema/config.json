@@ -22,19 +22,6 @@
     "registries": {
       "type": "object",
       "additionalProperties": { "type": "string" }
-    },
-    "installed": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "object",
-        "required": ["version", "installedAt", "files", "hash"],
-        "properties": {
-          "version": { "type": "string" },
-          "installedAt": { "type": "string" },
-          "files": { "type": "array", "items": { "type": "string" } },
-          "hash": { "type": "string" }
-        }
-      }
     }
   }
 }

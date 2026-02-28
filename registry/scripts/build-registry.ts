@@ -1,4 +1,4 @@
-import { registryItemSchema, typeToAliasKey } from "../src/schema.js";
+import { registryItemSchema } from "../src/schema.js";
 import type { RegistryItem, RegistryIndex, ComponentType, ChangelogEntry } from "../src/schema.js";
 
 interface ComponentManifest {

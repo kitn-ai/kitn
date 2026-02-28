@@ -5,7 +5,21 @@
   "dependencies": ["bullmq"],
   "registryDependencies": ["core"],
   "files": ["bullmq-scheduler.ts"],
-  "envVars": ["REDIS_HOST", "REDIS_PORT", "REDIS_PASSWORD"],
+  "envVars": {
+    "REDIS_HOST": {
+      "description": "Redis server hostname (default: localhost)",
+      "required": false
+    },
+    "REDIS_PORT": {
+      "description": "Redis server port (default: 6379)",
+      "required": false
+    },
+    "REDIS_PASSWORD": {
+      "description": "Redis server password",
+      "required": false,
+      "secret": true
+    }
+  },
   "categories": ["scheduling", "cron", "redis"],
   "changelog": [
     {

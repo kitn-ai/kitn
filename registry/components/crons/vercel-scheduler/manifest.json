@@ -5,7 +5,13 @@
   "dependencies": [],
   "registryDependencies": ["core"],
   "files": ["vercel-scheduler.ts"],
-  "envVars": ["CRON_SECRET"],
+  "envVars": {
+    "CRON_SECRET": {
+      "description": "Shared secret for verifying cron requests from Vercel",
+      "required": true,
+      "secret": true
+    }
+  },
   "categories": ["scheduling", "cron", "serverless", "vercel"],
   "docs": "Vercel Cron Jobs are configured in vercel.json. This scheduler is a no-op with CRON_SECRET verification middleware.",
   "changelog": [

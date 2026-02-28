@@ -5,7 +5,7 @@ import {
   updateCronTool,
   deleteCronTool,
   listAgentsTool,
-} from "@kitn/tools/cron.js";
+} from "@kitn/tools/cron-tools.js";
 
 const SYSTEM_PROMPT = `You are a scheduling assistant that helps users create and manage cron jobs.
 

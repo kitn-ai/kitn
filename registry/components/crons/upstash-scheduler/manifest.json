@@ -5,7 +5,13 @@
   "dependencies": ["@upstash/qstash"],
   "registryDependencies": ["core"],
   "files": ["upstash-scheduler.ts"],
-  "envVars": ["QSTASH_TOKEN"],
+  "envVars": {
+    "QSTASH_TOKEN": {
+      "description": "Upstash QStash API token from https://console.upstash.com/qstash",
+      "required": true,
+      "secret": true
+    }
+  },
   "categories": ["scheduling", "cron", "serverless"],
   "changelog": [
     {

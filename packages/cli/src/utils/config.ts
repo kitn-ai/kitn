@@ -59,6 +59,9 @@ export const configSchema = z.object({
     crons: z.string().optional(),
   }),
   registries: z.record(z.string(), registryValueSchema),
+  chatService: z.object({
+    url: z.string().optional(),
+  }).optional(),
 });
 
 export type KitnConfig = z.infer<typeof configSchema>;

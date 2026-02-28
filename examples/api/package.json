@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@ai-sdk/mcp": "^1.0.22",
-    "@kitnai/hono-adapter": "workspace:*",
+    "@hono/zod-openapi": "^1.2.2",
+    "@kitnai/hono-openapi-adapter": "workspace:*",
+    "@scalar/hono-api-reference": "^0.9.45",
     "@kitnai/voice": "workspace:*",
     "@kitnai/mcp-client": "workspace:*",
     "@kitnai/mcp-server-adapter": "workspace:*",

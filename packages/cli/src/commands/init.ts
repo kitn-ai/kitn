@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { readConfig, writeConfig } from "../utils/config.js";
 import type { KitnConfig } from "../utils/config.js";
@@ -11,6 +11,20 @@ import {
   fetchRulesConfig,
   generateRulesFiles,
 } from "../installers/rules-generator.js";
+
+/** Detect the HTTP framework from the project's package.json dependencies. */
+async function detectFramework(cwd: string): Promise<"hono" | "hono-openapi" | "elysia" | null> {
+  try {
+    const pkg = JSON.parse(await readFile(join(cwd, "package.json"), "utf-8"));
+    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+    if (deps["elysia"]) return "elysia";
+    if (deps["@hono/zod-openapi"]) return "hono-openapi";
+    if (deps["hono"]) return "hono";
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 function getPluginTemplate(framework: string): string {
   const adapterName = framework === "hono-openapi" ? "hono-openapi" : framework;
@@ -92,12 +106,41 @@ export async function initCommand(opts: InitOptions = {}) {
   const validFrameworks = ["hono", "hono-openapi", "elysia"] as const;
   type Framework = (typeof validFrameworks)[number];
   let framework: Framework;
+  const detected = await detectFramework(cwd);
   if (opts.framework) {
     if (!validFrameworks.includes(opts.framework as Framework)) {
       p.log.error(`Invalid framework: ${opts.framework}. Must be one of: ${validFrameworks.join(", ")}`);
       process.exit(1);
     }
     framework = opts.framework as Framework;
+  } else if (detected) {
+    framework = detected;
+    p.log.info(`Detected ${pc.bold(detected)} from package.json`);
+    if (!opts.yes) {
+      const confirm = await p.confirm({
+        message: `Use ${detected}?`,
+        initialValue: true,
+      });
+      if (p.isCancel(confirm)) {
+        p.cancel("Init cancelled.");
+        process.exit(0);
+      }
+      if (!confirm) {
+        const selected = await p.select({
+          message: "Which HTTP framework do you use?",
+          options: [
+            { value: "hono", label: "Hono" },
+            { value: "hono-openapi", label: "Hono + OpenAPI", hint: "zod-openapi routes with /doc endpoint" },
+            { value: "elysia", label: "Elysia", hint: "Bun-native framework" },
+          ],
+        });
+        if (p.isCancel(selected)) {
+          p.cancel("Init cancelled.");
+          process.exit(0);
+        }
+        framework = selected as Framework;
+      }
+    }
   } else if (opts.yes) {
     framework = "hono";
   } else {

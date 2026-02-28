@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { createAIPlugin, createFileStorage, createInternalScheduler } from "@kitnai/hono-adapter";
+import { Scalar } from "@scalar/hono-api-reference";
+import { createAIPlugin, createFileStorage, createInternalScheduler } from "@kitnai/hono-openapi-adapter";
 import { createVoice, OpenAIVoiceProvider, createFileAudioStore } from "@kitnai/voice";
 import { createMCPServer } from "@kitnai/mcp-server-adapter";
 import { connectMCPServers } from "@kitnai/mcp-client";
@@ -51,6 +52,7 @@ const plugin = createAIPlugin({
   // Enable /crons API routes (actual scheduling handled by InternalScheduler below)
   cronScheduler: { async schedule() {}, async unschedule() {} },
   plugins: voicePlugin ? [voicePlugin] : [],
+  openapi: { title: "kitn API", version: "1.0.0", description: "AI agent framework API" },
 });
 
 // Register tools
@@ -140,8 +142,12 @@ if (env.MCP_CONTEXT7) {
 const app = new Hono();
 app.use("/*", cors());
 
-// API key auth middleware — protects /api routes
+// API key auth middleware — protects /api routes (except docs)
 app.use("/api/*", async (c, next) => {
+  const path = new URL(c.req.url).pathname;
+  if (path === "/api/reference" || path === "/api/doc" || path === "/api/plugins") {
+    return next();
+  }
   const key = c.req.header("X-API-Key");
   if (key !== env.API_KEY) {
     return c.json({ error: "Unauthorized — set X-API-Key header" }, 401);
@@ -150,6 +156,9 @@ app.use("/api/*", async (c, next) => {
 });
 
 app.route("/api", plugin.router);
+
+// Scalar API reference UI — serves interactive docs from the OpenAPI spec at /api/doc
+app.get("/api/reference", Scalar({ url: "/api/doc", pageTitle: "kitn API Reference" }));
 
 // MCP endpoint — stateless mode requires a fresh server + transport per request.
 // The SDK transport rejects requests unless Accept includes both application/json

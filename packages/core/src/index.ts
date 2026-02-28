@@ -147,3 +147,6 @@ export type {
   DelegateEndEvent,
   ModelCallEvent,
 } from "./hooks/index.js";
+
+// ── Plugins ──
+export type { KitnPlugin, PluginRoute, PluginRouteMethod, PluginHandlerContext, PluginRouteSchema } from "./plugins/index.js";

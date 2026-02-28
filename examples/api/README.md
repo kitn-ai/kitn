@@ -1,30 +1,42 @@
-# kitn Example API Server
+# kitn API Example
 
-A working REST API built with kitn, demonstrating agents, tools, an orchestrator, file-based storage, and optional voice support.
+The comprehensive example — every kitn feature wired up manually in one Hono server. If you want the quick CLI-based path instead, see [`getting-started/`](../getting-started/).
 
-## What This Example Demonstrates
+## What's Inside
 
-- Creating a `@kitn/routes` plugin with `createAIPlugin`
-- Registering tools with both AI and direct-call execution
-- Registering agents that use those tools
-- Adding a guard function to reject certain inputs
-- Setting up an orchestrator that routes queries to specialist agents
-- File-based persistent storage for conversations, memories, skills, and prompt overrides
-- API key authentication via `X-API-Key` header
-- Automatic retry and conversation compaction configuration
-- Optional voice (TTS/STT) providers
+- **6 tools** — echo, weather, calculator, web search, Hacker News (top stories + detail)
+- **2 agents** — general (multi-tool) and guarded (input filtering)
+- **Orchestrator** — autonomous agent routing
+- **Cron scheduling** — InternalScheduler with sample hourly job
+- **Commands** — stored command definitions via the commands API
+- **Voice** — OpenAI and Groq TTS/STT providers (optional)
+- **File storage** — conversations, memory, skills, commands, crons persisted to `data/`
+- **Resilience** — automatic retries with exponential backoff
+- **Compaction** — automatic conversation compaction after 20 messages
+
+## Prerequisites
+
+- [Bun](https://bun.sh) v1.0+
+- An [OpenRouter API key](https://openrouter.ai/keys) (required)
+- A [Brave Search API key](https://brave.search.com/api) (optional, for web search)
+- OpenAI or Groq API key (optional, for voice)
+
+> **Tip:** Install the [kitn CLI](https://www.npmjs.com/package/@kitnai/cli) to add components to your own projects:
+> ```bash
+> bunx @kitnai/cli init
+> bunx @kitnai/cli add weather-agent
+> ```
 
 ## Setup
 
-1. Copy the environment file and fill in your keys:
+1. Copy the environment file and add your API key:
 
 ```bash
 cp .env.example .env
+# Edit .env — at minimum set OPENROUTER_API_KEY
 ```
 
-At minimum, set `OPENROUTER_API_KEY`. Everything else has working defaults.
-
-2. Install dependencies from the monorepo root:
+2. Install dependencies (from monorepo root):
 
 ```bash
 bun install
@@ -33,172 +45,190 @@ bun install
 3. Start the dev server:
 
 ```bash
-bun run dev
+bun run dev:api
+# or: cd examples/api && bun run dev
 ```
 
-The server starts at `http://localhost:4000` by default. All API routes are mounted under `/api`.
+The server starts at **http://localhost:4000**. All API routes are under `/api`.
+
+## Project Structure
+
+```
+examples/api/
+  src/
+    index.ts              # Server entry — wires everything together
+    env.ts                # Environment validation (t3-env + Zod)
+    agents/
+      general.ts          # Multi-tool agent (weather, search, HN, calculator, echo)
+      guarded.ts          # Agent with input guard (blocks keyword "blocked")
+    tools/
+      calculator.ts       # Math expression evaluator
+      echo.ts             # Echo utility
+      hackernews.ts       # Hacker News top stories + story detail
+      weather.ts          # Open-Meteo weather (no API key needed)
+      web-search.ts       # Brave Search (requires BRAVE_API_KEY)
+  data/                   # File storage (persisted across restarts)
+    conversations/        # Saved conversation histories
+    memory/               # Agent memory namespaces
+    audio/                # Voice audio files (when VOICE_RETAIN_AUDIO=true)
+    skills/               # Skill definitions (markdown with YAML front matter)
+    prompt-overrides.json # System prompt overrides set via PATCH
+  .env.example            # Environment template
+```
 
 ## Agents
 
 | Agent | Description | Tools |
 |---|---|---|
-| `general` | General-purpose assistant | `echo`, `getWeather`, `calculate` |
-| `guarded` | Demonstrates input guards -- blocks messages containing "blocked" | `echo` |
-| `orchestrator` | Automatically routes queries to the best specialist agent | (delegates to other agents) |
+| `general` | General-purpose assistant | echo, weather, calculator, web search, Hacker News |
+| `guarded` | Input guard demo — blocks messages containing "blocked" | echo |
+| `orchestrator` | Routes queries to the best specialist agent | (delegates) |
 
 ## Tools
 
-| Tool | Category | Description |
-|---|---|---|
-| `echo` | utility | Echoes back the input message |
-| `getWeather` | weather | Fetches current weather from Open-Meteo (no API key needed) |
-| `calculate` | utility | Evaluates math expressions (`+`, `-`, `*`, `/`, `%`, `^`, parentheses) |
+| Tool | Category | API Key? | Description |
+|---|---|---|---|
+| `echo` | utility | No | Echoes back the input message |
+| `getWeather` | weather | No | Current weather from Open-Meteo |
+| `calculate` | utility | No | Math expression evaluator (`+`, `-`, `*`, `/`, `%`, `^`) |
+| `searchWeb` | search | BRAVE_API_KEY | Web search via Brave Search |
+| `hackernewsTopStories` | news | No | Top stories from Hacker News |
+| `hackernewsStoryDetail` | news | No | Story detail with top comments |
 
-All tools support both AI-driven execution (when an agent decides to use them) and direct execution via `POST /api/tools/:toolName`.
+## Try It
 
-## Example Curl Commands
+All requests use `X-API-Key: demo` (configurable via `API_KEY` env var).
 
-Every request requires the `X-API-Key` header. The default key is `test`.
-
-### List agents
-
-```bash
-curl http://localhost:4000/api/agents \
-  -H "X-API-Key: test"
-```
-
-### Chat with the general agent (SSE streaming)
+### Chat with an agent
 
 ```bash
+# SSE streaming (default)
 curl -N http://localhost:4000/api/agents/general \
-  -H "X-API-Key: test" \
+  -H "X-API-Key: demo" \
   -H "Content-Type: application/json" \
   -d '{"message": "What is the weather in Tokyo?"}'
-```
 
-### Chat with the general agent (JSON response)
-
-```bash
+# JSON response
 curl http://localhost:4000/api/agents/general?format=json \
-  -H "X-API-Key: test" \
+  -H "X-API-Key: demo" \
   -H "Content-Type: application/json" \
   -d '{"message": "What is 42 * 17?"}'
 ```
 
 ### Use the orchestrator
 
-The orchestrator picks the best agent for the query automatically:
-
 ```bash
 curl -N http://localhost:4000/api/agents/orchestrator \
-  -H "X-API-Key: test" \
+  -H "X-API-Key: demo" \
   -H "Content-Type: application/json" \
-  -d '{"message": "Check the weather in Berlin"}'
-```
-
-### Continue a conversation
-
-Pass a `conversationId` to maintain context across requests:
-
-```bash
-curl -N http://localhost:4000/api/agents/general \
-  -H "X-API-Key: test" \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Now compare that to New York", "conversationId": "my-session-1"}'
+  -d '{"message": "What are the top stories on Hacker News?"}'
 ```
 
 ### Call a tool directly
 
-Tools can be called without going through an agent:
-
-```bash
-curl http://localhost:4000/api/tools/calculate \
-  -H "X-API-Key: test" \
-  -H "Content-Type: application/json" \
-  -d '{"expression": "2 ^ 10"}'
-```
-
 ```bash
 curl http://localhost:4000/api/tools/getWeather \
-  -H "X-API-Key: test" \
+  -H "X-API-Key: demo" \
   -H "Content-Type: application/json" \
   -d '{"location": "Paris"}'
-```
 
-### Test the guard
-
-The guarded agent rejects messages containing the word "blocked":
-
-```bash
-curl http://localhost:4000/api/agents/guarded?format=json \
-  -H "X-API-Key: test" \
+curl http://localhost:4000/api/tools/hackernewsTopStories \
+  -H "X-API-Key: demo" \
   -H "Content-Type: application/json" \
-  -d '{"message": "This is blocked content"}'
+  -d '{"limit": 5}'
 ```
 
-### List tools
+### Cron scheduling
+
+The example seeds an hourly cron job that asks the general agent for a Hacker News digest.
 
 ```bash
-curl http://localhost:4000/api/tools \
-  -H "X-API-Key: test"
+# List cron jobs
+curl http://localhost:4000/api/crons \
+  -H "X-API-Key: demo"
+
+# Create a new cron job
+curl http://localhost:4000/api/crons \
+  -H "X-API-Key: demo" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "weather-check",
+    "schedule": "*/30 * * * *",
+    "agentName": "general",
+    "input": "Check the weather in San Francisco and give a brief summary."
+  }'
+
+# Manually trigger a job
+curl -X POST http://localhost:4000/api/crons/{id}/run \
+  -H "X-API-Key: demo"
+
+# View execution history
+curl http://localhost:4000/api/crons/{id}/history \
+  -H "X-API-Key: demo"
 ```
 
-### Override an agent's system prompt
+### Commands
 
 ```bash
+# List commands
+curl http://localhost:4000/api/commands \
+  -H "X-API-Key: demo"
+
+# Run a command
+curl http://localhost:4000/api/commands/status \
+  -H "X-API-Key: demo" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Show me the current server status"}'
+```
+
+### Conversations
+
+```bash
+# Chat with conversation memory
+curl -N http://localhost:4000/api/agents/general \
+  -H "X-API-Key: demo" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "Remember that my name is Alice", "conversationId": "session-1"}'
+
+# Continue the conversation
+curl -N http://localhost:4000/api/agents/general \
+  -H "X-API-Key: demo" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "What is my name?", "conversationId": "session-1"}'
+```
+
+### Prompt overrides
+
+```bash
+# Override an agent's system prompt
 curl -X PATCH http://localhost:4000/api/agents/general \
-  -H "X-API-Key: test" \
+  -H "X-API-Key: demo" \
   -H "Content-Type: application/json" \
   -d '{"system": "You are a pirate. Respond in pirate speak."}'
-```
 
-Reset to default:
-
-```bash
+# Reset to default
 curl -X PATCH http://localhost:4000/api/agents/general \
-  -H "X-API-Key: test" \
+  -H "X-API-Key: demo" \
   -H "Content-Type: application/json" \
   -d '{"reset": true}'
 ```
 
 ## Configuration
 
-Environment variables are validated with `t3-env` at startup. The server will exit with a clear error if required values are missing.
+Environment variables are validated at startup. The server exits with a clear error if required values are missing.
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `OPENROUTER_API_KEY` | Yes | -- | API key from [openrouter.ai/keys](https://openrouter.ai/keys) |
-| `DEFAULT_MODEL` | No | `openai/gpt-4o-mini` | Default LLM model for all agents |
-| `API_KEY` | No | `test` | API key clients must send in the `X-API-Key` header |
-| `PORT` | No | `4000` | Server listen port |
-| `OPENAI_API_KEY` | No | -- | Enables OpenAI voice provider (TTS/STT) |
-| `GROQ_API_KEY` | No | -- | Enables Groq voice provider (STT via Whisper) |
-| `VOICE_PROVIDER` | No | `openai` | Default voice provider name |
-| `VOICE_TTS_MODEL` | No | `tts-1` | Text-to-speech model |
-| `VOICE_STT_MODEL` | No | `gpt-4o-mini-transcribe` | Speech-to-text model |
-| `VOICE_DEFAULT_SPEAKER` | No | `alloy` | Default TTS voice |
-| `VOICE_RETAIN_AUDIO` | No | `false` | Keep generated audio files in `data/audio/` |
-| `BRAVE_API_KEY` | No | -- | Brave Search API key (for additional tools) |
-| `TMDB_API_KEY` | No | -- | TMDB API key (for additional tools) |
-
-## Data Directory
-
-The `data/` directory is used by `createFileStorage` to persist state across server restarts:
-
-```
-data/
-  conversations/   # Saved conversation histories (JSON files)
-  memory/          # Agent memory namespaces
-  audio/           # Retained voice audio files (when VOICE_RETAIN_AUDIO=true)
-  skills/          # Skill definitions that agents can activate
-    concise/       # "Respond concisely" -- keeps answers under 3 sentences
-    formal-tone/   # "Use formal language" -- avoids contractions and slang
-    step-by-step/  # "Break down answers into steps" -- numbered step format
-  prompt-overrides.json  # Persisted system prompt overrides set via PATCH
-```
-
-Each skill is a directory containing a `README.md` with YAML front matter (`description`, `phase`) and markdown instructions. Skills modify agent behavior when activated for a conversation.
+| `OPENROUTER_API_KEY` | Yes | — | [openrouter.ai/keys](https://openrouter.ai/keys) |
+| `DEFAULT_MODEL` | No | `openai/gpt-4o-mini` | Default LLM model |
+| `API_KEY` | No | `demo` | Client auth key (`X-API-Key` header) |
+| `PORT` | No | `4000` | Server port |
+| `BRAVE_API_KEY` | No | — | Enables web search tool |
+| `OPENAI_API_KEY` | No | — | Enables OpenAI voice (TTS/STT) |
+| `GROQ_API_KEY` | No | — | Enables Groq voice (Whisper STT) |
 
 ## Further Reading
 
-See the [main kitn README](../../README.md) for full documentation on the `@kitn/routes` package, client SDK, and architecture overview.
+- [`getting-started/`](../getting-started/) — minimal example using the kitn CLI
+- [kitn CLI on npm](https://www.npmjs.com/package/@kitnai/cli) — `kitn init`, `kitn add`, `kitn list`
+- [Main README](../../README.md) — full architecture overview

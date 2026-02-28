@@ -11,7 +11,6 @@ export const env = createEnv({
     DEFAULT_MODEL: z.string().default("openai/gpt-4o-mini"),
     API_KEY: z.string().default("demo"),
     PORT: z.coerce.number().default(4000),
-    TMDB_API_KEY: z.string().default(""),
     OPENAI_API_KEY: z.string().default(""),
     GROQ_API_KEY: z.string().default(""),
     BRAVE_API_KEY: z.string().default(""),
@@ -48,8 +47,8 @@ export function printConfig() {
   console.log("  Services:");
   console.log(`    AI (OpenRouter)    : active`);
   console.log(`    Voice              : ${voiceEnabled ? `active (${env.VOICE_PROVIDER})` : "no API key"}`);
-  console.log(`    TMDB               : ${status(env.TMDB_API_KEY)}`);
   console.log(`    Brave Search       : ${status(env.BRAVE_API_KEY)}`);
+  console.log(`    Cron Scheduler     : active (internal)`);
   console.log("");
 
   if (voiceEnabled) {

@@ -7,6 +7,7 @@ import type {
   MemoryStore,
   OrchestratorAgentConfig,
   CronScheduler,
+  EventBuffer,
   LifecycleEventMap,
   LifecycleEventName,
   WildcardEvent,
@@ -26,6 +27,8 @@ type EventHandler<T> = (data: T) => void | Promise<void>;
 
 export interface AIPluginInstance extends PluginContext {
   router: Hono;
+  /** Shared event buffer for reconnectable job SSE streaming. Always present. */
+  eventBuffer: EventBuffer;
   createHandlers(config: { tools: Record<string, any>; maxSteps?: number }): {
     sseHandler: AgentHandler;
     jsonHandler: AgentHandler;

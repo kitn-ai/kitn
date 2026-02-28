@@ -13,6 +13,7 @@ import {
   createMemoryStorage,
   VoiceManager,
   createLifecycleHooks,
+  createEventBuffer,
 } from "@kitnai/core";
 
 // Route factories
@@ -25,6 +26,7 @@ import { createConversationsRoutes } from "./routes/conversations/conversations.
 import { createVoiceRoutes } from "./routes/voice/voice.routes.js";
 import { createCommandsRoutes } from "./routes/commands/commands.routes.js";
 import { createCronRoutes } from "./routes/crons/crons.routes.js";
+import { createJobRoutes } from "./routes/jobs/jobs.routes.js";
 
 export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   if (config.memoryStore) {
@@ -48,6 +50,8 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
     ? createLifecycleHooks(config.hooks)
     : undefined;
 
+  const eventBuffer = createEventBuffer();
+
   const ctx: PluginContext = {
     agents,
     tools,
@@ -62,6 +66,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
     cards,
     cronScheduler,
     hooks,
+    eventBuffer,
     maxDelegationDepth: config.maxDelegationDepth ?? DEFAULTS.MAX_DELEGATION_DEPTH,
     defaultMaxSteps: config.defaultMaxSteps ?? DEFAULTS.MAX_STEPS,
     config,
@@ -103,6 +108,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   app.route("/skills", createSkillsRoutes(ctx));
   app.route("/conversations", createConversationsRoutes(ctx));
   app.route("/commands", createCommandsRoutes(ctx));
+  app.route("/jobs", createJobRoutes(ctx, eventBuffer));
   // Conditionally mount cron routes
   if (cronScheduler) {
     app.route("/crons", createCronRoutes(ctx));
@@ -115,6 +121,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
 
   return {
     ...ctx,
+    eventBuffer,
     router: app,
     createHandlers(handlerConfig) {
       return makeRegistryHandlers(handlerConfig, ctx);

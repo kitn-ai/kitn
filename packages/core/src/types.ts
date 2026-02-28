@@ -7,6 +7,7 @@ import type { VoiceManager } from "./voice/voice-manager.js";
 import type { CardRegistry } from "./utils/card-registry.js";
 import type { CronScheduler } from "./crons/scheduler.js";
 import type { LifecycleHookConfig, LifecycleHookEmitter } from "./hooks/lifecycle-hooks.js";
+import type { EventBuffer } from "./jobs/event-buffer.js";
 
 /**
  * Framework-agnostic request interface.
@@ -89,5 +90,7 @@ export interface PluginContext {
   cronScheduler?: CronScheduler;
   /** Lifecycle hook emitter for observability events. Present when hooks config is provided. */
   hooks?: LifecycleHookEmitter;
+  /** Shared event buffer for reconnectable job SSE streaming. */
+  eventBuffer?: EventBuffer;
 }
 

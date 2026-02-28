@@ -8,6 +8,7 @@ import type {
   OrchestratorAgentConfig,
   CronScheduler,
   EventBuffer,
+  KitnPlugin,
   LifecycleEventMap,
   LifecycleEventName,
   WildcardEvent,

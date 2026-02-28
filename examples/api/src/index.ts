@@ -127,7 +127,7 @@ if (env.MCP_CONTEXT7) {
     const mcp = await connectMCPServers(plugin, {
       servers: [{
         name: "context7",
-        transport: { type: "stdio", command: "npx", args: ["-y", "@context7/mcp"] },
+        transport: { type: "stdio", command: "npx", args: ["-y", "@upstash/context7-mcp"] },
       }],
     });
     console.log("[mcp] Connected to Context7 MCP — documentation tools available");

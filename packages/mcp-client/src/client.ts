@@ -21,12 +21,27 @@ export function buildToolRegistration(
   };
 }
 
+/** Resolve transport config into something @ai-sdk/mcp understands. */
+async function resolveTransport(transport: ServerConfig["transport"]) {
+  // HTTP and SSE configs are passed through as-is (natively supported)
+  if (transport.type === "http" || transport.type === "sse") {
+    return transport;
+  }
+  // Stdio requires an actual transport instance
+  const { Experimental_StdioMCPTransport } = await import("@ai-sdk/mcp/mcp-stdio");
+  return new Experimental_StdioMCPTransport({
+    command: transport.command,
+    args: transport.args,
+  });
+}
+
 /** Connect to one MCP server and register its tools. */
 async function connectServer(
   ctx: PluginContext,
   config: ServerConfig,
 ) {
-  const client = await createMCPClient({ transport: config.transport as any });
+  const transport = await resolveTransport(config.transport);
+  const client = await createMCPClient({ transport: transport as any });
   const tools = await client.tools();
 
   for (const [toolName, tool] of Object.entries(tools)) {

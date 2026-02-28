@@ -1,0 +1,18 @@
+{
+  "name": "upstash-scheduler",
+  "type": "kitn:cron",
+  "description": "CronScheduler implementation using Upstash QStash — dynamic HTTP callbacks for serverless cron execution",
+  "dependencies": ["@upstash/qstash"],
+  "registryDependencies": ["core"],
+  "files": ["upstash-scheduler.ts"],
+  "envVars": ["QSTASH_TOKEN"],
+  "categories": ["scheduling", "cron", "serverless"],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-28",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

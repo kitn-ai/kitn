@@ -1,0 +1,18 @@
+{
+  "name": "cloudflare-scheduler",
+  "type": "kitn:cron",
+  "description": "CronScheduler for Cloudflare Workers — config-based cron triggers with catch-all tick endpoint",
+  "dependencies": [],
+  "registryDependencies": ["core"],
+  "files": ["cloudflare-scheduler.ts"],
+  "categories": ["scheduling", "cron", "serverless", "cloudflare"],
+  "docs": "Cloudflare Cron Triggers are configured in wrangler.toml, not dynamically. This scheduler provides a no-op CronScheduler and a Worker scheduled event handler that POSTs to /crons/tick.",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-28",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

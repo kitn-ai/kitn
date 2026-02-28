@@ -12,6 +12,7 @@ interface AgentScopeFields {
   conversationId: string;
   scopeId?: string;
   jobId?: string;
+  /** Unix epoch milliseconds (Date.now()) */
   timestamp: number;
 }
 
@@ -31,6 +32,7 @@ export interface AgentEndEvent extends AgentScopeFields {
 
 export interface AgentErrorEvent extends AgentScopeFields {
   input: string;
+  /** The error that occurred. Typically an Error instance or string. */
   error: unknown;
   duration: number;
 }
@@ -41,6 +43,7 @@ export interface JobStartEvent {
   input: string;
   conversationId: string;
   scopeId?: string;
+  /** Unix epoch milliseconds (Date.now()) */
   timestamp: number;
 }
 
@@ -50,6 +53,7 @@ export interface JobEndEvent {
   output: string;
   duration: number;
   usage: TokenUsage;
+  /** Unix epoch milliseconds (Date.now()) */
   timestamp: number;
 }
 
@@ -57,6 +61,7 @@ export interface JobCancelledEvent {
   jobId: string;
   agentName: string;
   duration: number;
+  /** Unix epoch milliseconds (Date.now()) */
   timestamp: number;
 }
 
@@ -66,6 +71,7 @@ export interface CronExecutedEvent {
   executionId: string;
   status: "completed" | "failed";
   duration: number;
+  /** Unix epoch milliseconds (Date.now()) */
   timestamp: number;
 }
 
@@ -78,6 +84,7 @@ export interface ToolExecuteEvent {
   output: unknown;
   duration: number;
   conversationId: string;
+  /** Unix epoch milliseconds (Date.now()) */
   timestamp: number;
 }
 
@@ -86,6 +93,7 @@ export interface DelegateStartEvent {
   childAgent: string;
   input: string;
   conversationId: string;
+  /** Unix epoch milliseconds (Date.now()) */
   timestamp: number;
 }
 
@@ -95,6 +103,7 @@ export interface DelegateEndEvent {
   output: string;
   duration: number;
   conversationId: string;
+  /** Unix epoch milliseconds (Date.now()) */
   timestamp: number;
 }
 
@@ -105,6 +114,7 @@ export interface ModelCallEvent {
   completionTokens: number;
   duration: number;
   conversationId: string;
+  /** Unix epoch milliseconds (Date.now()) */
   timestamp: number;
 }
 
@@ -196,7 +206,10 @@ class LifecycleHookEmitterImpl implements LifecycleHookEmitter {
     if (specific) {
       for (const handler of specific) {
         try {
-          handler(data);
+          const result = handler(data);
+          if (result && typeof (result as any).catch === "function") {
+            (result as Promise<void>).catch(() => {});
+          }
         } catch {
           // Swallow — never break agent execution
         }
@@ -209,7 +222,10 @@ class LifecycleHookEmitterImpl implements LifecycleHookEmitter {
       const wildcardData: WildcardEvent = { type: event, ...data } as WildcardEvent;
       for (const handler of wildcards) {
         try {
-          handler(wildcardData);
+          const result = handler(wildcardData);
+          if (result && typeof (result as any).catch === "function") {
+            (result as Promise<void>).catch(() => {});
+          }
         } catch {
           // Swallow — never break agent execution
         }

@@ -27,6 +27,7 @@ import { relative } from "path";
 interface AddOptions {
   overwrite?: boolean;
   type?: string;
+  yes?: boolean;
 }
 
 export async function addCommand(components: string[], opts: AddOptions) {
@@ -398,15 +399,39 @@ export async function addCommand(components: string[], opts: AddOptions) {
     return `  ${pc.cyan(label)}`;
   }).join("\n"));
 
-  const created: string[] = [];
-  const updated: string[] = [];
-  const skipped: string[] = [];
+  // Collect all npm dependencies across resolved components
   const allDeps: string[] = [];
   const allDevDeps: string[] = [];
   for (const item of resolved) {
     if (item.dependencies) allDeps.push(...item.dependencies);
     if (item.devDependencies) allDevDeps.push(...item.devDependencies);
+  }
+  const uniqueDeps = [...new Set(allDeps)];
+  const uniqueDevDeps = [...new Set(allDevDeps)].filter((d) => !uniqueDeps.includes(d));
+  const totalDeps = uniqueDeps.length + uniqueDevDeps.length;
 
+  if (totalDeps > 0) {
+    const depLines = uniqueDeps.map((d) => `  ${pc.cyan(d)}`);
+    const devDepLines = uniqueDevDeps.map((d) => `  ${pc.dim(d)}`);
+    p.log.info("Dependencies:\n" + [...depLines, ...devDepLines].join("\n"));
+  }
+
+  if (!opts.yes && process.stdin.isTTY) {
+    const totalComponents = resolved.length;
+    const summary = totalDeps > 0
+      ? `Install ${totalComponents} component(s) and ${totalDeps} npm package(s)?`
+      : `Install ${totalComponents} component(s)?`;
+    const confirm = await p.confirm({ message: summary });
+    if (p.isCancel(confirm) || !confirm) {
+      p.cancel("Cancelled.");
+      process.exit(0);
+    }
+  }
+
+  const created: string[] = [];
+  const updated: string[] = [];
+  const skipped: string[] = [];
+  for (const item of resolved) {
     // Skip file processing for packages already installed with identical content
     const existingInstall = lock[item.name];
     if (existingInstall && item.type === "kitn:package") {
@@ -617,9 +642,6 @@ export async function addCommand(components: string[], opts: AddOptions) {
   await writeConfig(cwd, config);
   await writeLock(cwd, lock);
 
-  const uniqueDeps = [...new Set(allDeps)];
-  const uniqueDevDeps = [...new Set(allDevDeps)].filter((d) => !uniqueDeps.includes(d));
-  const totalDeps = uniqueDeps.length + uniqueDevDeps.length;
   if (totalDeps > 0) {
     const pm = await detectPackageManager(cwd);
     if (pm) {

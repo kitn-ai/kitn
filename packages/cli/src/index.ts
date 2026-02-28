@@ -30,6 +30,7 @@ program
   .argument("[components...]", "component names or type followed by names")
   .option("-o, --overwrite", "overwrite existing files without prompting")
   .option("-t, --type <type>", "filter by component type during resolution")
+  .option("-y, --yes", "skip confirmation prompt")
   .action(async (components: string[], opts) => {
     const { addCommand } = await import("./commands/add.js");
     await addCommand(components, opts);

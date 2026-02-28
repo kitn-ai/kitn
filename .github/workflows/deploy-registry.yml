@@ -6,12 +6,11 @@ on:
     paths:
       - 'registry/**'
       - 'packages/core/src/**'
-      - 'packages/core/registry.json'
       - 'packages/adapters/hono/src/**'
-      - 'packages/adapters/hono/registry.json'
       - 'packages/adapters/hono-openapi/src/**'
-      - 'packages/adapters/hono-openapi/registry.json'
       - 'packages/adapters/elysia/src/**'
+      - 'packages/adapters/mcp-server/src/**'
+      - 'packages/mcp-client/src/**'
   workflow_dispatch:
 
 permissions:

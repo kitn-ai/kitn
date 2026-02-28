@@ -7,7 +7,6 @@ import type {
   AgentHandler,
   AgentRegistration,
   CardRegistry,
-  VoiceManager,
   StorageProvider,
   MemoryStore,
   OrchestratorAgentConfig,
@@ -20,14 +19,9 @@ import type {
 } from "@kitnai/core";
 
 export interface AIPluginConfig extends CoreConfig {
-  voice?: VoiceConfig;
   memoryStore?: MemoryStore;
   cronScheduler?: CronScheduler;
   openapi?: { title?: string; version?: string; description?: string; serverUrl?: string };
-}
-
-export interface VoiceConfig {
-  retainAudio?: boolean;
 }
 
 type EventHandler<T> = (data: T) => void | Promise<void>;

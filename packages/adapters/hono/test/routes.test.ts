@@ -110,9 +110,3 @@ describe("Unknown routes", () => {
   });
 });
 
-describe("Voice routes", () => {
-  test("not mounted when voice not configured", async () => {
-    const res = await app.request("/ai/voice/speakers");
-    expect(res.status).toBe(404);
-  });
-});

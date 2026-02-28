@@ -10,7 +10,6 @@ import {
   makeRegistryHandlers,
   createOrchestratorAgent,
   createMemoryStorage,
-  VoiceManager,
   createLifecycleHooks,
   createEventBuffer,
 } from "@kitnai/core";
@@ -22,7 +21,6 @@ import { createGenerateRoutes } from "./routes/generate.js";
 import { createMemoryRoutes } from "./routes/memory.js";
 import { createSkillsRoutes } from "./routes/skills.js";
 import { createConversationsRoutes } from "./routes/conversations.js";
-import { createVoiceRoutes } from "./routes/voice.js";
 import { createCommandsRoutes } from "./routes/commands.js";
 import { createCronRoutes } from "./routes/crons.js";
 import { createJobRoutes } from "./routes/jobs.js";
@@ -56,8 +54,6 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   agents.setPromptStore(storage.prompts);
   const tools = new ToolRegistry();
   const cards = new CardRegistry();
-  const voice = config.voice ? new VoiceManager() : undefined;
-
   const cronScheduler = config.cronScheduler;
 
   const hooks = config.hooks
@@ -76,7 +72,6 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
         "See: https://sdk.vercel.ai/providers/ai-sdk-providers",
       );
     }),
-    voice,
     cards,
     cronScheduler,
     hooks,
@@ -127,11 +122,6 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   // Conditionally mount cron routes
   if (cronScheduler) {
     app.use(createCronRoutes(ctx));
-  }
-
-  // Conditionally mount voice routes
-  if (voice) {
-    app.use(createVoiceRoutes(ctx));
   }
 
   // Mount plugins

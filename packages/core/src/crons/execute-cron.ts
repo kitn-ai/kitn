@@ -61,6 +61,16 @@ export async function executeCronJob(
     }, scopeId);
   }
 
+  // Emit cron:executed hook (observational — must not break execution)
+  ctx.hooks?.emit("cron:executed", {
+    cronId: job.id,
+    agentName: job.agentName,
+    executionId: execution.id,
+    status: execution.status as "completed" | "failed",
+    duration: Date.now() - new Date(startedAt).getTime(),
+    timestamp: Date.now(),
+  });
+
   // Update job state
   const now = new Date();
   const updates: Partial<CronJob> = { lastRun: now.toISOString() };

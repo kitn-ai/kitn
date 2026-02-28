@@ -46,8 +46,8 @@ export async function runAgent(
     .filter((t) => !BUILT_IN_TOOLS.has(t));
 
   const bus = getEventBus();
-  if (bus) {
-    for (const step of result.steps) {
+  for (const step of result.steps) {
+    if (bus) {
       for (const tc of step.toolCalls) {
         if (!BUILT_IN_TOOLS.has(tc.toolName)) {
           // AI SDK v6 ToolCall type doesn't expose `.input` directly
@@ -55,12 +55,29 @@ export async function runAgent(
           bus.emit(BUS_EVENTS.TOOL_CALL, { agent: config.agentName, tool: tc.toolName, args: tcInput });
         }
       }
-      for (const tr of step.toolResults) {
-        if (!BUILT_IN_TOOLS.has(tr.toolName)) {
-          // AI SDK v6 ToolResult type doesn't expose `.output` directly
-          const trOutput = (tr as unknown as { output: unknown }).output;
+    }
+    for (const tr of step.toolResults) {
+      if (!BUILT_IN_TOOLS.has(tr.toolName)) {
+        // AI SDK v6 ToolResult type doesn't expose `.output` directly
+        const trOutput = (tr as unknown as { output: unknown }).output;
+        if (bus) {
           bus.emit(BUS_EVENTS.TOOL_RESULT, { agent: config.agentName, tool: tr.toolName, result: trOutput });
         }
+
+        // Emit trace-level lifecycle hook pairing call input with result output
+        const matchingCall = step.toolCalls.find((tc) => tc.toolName === tr.toolName);
+        const callInput = matchingCall
+          ? (matchingCall as unknown as { input: Record<string, unknown> }).input ?? {}
+          : {};
+        ctx.hooks?.emit("tool:execute", {
+          agentName: config.agentName ?? "unknown",
+          toolName: tr.toolName,
+          input: callInput,
+          output: trOutput,
+          duration: 0, // tool-level timing not available from AI SDK
+          conversationId: "", // not available in run-agent context
+          timestamp: Date.now(),
+        });
       }
     }
   }

@@ -1,0 +1,28 @@
+{
+  "name": "cron-manager-agent",
+  "type": "kitn:agent",
+  "description": "Natural language cron manager -- interprets scheduling requests, discovers agents, and creates cron jobs",
+  "dependencies": [
+    "ai"
+  ],
+  "registryDependencies": [
+    "core",
+    "cron-tools"
+  ],
+  "files": [
+    "cron-manager-agent.ts"
+  ],
+  "docs": "The cron manager agent provides natural language scheduling. It parses temporal expressions, discovers installed agents, and creates cron jobs via the cron-tools CRUD tools.",
+  "categories": [
+    "scheduling",
+    "cron"
+  ],
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-28",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

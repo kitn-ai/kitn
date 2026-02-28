@@ -3,7 +3,6 @@ import type { AgentRegistry } from "./registry/agent-registry.js";
 export type { AgentRegistry };
 import type { ToolRegistry } from "./registry/tool-registry.js";
 import type { StorageProvider } from "./storage/interfaces.js";
-import type { VoiceManager } from "./voice/voice-manager.js";
 import type { CardRegistry } from "./utils/card-registry.js";
 import type { CronScheduler } from "./crons/scheduler.js";
 import type { LifecycleHookConfig, LifecycleHookEmitter } from "./hooks/lifecycle-hooks.js";
@@ -85,7 +84,6 @@ export interface PluginContext {
   tools: ToolRegistry;
   storage: StorageProvider;
   model: (model?: string) => LanguageModel;
-  voice?: VoiceManager;
   cards: CardRegistry;
   maxDelegationDepth: number;
   defaultMaxSteps: number;

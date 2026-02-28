@@ -71,8 +71,6 @@ export type {
   Task,
   PromptStore,
   PromptOverride,
-  AudioStore,
-  AudioEntry,
   CommandRegistration,
   CommandStore,
   CronJob,
@@ -89,12 +87,6 @@ export { createInMemoryMemoryStore } from "./storage/in-memory/memory-store.js";
 // ── Tool examples ──
 export type { ToolExample } from "./utils/tool-examples.js";
 export { formatExamplesBlock, buildToolDescription } from "./utils/tool-examples.js";
-
-// ── Voice ──
-export type { VoiceProvider, TranscribeOptions, TranscribeResult, SpeakOptions, VoiceSpeaker } from "./voice/voice-provider.js";
-export { VoiceManager } from "./voice/voice-manager.js";
-export { OpenAIVoiceProvider } from "./voice/openai-voice-provider.js";
-export type { OpenAIVoiceProviderConfig } from "./voice/openai-voice-provider.js";
 
 // ── Resilience ──
 export { withResilience, isRetryableError } from "./utils/resilience.js";
@@ -119,8 +111,6 @@ export { generateRequestSchema, generateResponseSchema } from "./schemas/generat
 export { agentRequestSchema, agentResponseSchema, approveRequestSchema, agentPatchSchema } from "./schemas/agents.schemas.js";
 export { memoryEntrySchema, memorySaveSchema } from "./schemas/memory.schemas.js";
 export { skillMetaSchema, skillSchema, skillCreateSchema, skillUpdateSchema } from "./schemas/skills.schemas.js";
-export { speakRequestSchema, transcribeResponseSchema, speakersResponseSchema, converseResponseHeadersSchema } from "./schemas/voice.schemas.js";
-
 // ── Jobs ──
 export { executeJobInBackground, type JobExecutionContext } from "./jobs/index.js";
 export { createEventBuffer, type EventBuffer, type BufferedEvent } from "./jobs/index.js";

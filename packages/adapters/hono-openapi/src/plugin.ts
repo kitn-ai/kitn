@@ -1,7 +1,7 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 import type { AIPluginConfig, AIPluginInstance } from "./types.js";
-import type { PluginContext } from "@kitnai/core";
+import type { PluginContext, KitnPlugin } from "@kitnai/core";
 import {
   AgentRegistry,
   ToolRegistry,
@@ -28,6 +28,45 @@ import { createVoiceRoutes } from "./routes/voice/voice.routes.js";
 import { createCommandsRoutes } from "./routes/commands/commands.routes.js";
 import { createCronRoutes } from "./routes/crons/crons.routes.js";
 import { createJobRoutes } from "./routes/jobs/jobs.routes.js";
+
+function mountPlugin(app: OpenAPIHono, plugin: KitnPlugin, ctx: PluginContext) {
+  const sub = new OpenAPIHono();
+  for (const route of plugin.routes) {
+    if (route.schema) {
+      // Cast to satisfy @hono/zod-openapi's stricter RouteConfig types —
+      // PluginRouteSchema uses generic z.ZodType while createRoute expects
+      // narrower types (ZodObject for params/query, ZodRequestBody for body).
+      const openApiRoute = createRoute({
+        method: route.method.toLowerCase() as any,
+        path: route.path,
+        summary: route.schema.summary,
+        description: route.schema.description,
+        tags: route.schema.tags,
+        ...(route.schema.request && { request: route.schema.request as any }),
+        responses: route.schema.responses ?? {
+          200: { description: "Success" },
+        },
+      });
+      sub.openapi(openApiRoute, (async (c: any) => {
+        return route.handler({
+          request: c.req.raw,
+          params: c.req.param(),
+          pluginContext: ctx,
+        });
+      }) as any);
+    } else {
+      const method = route.method.toLowerCase() as "get" | "post" | "put" | "delete" | "patch";
+      sub[method](route.path, async (c) => {
+        return route.handler({
+          request: c.req.raw,
+          params: c.req.param(),
+          pluginContext: ctx,
+        });
+      });
+    }
+  }
+  app.route(plugin.prefix, sub);
+}
 
 export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   if (config.memoryStore) {
@@ -122,6 +161,39 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
 
   // Configure OpenAPI docs
   configureOpenAPI(app, config.openapi);
+
+  // Mount plugins
+  for (const plugin of config.plugins ?? []) {
+    mountPlugin(app, plugin, ctx);
+  }
+
+  // Run plugin init functions (fire-and-forget)
+  const initPromise = Promise.all(
+    (config.plugins ?? [])
+      .filter((p) => p.init)
+      .map((p) => Promise.resolve(p.init!(ctx)).catch((err) =>
+        console.error(`[kitn] Plugin "${p.name}" init failed:`, err)
+      ))
+  );
+  if (config.waitUntil) {
+    config.waitUntil(initPromise);
+  } else {
+    initPromise.catch(() => {});
+  }
+
+  // Plugin discovery endpoint
+  app.get("/plugins", (c) => {
+    const plugins = (config.plugins ?? []).map((p) => ({
+      name: p.name,
+      prefix: p.prefix,
+      routes: p.routes.map((r) => ({
+        method: r.method,
+        path: `${p.prefix}${r.path}`,
+        summary: r.schema?.summary,
+      })),
+    }));
+    return c.json({ plugins });
+  });
 
   return {
     ...ctx,

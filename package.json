@@ -13,6 +13,7 @@
     "dev:api": "bun run --cwd examples/api dev",
     "dev:app": "bun run --cwd examples/app dev",
     "dev:voice": "bun run --cwd examples/voice dev",
+    "dev:chat": "bun run --cwd packages/chat-service dev",
     "build": "bun run --filter '*' build",
     "test": "bun run --filter '*' test",
     "typecheck": "bun run --filter '*' typecheck",

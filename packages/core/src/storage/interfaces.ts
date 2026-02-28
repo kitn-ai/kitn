@@ -326,6 +326,48 @@ export interface CronStore {
   getDueJobs(now: Date, scopeId?: string): Promise<CronJob[]>;
 }
 
+// ── Job Store ──
+
+/** A background job execution record */
+export interface Job {
+  id: string;
+  agentName: string;
+  input: string;
+  conversationId: string;
+  scopeId?: string;
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
+  result?: string;
+  error?: string;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+  toolsUsed?: string[];
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
+}
+
+/**
+ * Stores and retrieves background job records.
+ *
+ * Jobs represent asynchronous agent invocations that run in the background.
+ * Return `null` from `get()` when not found (do not throw).
+ */
+export interface JobStore {
+  /** Create a new job. */
+  create(job: Omit<Job, "id" | "createdAt">): Promise<Job>;
+  /** Get a job by ID. Returns `null` if not found. */
+  get(id: string, scopeId?: string): Promise<Job | null>;
+  /** List all jobs. */
+  list(scopeId?: string): Promise<Job[]>;
+  /** Update a job. Returns the updated job. */
+  update(id: string, updates: Partial<Omit<Job, "id">>): Promise<Job>;
+  /** Delete a job. Returns `true` if it existed. */
+  delete(id: string, scopeId?: string): Promise<boolean>;
+}
+
 // ── Combined Storage Provider ──
 
 /**
@@ -357,4 +399,5 @@ export interface StorageProvider {
   audio: AudioStore;
   commands: CommandStore;
   crons: CronStore;
+  jobs: JobStore;
 }

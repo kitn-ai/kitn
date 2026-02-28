@@ -15,6 +15,7 @@ import type {
 import { createInMemoryMemoryStore } from "./memory-store.js";
 import { createCommandStore } from "./command-store.js";
 import { createCronStore } from "./cron-store.js";
+import { createJobStore } from "./job-store.js";
 import { parseFrontmatter, parsePhase, buildSkill, KEBAB_CASE } from "../skill-helpers.js";
 
 // ── Conversation Store ──
@@ -332,5 +333,6 @@ export function createMemoryStorage(): StorageProvider {
     audio: createAudioStore(),
     commands: createCommandStore(),
     crons: createCronStore(),
+    jobs: createJobStore(),
   };
 }

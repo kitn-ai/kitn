@@ -122,6 +122,17 @@ export async function executeTask(
   }
   bus?.emit(BUS_EVENTS.DELEGATE_START, { from, to: agent, query });
 
+  // Emit trace-level lifecycle hook
+  ctx.hooks?.emit("delegate:start", {
+    parentAgent: from,
+    childAgent: agent,
+    input: query,
+    conversationId: "",
+    timestamp: Date.now(),
+  });
+
+  const delegateStart = performance.now();
+
   const childCtx: DelegationContext = {
     chain: [...chain, agent],
     depth: depth + 1,
@@ -164,6 +175,16 @@ export async function executeTask(
     bus?.emit(BUS_EVENTS.AGENT_END, { agent });
     bus?.emit(BUS_EVENTS.DELEGATE_END, { from, to: agent, summary: result.response.slice(0, DEFAULTS.SUMMARY_LENGTH_LIMIT) });
 
+    // Emit trace-level lifecycle hook
+    ctx.hooks?.emit("delegate:end", {
+      parentAgent: from,
+      childAgent: agent,
+      output: result.response.slice(0, DEFAULTS.SUMMARY_LENGTH_LIMIT),
+      duration: Math.round(performance.now() - delegateStart),
+      conversationId: "",
+      timestamp: Date.now(),
+    });
+
     return {
       agent,
       query,
@@ -174,6 +195,17 @@ export async function executeTask(
     const message = err instanceof Error ? err.message : String(err);
     bus?.emit(BUS_EVENTS.AGENT_END, { agent, error: message.slice(0, DEFAULTS.SUMMARY_LENGTH_LIMIT) });
     bus?.emit(BUS_EVENTS.DELEGATE_END, { from, to: agent, summary: `Error: ${message.slice(0, DEFAULTS.SUMMARY_LENGTH_LIMIT)}`, error: true });
+
+    // Emit trace-level lifecycle hook
+    ctx.hooks?.emit("delegate:end", {
+      parentAgent: from,
+      childAgent: agent,
+      output: `Error: ${message.slice(0, DEFAULTS.SUMMARY_LENGTH_LIMIT)}`,
+      duration: Math.round(performance.now() - delegateStart),
+      conversationId: "",
+      timestamp: Date.now(),
+    });
+
     return errorResult(agent, query, `Agent execution failed: ${message}`);
   }
 }

@@ -11,6 +11,8 @@ import {
   createOrchestratorAgent,
   createMemoryStorage,
   VoiceManager,
+  createLifecycleHooks,
+  createEventBuffer,
 } from "@kitnai/core";
 
 // Route factories
@@ -23,6 +25,7 @@ import { createConversationsRoutes } from "./routes/conversations.js";
 import { createVoiceRoutes } from "./routes/voice.js";
 import { createCommandsRoutes } from "./routes/commands.js";
 import { createCronRoutes } from "./routes/crons.js";
+import { createJobRoutes } from "./routes/jobs.js";
 
 export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   if (config.memoryStore) {
@@ -42,6 +45,12 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
 
   const cronScheduler = config.cronScheduler;
 
+  const hooks = config.hooks
+    ? createLifecycleHooks(config.hooks)
+    : undefined;
+
+  const eventBuffer = createEventBuffer();
+
   const ctx: PluginContext = {
     agents,
     tools,
@@ -55,6 +64,8 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
     voice,
     cards,
     cronScheduler,
+    hooks,
+    eventBuffer,
     maxDelegationDepth: config.maxDelegationDepth ?? DEFAULTS.MAX_DELEGATION_DEPTH,
     defaultMaxSteps: config.defaultMaxSteps ?? DEFAULTS.MAX_STEPS,
     config,
@@ -97,6 +108,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   app.use(createSkillsRoutes(ctx));
   app.use(createConversationsRoutes(ctx));
   app.use(createCommandsRoutes(ctx));
+  app.use(createJobRoutes(ctx));
   // Conditionally mount cron routes
   if (cronScheduler) {
     app.use(createCronRoutes(ctx));
@@ -109,12 +121,17 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
 
   return {
     ...ctx,
+    eventBuffer,
     router: app,
     createHandlers(handlerConfig) {
       return makeRegistryHandlers(handlerConfig, ctx);
     },
     createOrchestrator(orchestratorConfig) {
       return createOrchestratorAgent(ctx, orchestratorConfig);
+    },
+    on(event: any, handler: any) {
+      if (!ctx.hooks) throw new Error("Hooks not configured. Set `hooks` in plugin config.");
+      return ctx.hooks.on(event, handler);
     },
   };
 }

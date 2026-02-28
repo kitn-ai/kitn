@@ -1,6 +1,12 @@
 import { Hono } from "hono";
 import type { PluginContext, DelegationContext } from "@kitnai/core";
-import { AgentEventBus, delegationStore, cancelRequest } from "@kitnai/core";
+import {
+  AgentEventBus,
+  delegationStore,
+  cancelRequest,
+  generateConversationId,
+  executeJobInBackground,
+} from "@kitnai/core";
 
 export function createAgentsRoutes(ctx: PluginContext) {
   const router = new Hono();
@@ -96,6 +102,38 @@ export function createAgentsRoutes(ctx: PluginContext) {
     const agent = ctx.agents.get(name);
     if (!agent) return c.json({ error: `Agent not found: ${name}` }, 404);
 
+    // ── Async execution path ──
+    // When ?async=true, create a Job and return HTTP 202 immediately.
+    // The agent runs in the background; callers poll /jobs/:id or stream /jobs/:id/stream.
+    if (c.req.query("async") === "true") {
+      const body = await c.req.json<any>();
+      const message: string = body.message ?? "";
+      const conversationId = generateConversationId(body.conversationId);
+      const scopeId = c.req.header("x-scope-id") ?? undefined;
+
+      const job = await ctx.storage.jobs.create({
+        agentName: name,
+        input: message,
+        conversationId,
+        scopeId,
+        status: "queued",
+      });
+
+      const abortController = new AbortController();
+      const execution = executeJobInBackground({
+        ctx,
+        job,
+        eventBuffer: ctx.eventBuffer!,
+        abortController,
+      });
+
+      // Keep execution alive on serverless platforms (Vercel, Cloudflare, etc.)
+      ctx.config.waitUntil?.(execution);
+
+      return c.json({ jobId: job.id, conversationId }, 202);
+    }
+
+    // ── Synchronous execution path (unchanged) ──
     const format = (c.req.query("format") ?? agent.defaultFormat) as "json" | "sse";
     const handler = format === "sse" ? agent.sseHandler : agent.jsonHandler;
 

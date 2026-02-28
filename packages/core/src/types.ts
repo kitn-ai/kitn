@@ -6,6 +6,7 @@ import type { StorageProvider } from "./storage/interfaces.js";
 import type { VoiceManager } from "./voice/voice-manager.js";
 import type { CardRegistry } from "./utils/card-registry.js";
 import type { CronScheduler } from "./crons/scheduler.js";
+import type { LifecycleHookConfig, LifecycleHookEmitter } from "./hooks/lifecycle-hooks.js";
 
 /**
  * Framework-agnostic request interface.
@@ -68,6 +69,10 @@ export interface CoreConfig {
   resilience?: ResilienceConfig;
   /** Conversation compaction configuration */
   compaction?: CompactionConfig;
+  /** Lifecycle hooks configuration. When set, enables execution event emission. */
+  hooks?: LifecycleHookConfig;
+  /** Platform-specific waitUntil for serverless background execution. */
+  waitUntil?: (promise: Promise<unknown>) => void;
 }
 
 /** Internal context passed to all core handlers and factories. */
@@ -82,5 +87,7 @@ export interface PluginContext {
   defaultMaxSteps: number;
   config: CoreConfig;
   cronScheduler?: CronScheduler;
+  /** Lifecycle hook emitter for observability events. Present when hooks config is provided. */
+  hooks?: LifecycleHookEmitter;
 }
 

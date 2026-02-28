@@ -12,6 +12,7 @@ import {
   createOrchestratorAgent,
   createMemoryStorage,
   VoiceManager,
+  createLifecycleHooks,
 } from "@kitnai/core";
 
 // Route factories
@@ -43,6 +44,10 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
 
   const cronScheduler = config.cronScheduler;
 
+  const hooks = config.hooks
+    ? createLifecycleHooks(config.hooks)
+    : undefined;
+
   const ctx: PluginContext = {
     agents,
     tools,
@@ -56,6 +61,7 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
     voice,
     cards,
     cronScheduler,
+    hooks,
     maxDelegationDepth: config.maxDelegationDepth ?? DEFAULTS.MAX_DELEGATION_DEPTH,
     defaultMaxSteps: config.defaultMaxSteps ?? DEFAULTS.MAX_STEPS,
     config,
@@ -115,6 +121,10 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
     },
     createOrchestrator(orchestratorConfig) {
       return createOrchestratorAgent(ctx, orchestratorConfig);
+    },
+    on(event: any, handler: any) {
+      if (!ctx.hooks) throw new Error("Hooks not configured. Set `hooks` in plugin config.");
+      return ctx.hooks.on(event, handler);
     },
   };
 }

@@ -69,6 +69,24 @@ examples/api/
       hackernews.ts       # Hacker News top stories + story detail
       weather.ts          # Open-Meteo weather (no API key needed)
       web-search.ts       # Brave Search (requires BRAVE_API_KEY)
+      docs.ts             # Documentation lookup (Context7 MCP, optional)
+  scripts/                # Test & demo scripts (run with bun)
+    run.ts                # Interactive runner — pick suites to run
+    helpers.ts            # Shared test utilities
+    01-auth.ts            # API key authentication
+    02-tools.ts           # Tool endpoints (echo, weather, calculator, HN, search)
+    03-agents.ts          # Agent endpoints (general, guarded, orchestrator)
+    04-conversations.ts   # Conversation CRUD + recall
+    05-memory.ts          # Memory namespace CRUD
+    06-commands.ts        # Command CRUD + run
+    07-crons.ts           # Cron scheduling CRUD + trigger
+    08-async-jobs.ts      # Async job lifecycle (start, poll, cancel)
+    09-prompt-overrides.ts# Prompt override + reset
+    10-skills.ts          # Skill CRUD
+    11-generate.ts        # Direct text generation
+    12-mcp-server.ts      # MCP JSON-RPC (tools/list, tools/call)
+    13-docs-agent.ts      # Docs agent (requires MCP_CONTEXT7)
+    14-voice.ts           # Voice TTS/speakers (requires OPENAI_API_KEY)
   data/                   # File storage (persisted across restarts)
     conversations/        # Saved conversation histories
     memory/               # Agent memory namespaces
@@ -274,6 +292,30 @@ Environment variables are validated at startup. The server exits with a clear er
 | `OPENAI_API_KEY` | No | — | Enables OpenAI voice (TTS/STT) |
 | `GROQ_API_KEY` | No | — | Enables Groq voice (Whisper STT) |
 | `MCP_CONTEXT7` | No | `false` | Enables Context7 MCP client (documentation tools) |
+
+## Test Scripts
+
+The `scripts/` directory contains TypeScript test scripts that exercise every API feature. They double as runnable documentation — each script shows exactly how to call the endpoints.
+
+```bash
+# Interactive picker — choose which suites to run
+bun scripts/run.ts
+
+# Run all suites
+bun scripts/run.ts --all
+
+# Run specific suites by number
+bun scripts/run.ts 01 02 12
+
+# Run a single suite directly
+bun scripts/02-tools.ts
+```
+
+Override the target server or API key:
+
+```bash
+KITN_BASE_URL=http://localhost:5000 KITN_API_KEY=my-key bun scripts/run.ts --all
+```
 
 ## Further Reading
 

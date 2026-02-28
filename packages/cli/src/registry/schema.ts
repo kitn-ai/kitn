@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const componentType = z.enum(["kitn:agent", "kitn:tool", "kitn:skill", "kitn:storage", "kitn:package"]);
+export const componentType = z.enum(["kitn:agent", "kitn:tool", "kitn:skill", "kitn:storage", "kitn:package", "kitn:cron"]);
 export type ComponentType = z.infer<typeof componentType>;
 
 export const registryFileSchema = z.object({
@@ -94,4 +94,5 @@ export const typeToDir: Record<ComponentType, string> = {
   "kitn:skill": "skills",
   "kitn:storage": "storage",
   "kitn:package": "package",
+  "kitn:cron": "crons",
 };

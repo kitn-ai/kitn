@@ -178,7 +178,7 @@ export async function initCommand(opts: InitOptions = {}) {
   p.log.success(`Created ${pc.bold(baseDir + "/plugin.ts")} — configure your AI provider there`);
 
   const mountCode = framework === "elysia"
-    ? `app.use(ai.router);`
+    ? `app.use(new Elysia({ prefix: "/api" }).use(ai.router));`
     : `app.route("/api", ai.router);`;
   p.note(
     [

@@ -78,6 +78,8 @@ export type {
   CronJob,
   CronExecution,
   CronStore,
+  Job,
+  JobStore,
 } from "./storage/interfaces.js";
 export { createFileStorage } from "./storage/file-storage/index.js";
 export type { FileStorageOptions } from "./storage/file-storage/index.js";

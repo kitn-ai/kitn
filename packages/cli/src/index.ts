@@ -139,7 +139,7 @@ program
   .command("chat")
   .description("AI-powered scaffolding assistant — describe what you need in plain English")
   .argument("<message>", "what you want to build (e.g. \"I want a weather agent\")")
-  .option("--url <url>", "chat service URL (overrides config and default)")
+  .option("-u, --url <url>", "chat service URL (overrides config and default)")
   .action(async (message: string, opts: { url?: string }) => {
     const { chatCommand } = await import("./commands/chat.js");
     await chatCommand(message, opts);

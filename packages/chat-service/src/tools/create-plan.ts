@@ -39,6 +39,6 @@ export type ChatPlan = z.infer<typeof chatPlanSchema>;
 export const createPlanTool = tool({
   description:
     "Create an execution plan of kitn CLI actions. Call this once with the complete plan after analyzing the user's request against the available and installed components.",
-  parameters: chatPlanSchema,
-  execute: async (input) => input,
+  inputSchema: chatPlanSchema,
+  execute: async (input: ChatPlan) => input,
 });

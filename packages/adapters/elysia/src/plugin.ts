@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import type { AIPluginConfig, AIPluginInstance } from "./types.js";
-import type { PluginContext } from "@kitnai/core";
+import type { PluginContext, KitnPlugin } from "@kitnai/core";
 import {
   AgentRegistry,
   ToolRegistry,
@@ -26,6 +26,21 @@ import { createVoiceRoutes } from "./routes/voice.js";
 import { createCommandsRoutes } from "./routes/commands.js";
 import { createCronRoutes } from "./routes/crons.js";
 import { createJobRoutes } from "./routes/jobs.js";
+
+function mountPlugin(app: Elysia, plugin: KitnPlugin, ctx: PluginContext) {
+  const sub = new Elysia({ prefix: plugin.prefix });
+  for (const route of plugin.routes) {
+    const method = route.method.toLowerCase() as "get" | "post" | "put" | "delete" | "patch";
+    (sub[method] as Function)(route.path, async (elysiaCtx: { request: Request; params?: Record<string, string> }) => {
+      return route.handler({
+        request: elysiaCtx.request,
+        params: (elysiaCtx.params ?? {}) as Record<string, string>,
+        pluginContext: ctx,
+      });
+    });
+  }
+  app.use(sub);
+}
 
 export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   if (config.memoryStore) {
@@ -118,6 +133,39 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   if (voice) {
     app.use(createVoiceRoutes(ctx));
   }
+
+  // Mount plugins
+  for (const plugin of config.plugins ?? []) {
+    mountPlugin(app, plugin, ctx);
+  }
+
+  // Run plugin init functions (fire-and-forget)
+  const initPromise = Promise.all(
+    (config.plugins ?? [])
+      .filter((p) => p.init)
+      .map((p) => Promise.resolve(p.init!(ctx)).catch((err) =>
+        console.error(`[kitn] Plugin "${p.name}" init failed:`, err)
+      ))
+  );
+  if (config.waitUntil) {
+    config.waitUntil(initPromise);
+  } else {
+    initPromise.catch(() => {});
+  }
+
+  // Plugin discovery endpoint
+  app.get("/plugins", () => {
+    const plugins = (config.plugins ?? []).map((p) => ({
+      name: p.name,
+      prefix: p.prefix,
+      routes: p.routes.map((r) => ({
+        method: r.method,
+        path: `${p.prefix}${r.path}`,
+        summary: r.schema?.summary,
+      })),
+    }));
+    return { plugins };
+  });
 
   return {
     ...ctx,

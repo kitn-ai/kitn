@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { createAIPlugin, createFileStorage, createInternalScheduler, OpenAIVoiceProvider } from "@kitnai/hono-adapter";
+import { createAIPlugin, createFileStorage, createInternalScheduler } from "@kitnai/hono-adapter";
+import { createVoice, OpenAIVoiceProvider, createFileAudioStore } from "@kitnai/voice";
 import { createMCPServer } from "@kitnai/mcp-server-adapter";
 import { connectMCPServers } from "@kitnai/mcp-client";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
@@ -15,6 +16,32 @@ import { registerGeneralAgent } from "./agents/general.js";
 import { registerGuardedAgent } from "./agents/guarded.js";
 import { registerDocsAgent } from "./agents/docs.js";
 
+// Build voice plugin when keys are available
+const voicePlugin = voiceEnabled
+  ? createVoice({
+      retainAudio: env.VOICE_RETAIN_AUDIO,
+      audioStore: createFileAudioStore("./data/voice"),
+      providers: [
+        ...(env.OPENAI_API_KEY ? [new OpenAIVoiceProvider({
+          apiKey: env.OPENAI_API_KEY,
+          name: "openai",
+          ttsModel: env.VOICE_TTS_MODEL,
+          sttModel: env.VOICE_STT_MODEL,
+          defaultSpeaker: env.VOICE_DEFAULT_SPEAKER,
+        })] : []),
+        ...(env.GROQ_API_KEY ? [new OpenAIVoiceProvider({
+          apiKey: env.GROQ_API_KEY,
+          name: "groq",
+          label: "Groq",
+          baseUrl: "https://api.groq.com/openai/v1",
+          sttModel: "whisper-large-v3-turbo",
+          ttsModel: env.VOICE_TTS_MODEL,
+          defaultSpeaker: env.VOICE_DEFAULT_SPEAKER,
+        })] : []),
+      ],
+    })
+  : undefined;
+
 const plugin = createAIPlugin({
   model: (id) => openrouter(id ?? env.DEFAULT_MODEL),
   storage: createFileStorage({ dataDir: "./data" }),
@@ -23,38 +50,8 @@ const plugin = createAIPlugin({
   hooks: { level: "summary" },
   // Enable /crons API routes (actual scheduling handled by InternalScheduler below)
   cronScheduler: { async schedule() {}, async unschedule() {} },
-  ...(voiceEnabled && {
-    voice: { retainAudio: env.VOICE_RETAIN_AUDIO },
-  }),
+  plugins: voicePlugin ? [voicePlugin] : [],
 });
-
-// Register voice providers when keys are available
-if (voiceEnabled && plugin.voice) {
-  if (env.OPENAI_API_KEY) {
-    plugin.voice.register(
-      new OpenAIVoiceProvider({
-        apiKey: env.OPENAI_API_KEY,
-        name: "openai",
-        ttsModel: env.VOICE_TTS_MODEL,
-        sttModel: env.VOICE_STT_MODEL,
-        defaultSpeaker: env.VOICE_DEFAULT_SPEAKER,
-      }),
-    );
-  }
-  if (env.GROQ_API_KEY) {
-    plugin.voice.register(
-      new OpenAIVoiceProvider({
-        apiKey: env.GROQ_API_KEY,
-        name: "groq",
-        label: "Groq",
-        baseUrl: "https://api.groq.com/openai/v1",
-        sttModel: "whisper-large-v3-turbo",
-        ttsModel: env.VOICE_TTS_MODEL,
-        defaultSpeaker: env.VOICE_DEFAULT_SPEAKER,
-      }),
-    );
-  }
-}
 
 // Register tools
 registerEchoTool(plugin);

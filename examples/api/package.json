@@ -13,6 +13,7 @@
   "dependencies": {
     "@ai-sdk/mcp": "^1.0.22",
     "@kitnai/hono-adapter": "workspace:*",
+    "@kitnai/voice": "workspace:*",
     "@kitnai/mcp-client": "workspace:*",
     "@kitnai/mcp-server-adapter": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.27.0",

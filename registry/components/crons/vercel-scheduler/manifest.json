@@ -1,0 +1,19 @@
+{
+  "name": "vercel-scheduler",
+  "type": "kitn:cron",
+  "description": "CronScheduler for Vercel Cron — config-based with CRON_SECRET verification",
+  "dependencies": [],
+  "registryDependencies": ["core"],
+  "files": ["vercel-scheduler.ts"],
+  "envVars": ["CRON_SECRET"],
+  "categories": ["scheduling", "cron", "serverless", "vercel"],
+  "docs": "Vercel Cron Jobs are configured in vercel.json. This scheduler is a no-op with CRON_SECRET verification middleware.",
+  "changelog": [
+    {
+      "version": "1.0.0",
+      "date": "2026-02-28",
+      "type": "initial",
+      "note": "Initial release"
+    }
+  ]
+}

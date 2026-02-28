@@ -185,7 +185,57 @@ kitn create agent my-agent
 kitn create tool my-tool
 ```
 
-Creates a new component directory with a manifest and template source file.
+Creates a new component file with a template and wires it into the barrel file (`src/ai/index.ts`).
+
+### `kitn link`
+
+Wire a tool into an agent's `tools` object. Adds the import statement and tools entry automatically.
+
+```bash
+# Fully explicit
+kitn link tool weather --to general-agent
+
+# With a custom key name
+kitn link tool weather --to general-agent --as getWeather
+
+# Interactive — pick tool, then agent
+kitn link
+```
+
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--to <agent>` | Target agent name (interactive if omitted) |
+| `--as <key>` | Key name in the tools object (defaults to the export name) |
+
+### `kitn unlink`
+
+Remove a tool from an agent's `tools` object. Removes the import if it's no longer referenced.
+
+```bash
+# Fully explicit
+kitn unlink tool weather --from general-agent
+
+# Interactive — pick tool, then agent
+kitn unlink
+```
+
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--from <agent>` | Target agent name (interactive if omitted) |
+
+### `kitn rules`
+
+Generate or regenerate AI coding assistant rules files (e.g. `AGENTS.md`, `.cursor/rules/kitn.mdc`).
+
+```bash
+kitn rules
+```
+
+Fetches the latest rules template from the registry and writes files for each AI tool selected during `kitn init`. If no `aiTools` selection exists in `kitn.json`, prompts for one.
 
 ### `kitn build`
 
@@ -279,6 +329,7 @@ Created by `kitn init`. Controls where components are installed and which regist
 | `framework` | `hono` |
 | `aliases` | Directory paths for each component type |
 | `registries` | Named registries — each value is a URL string or an object with `url`, `homepage`, `description` |
+| `aiTools` | (optional) Selected AI coding tools for `kitn rules` — e.g. `["claude-code", "cursor"]` |
 
 > Installed component tracking (file paths, content hashes, versions) is stored separately in `kitn.lock`. This file is auto-managed — don't edit it manually.
 

@@ -1,3 +1,4 @@
+import "./setup-openapi.js";
 import { z } from "zod";
 
 export const speakRequestSchema = z.object({

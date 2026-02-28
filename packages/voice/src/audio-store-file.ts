@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import type { AudioStore, AudioEntry } from "../interfaces.js";
+import type { AudioStore, AudioEntry } from "./audio-store.js";
 
 const META_SUFFIX = ".meta.json";
 
@@ -20,7 +20,13 @@ function extension(mimeType: string): string {
   return map[mimeType] ?? "bin";
 }
 
-export function createAudioStore(dataDir: string): AudioStore {
+/**
+ * Creates a file-based AudioStore that persists audio files to disk.
+ * Audio files and their metadata are stored in `{dataDir}/audio/`.
+ *
+ * @param dataDir - Base directory for data storage (audio will be stored in `{dataDir}/audio/`)
+ */
+export function createFileAudioStore(dataDir: string): AudioStore {
   const baseDir = join(dataDir, "audio");
 
   /** Resolve the directory for a given scope (or the base dir for global). */

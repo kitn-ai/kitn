@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { AIPluginConfig, AIPluginInstance } from "./types.js";
-import type { PluginContext } from "@kitnai/core";
+import type { PluginContext, KitnPlugin } from "@kitnai/core";
 import {
   AgentRegistry,
   ToolRegistry,
@@ -11,7 +11,6 @@ import {
   makeRegistryHandlers,
   createOrchestratorAgent,
   createMemoryStorage,
-  VoiceManager,
   createLifecycleHooks,
   createEventBuffer,
 } from "@kitnai/core";
@@ -23,10 +22,24 @@ import { createGenerateRoutes } from "./routes/generate/generate.routes.js";
 import { createMemoryRoutes } from "./routes/memory/memory.routes.js";
 import { createSkillsRoutes } from "./routes/skills/skills.routes.js";
 import { createConversationsRoutes } from "./routes/conversations/conversations.routes.js";
-import { createVoiceRoutes } from "./routes/voice/voice.routes.js";
 import { createCommandsRoutes } from "./routes/commands/commands.routes.js";
 import { createCronRoutes } from "./routes/crons/crons.routes.js";
 import { createJobRoutes } from "./routes/jobs/jobs.routes.js";
+
+function mountPlugin(app: Hono, plugin: KitnPlugin, ctx: PluginContext) {
+  const sub = new Hono();
+  for (const route of plugin.routes) {
+    const method = route.method.toLowerCase() as "get" | "post" | "put" | "delete" | "patch";
+    sub[method](route.path, async (c) => {
+      return route.handler({
+        request: c.req.raw,
+        params: c.req.param(),
+        pluginContext: ctx,
+      });
+    });
+  }
+  app.route(plugin.prefix, sub);
+}
 
 export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   if (config.memoryStore) {
@@ -42,8 +55,6 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
   agents.setPromptStore(storage.prompts);
   const tools = new ToolRegistry();
   const cards = new CardRegistry();
-  const voice = config.voice ? new VoiceManager() : undefined;
-
   const cronScheduler = config.cronScheduler;
 
   const hooks = config.hooks
@@ -62,7 +73,6 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
         "See: https://sdk.vercel.ai/providers/ai-sdk-providers",
       );
     }),
-    voice,
     cards,
     cronScheduler,
     hooks,
@@ -114,10 +124,38 @@ export function createAIPlugin(config: AIPluginConfig): AIPluginInstance {
     app.route("/crons", createCronRoutes(ctx));
   }
 
-  // Conditionally mount voice routes
-  if (voice) {
-    app.route("/voice", createVoiceRoutes(ctx));
+  // Mount plugins
+  for (const plugin of config.plugins ?? []) {
+    mountPlugin(app, plugin, ctx);
   }
+
+  // Run plugin init functions (fire-and-forget)
+  const initPromise = Promise.all(
+    (config.plugins ?? [])
+      .filter((p) => p.init)
+      .map((p) => Promise.resolve(p.init!(ctx)).catch((err) =>
+        console.error(`[kitn] Plugin "${p.name}" init failed:`, err)
+      ))
+  );
+  if (config.waitUntil) {
+    config.waitUntil(initPromise);
+  } else {
+    initPromise.catch(() => {});
+  }
+
+  // Plugin discovery endpoint
+  app.get("/plugins", (c) => {
+    const plugins = (config.plugins ?? []).map((p) => ({
+      name: p.name,
+      prefix: p.prefix,
+      routes: p.routes.map((r) => ({
+        method: r.method,
+        path: `${p.prefix}${r.path}`,
+        summary: r.schema?.summary,
+      })),
+    }));
+    return c.json({ plugins });
+  });
 
   return {
     ...ctx,

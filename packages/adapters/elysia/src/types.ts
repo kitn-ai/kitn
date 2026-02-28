@@ -8,19 +8,15 @@ import type {
   OrchestratorAgentConfig,
   CronScheduler,
   EventBuffer,
+  KitnPlugin,
   LifecycleEventMap,
   LifecycleEventName,
   WildcardEvent,
 } from "@kitnai/core";
 
 export interface AIPluginConfig extends CoreConfig {
-  voice?: VoiceConfig;
   memoryStore?: MemoryStore;
   cronScheduler?: CronScheduler;
-}
-
-export interface VoiceConfig {
-  retainAudio?: boolean;
 }
 
 type EventHandler<T> = (data: T) => void | Promise<void>;

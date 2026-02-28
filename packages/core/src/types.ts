@@ -3,11 +3,11 @@ import type { AgentRegistry } from "./registry/agent-registry.js";
 export type { AgentRegistry };
 import type { ToolRegistry } from "./registry/tool-registry.js";
 import type { StorageProvider } from "./storage/interfaces.js";
-import type { VoiceManager } from "./voice/voice-manager.js";
 import type { CardRegistry } from "./utils/card-registry.js";
 import type { CronScheduler } from "./crons/scheduler.js";
 import type { LifecycleHookConfig, LifecycleHookEmitter } from "./hooks/lifecycle-hooks.js";
 import type { EventBuffer } from "./jobs/event-buffer.js";
+import type { KitnPlugin } from "./plugins/types.js";
 
 /**
  * Framework-agnostic request interface.
@@ -74,6 +74,8 @@ export interface CoreConfig {
   hooks?: LifecycleHookConfig;
   /** Platform-specific waitUntil for serverless background execution. */
   waitUntil?: (promise: Promise<unknown>) => void;
+  /** Plugins to mount. Each plugin provides routes that adapters will register. */
+  plugins?: KitnPlugin[];
 }
 
 /** Internal context passed to all core handlers and factories. */
@@ -82,7 +84,6 @@ export interface PluginContext {
   tools: ToolRegistry;
   storage: StorageProvider;
   model: (model?: string) => LanguageModel;
-  voice?: VoiceManager;
   cards: CardRegistry;
   maxDelegationDepth: number;
   defaultMaxSteps: number;

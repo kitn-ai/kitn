@@ -39,7 +39,6 @@ function createMockContext(
     agents: agentRegistry,
     cards: {} as any,
     storage: {} as any,
-    voice: {} as any,
     getModel: (() => ({})) as any,
     config: {} as any,
     maxDelegationDepth: 5,
@@ -159,8 +158,7 @@ describe("createMCPServer", () => {
       agents: agentRegistry,
       cards: {} as any,
       storage: {} as any,
-      voice: {} as any,
-      getModel: (() => ({})) as any,
+        getModel: (() => ({})) as any,
       config: {} as any,
       maxDelegationDepth: 5,
     } as PluginContext;

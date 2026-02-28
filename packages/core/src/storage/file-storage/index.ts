@@ -5,7 +5,6 @@ import { createMemoryStore } from "./memory-store.js";
 import { createSkillStore } from "./skill-store.js";
 import { createTaskStore } from "./task-store.js";
 import { createPromptStore } from "./prompt-store.js";
-import { createAudioStore } from "./audio-store.js";
 import { createCommandStore } from "./command-store.js";
 import { createCronStore as createFileCronStore } from "./cron-store.js";
 import { createFileJobStore } from "./job-store.js";
@@ -24,7 +23,6 @@ export function createFileStorage(options: FileStorageOptions): StorageProvider 
     skills: createSkillStore(dataDir),
     tasks: createTaskStore(dataDir),
     prompts: createPromptStore(dataDir),
-    audio: createAudioStore(dataDir),
     commands: createCommandStore(dataDir),
     crons: createFileCronStore(dataDir),
     jobs: createFileJobStore(dataDir),

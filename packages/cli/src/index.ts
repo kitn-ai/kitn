@@ -135,6 +135,15 @@ program
     await rulesCommand();
   });
 
+program
+  .command("chat")
+  .description("AI-powered scaffolding assistant — describe what you need in plain English")
+  .argument("<message>", "what you want to build (e.g. \"I want a weather agent\")")
+  .action(async (message: string) => {
+    const { chatCommand } = await import("./commands/chat.js");
+    await chatCommand(message);
+  });
+
 const registry = program
   .command("registry")
   .description("Manage component registries");

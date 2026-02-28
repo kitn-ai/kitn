@@ -108,6 +108,8 @@ export { loadConversationWithCompaction } from "./utils/conversation-helpers.js"
 export { getNextRun, validateCron } from "./crons/index.js";
 export { executeCronJob } from "./crons/index.js";
 export type { CronScheduler } from "./crons/index.js";
+export { createInternalScheduler } from "./crons/index.js";
+export type { InternalSchedulerOptions } from "./crons/index.js";
 
 // ── Schemas ──
 import "./schemas/setup-openapi.js";

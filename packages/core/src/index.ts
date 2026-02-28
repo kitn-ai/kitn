@@ -121,6 +121,10 @@ export { memoryEntrySchema, memorySaveSchema } from "./schemas/memory.schemas.js
 export { skillMetaSchema, skillSchema, skillCreateSchema, skillUpdateSchema } from "./schemas/skills.schemas.js";
 export { speakRequestSchema, transcribeResponseSchema, speakersResponseSchema, converseResponseHeadersSchema } from "./schemas/voice.schemas.js";
 
+// ── Jobs ──
+export { executeJobInBackground, type JobExecutionContext } from "./jobs/index.js";
+export { createEventBuffer, type EventBuffer, type BufferedEvent } from "./jobs/index.js";
+
 // ── Lifecycle hooks ──
 export { createLifecycleHooks } from "./hooks/index.js";
 export type {

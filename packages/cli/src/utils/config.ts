@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile, unlink } from "fs/promises";
 import { join } from "path";
 import { z } from "zod";
 
@@ -7,7 +7,7 @@ type ComponentType = z.infer<typeof componentType>;
 
 const installedComponentSchema = z.object({
   registry: z.string().optional(),
-  type: componentType,
+  type: componentType.optional(),
   slot: z.string().optional(),
   version: z.string(),
   installedAt: z.string(),
@@ -39,7 +39,6 @@ export const configSchema = z.object({
     storage: z.string(),
   }),
   registries: z.record(z.string(), registryValueSchema),
-  installed: z.record(z.string(), installedComponentSchema).optional(),
 });
 
 export type KitnConfig = z.infer<typeof configSchema>;
@@ -61,6 +60,7 @@ export function resolveRoutesAlias(config: KitnConfig): string {
 }
 
 const CONFIG_FILE = "kitn.json";
+const LOCK_FILE = "kitn.lock";
 
 export async function readConfig(projectDir: string): Promise<KitnConfig | null> {
   try {
@@ -74,6 +74,32 @@ export async function readConfig(projectDir: string): Promise<KitnConfig | null>
 export async function writeConfig(projectDir: string, config: KitnConfig): Promise<void> {
   const data = { $schema: "https://kitn.dev/schema/config.json", ...config };
   await writeFile(join(projectDir, CONFIG_FILE), JSON.stringify(data, null, 2) + "\n");
+}
+
+// --- Lock file (installed component tracking) ---
+
+export const lockSchema = z.record(z.string(), installedComponentSchema);
+export type LockFile = z.infer<typeof lockSchema>;
+
+export async function readLock(projectDir: string): Promise<LockFile> {
+  try {
+    const raw = await readFile(join(projectDir, LOCK_FILE), "utf-8");
+    return lockSchema.parse(JSON.parse(raw));
+  } catch {
+    return {};
+  }
+}
+
+export async function writeLock(projectDir: string, lock: LockFile): Promise<void> {
+  if (Object.keys(lock).length === 0) {
+    try {
+      await unlink(join(projectDir, LOCK_FILE));
+    } catch {
+      // File doesn't exist — nothing to delete
+    }
+    return;
+  }
+  await writeFile(join(projectDir, LOCK_FILE), JSON.stringify(lock, null, 2) + "\n");
 }
 
 type RequiredAliasKey = "agents" | "tools" | "skills" | "storage";

@@ -79,45 +79,52 @@ describe("config schema", () => {
   });
 });
 
-describe("installed tracking", () => {
-  test("installed entry accepts registry field", () => {
+describe("config schema rejects installed field", () => {
+  test("config without installed is valid", () => {
     const { configSchema } = require("../src/utils/config.js");
     const config = {
       runtime: "bun",
       framework: "hono",
       aliases: { base: "src/ai", agents: "src/ai/agents", tools: "src/ai/tools", skills: "src/ai/skills", storage: "src/ai/storage" },
       registries: { "@kitn": "https://example.com/r/{type}/{name}.json" },
-      installed: {
-        "weather-agent": {
-          registry: "@kitn",
-          type: "kitn:agent",
-          version: "1.0.0",
-          installedAt: "2026-02-25T00:00:00Z",
-          files: ["src/ai/agents/weather-agent.ts"],
-          hash: "abc12345",
-        },
-      },
     };
     expect(() => configSchema.parse(config)).not.toThrow();
   });
+});
 
-  test("registry field is optional", () => {
-    const { configSchema } = require("../src/utils/config.js");
-    const config = {
-      runtime: "bun",
-      aliases: { agents: "src/agents", tools: "src/tools", skills: "src/skills", storage: "src/storage" },
-      registries: { "@kitn": "https://example.com/r/{type}/{name}.json" },
-      installed: {
-        "weather-agent": {
-          type: "kitn:agent",
-          version: "1.0.0",
-          installedAt: "2026-02-25T00:00:00Z",
-          files: ["src/agents/weather-agent.ts"],
-          hash: "abc12345",
-        },
+describe("lock schema", () => {
+  test("lock entry accepts registry field", () => {
+    const { lockSchema } = require("../src/utils/config.js");
+    const lock = {
+      "weather-agent": {
+        registry: "@kitn",
+        type: "kitn:agent",
+        version: "1.0.0",
+        installedAt: "2026-02-25T00:00:00Z",
+        files: ["src/ai/agents/weather-agent.ts"],
+        hash: "abc12345",
       },
     };
-    expect(() => configSchema.parse(config)).not.toThrow();
+    expect(() => lockSchema.parse(lock)).not.toThrow();
+  });
+
+  test("registry field is optional", () => {
+    const { lockSchema } = require("../src/utils/config.js");
+    const lock = {
+      "weather-agent": {
+        type: "kitn:agent",
+        version: "1.0.0",
+        installedAt: "2026-02-25T00:00:00Z",
+        files: ["src/agents/weather-agent.ts"],
+        hash: "abc12345",
+      },
+    };
+    expect(() => lockSchema.parse(lock)).not.toThrow();
+  });
+
+  test("empty lock is valid", () => {
+    const { lockSchema } = require("../src/utils/config.js");
+    expect(() => lockSchema.parse({})).not.toThrow();
   });
 });
 

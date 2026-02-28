@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { readConfig, writeConfig, getRegistryUrl } from "../utils/config.js";
+import { readConfig, writeConfig, getRegistryUrl, readLock } from "../utils/config.js";
 import type { RegistryEntry } from "../utils/config.js";
 
 interface RegistryAddOptions {
@@ -73,12 +73,11 @@ export async function registryRemoveCommand(
     throw new Error("Cannot remove the default @kitn registry. Use --force to override.");
   }
 
+  const lock = await readLock(cwd);
   const affectedComponents: string[] = [];
-  if (config.installed) {
-    for (const [name, entry] of Object.entries(config.installed)) {
-      if (entry.registry === namespace) {
-        affectedComponents.push(name);
-      }
+  for (const [name, entry] of Object.entries(lock)) {
+    if (entry.registry === namespace) {
+      affectedComponents.push(name);
     }
   }
 

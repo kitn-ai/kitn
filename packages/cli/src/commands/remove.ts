@@ -3,16 +3,17 @@ import pc from "picocolors";
 import { join, relative, dirname } from "path";
 import { unlink, readFile, writeFile } from "fs/promises";
 import { existsSync } from "fs";
-import { readConfig, writeConfig, resolveRoutesAlias } from "../utils/config.js";
+import { readConfig, writeConfig, resolveRoutesAlias, readLock, writeLock } from "../utils/config.js";
+import type { LockFile } from "../utils/config.js";
 import { parseComponentRef } from "../utils/parse-ref.js";
 import { removeImportFromBarrel } from "../installers/barrel-manager.js";
 
-async function removeSingleComponent(installedKey: string, config: any, cwd: string) {
-  const installed = config.installed?.[installedKey];
-  if (!installed) return;
+async function removeSingleComponent(installedKey: string, lock: LockFile, config: any, cwd: string) {
+  const entry = lock[installedKey];
+  if (!entry) return;
 
   const deleted: string[] = [];
-  for (const filePath of installed.files) {
+  for (const filePath of entry.files) {
     try {
       await unlink(join(cwd, filePath));
       deleted.push(filePath);
@@ -53,23 +54,22 @@ async function removeSingleComponent(installedKey: string, config: any, cwd: str
     }
   }
 
-  delete config.installed![installedKey];
+  delete lock[installedKey];
 
   if (deleted.length > 0) {
     p.log.success(`Removed ${installedKey}:\n` + deleted.map((f) => `  ${pc.red("-")} ${f}`).join("\n"));
   }
 }
 
-async function offerOrphanRemoval(removedDeps: Set<string>, config: any, cwd: string) {
+async function offerOrphanRemoval(removedDeps: Set<string>, lock: LockFile, config: any, cwd: string) {
   if (removedDeps.size === 0) return;
 
   // Find orphaned dependencies — deps not needed by any remaining installed component
-  const remaining = Object.entries(config.installed ?? {});
+  const remaining = Object.entries(lock);
   const neededDeps = new Set<string>();
   for (const [, entry] of remaining) {
-    const deps = (entry as any).registryDependencies as string[] | undefined;
-    if (deps) {
-      for (const dep of deps) {
+    if (entry.registryDependencies) {
+      for (const dep of entry.registryDependencies) {
         neededDeps.add(dep);
       }
     }
@@ -77,7 +77,7 @@ async function offerOrphanRemoval(removedDeps: Set<string>, config: any, cwd: st
 
   // Also exclude "core" — never offer to remove it
   const orphans = [...removedDeps].filter(
-    (dep) => dep !== "core" && !neededDeps.has(dep) && config.installed?.[dep]
+    (dep) => dep !== "core" && !neededDeps.has(dep) && lock[dep]
   );
 
   if (orphans.length === 0) return;
@@ -87,7 +87,7 @@ async function offerOrphanRemoval(removedDeps: Set<string>, config: any, cwd: st
     options: orphans.map((dep) => ({
       value: dep,
       label: dep,
-      hint: `${config.installed![dep].files.length} file(s)`,
+      hint: `${lock[dep].files.length} file(s)`,
     })),
     initialValues: orphans, // all checked by default
   });
@@ -95,7 +95,7 @@ async function offerOrphanRemoval(removedDeps: Set<string>, config: any, cwd: st
   if (p.isCancel(selected)) return;
 
   for (const key of selected as string[]) {
-    await removeSingleComponent(key, config, cwd);
+    await removeSingleComponent(key, lock, config, cwd);
   }
 }
 
@@ -107,9 +107,10 @@ export async function removeCommand(componentName?: string) {
     process.exit(1);
   }
 
+  const lock = await readLock(cwd);
+
   if (!componentName) {
-    const installed = config.installed ?? {};
-    const installedKeys = Object.keys(installed);
+    const installedKeys = Object.keys(lock);
 
     if (installedKeys.length === 0) {
       p.log.warn("No components installed.");
@@ -121,7 +122,7 @@ export async function removeCommand(componentName?: string) {
       options: installedKeys.map((key) => ({
         value: key,
         label: key,
-        hint: `${installed[key].files.length} file(s)`,
+        hint: `${lock[key].files.length} file(s)`,
       })),
     });
 
@@ -136,15 +137,10 @@ export async function removeCommand(componentName?: string) {
       process.exit(0);
     }
 
-    // Remove each selected component
-    for (const key of selectedKeys) {
-      await removeSingleComponent(key, config, cwd);
-    }
-
-    // Compute orphaned dependencies across all removals
+    // Snapshot deps before removal (entries get deleted during removeSingleComponent)
     const allRemovedDeps = new Set<string>();
     for (const key of selectedKeys) {
-      const entry = installed[key];
+      const entry = lock[key];
       if (entry?.registryDependencies) {
         for (const dep of entry.registryDependencies) {
           allRemovedDeps.add(dep);
@@ -152,9 +148,14 @@ export async function removeCommand(componentName?: string) {
       }
     }
 
-    await offerOrphanRemoval(allRemovedDeps, config, cwd);
+    // Remove each selected component
+    for (const key of selectedKeys) {
+      await removeSingleComponent(key, lock, config, cwd);
+    }
 
-    await writeConfig(cwd, config);
+    await offerOrphanRemoval(allRemovedDeps, lock, config, cwd);
+
+    await writeLock(cwd, lock);
     p.outro(pc.green("Done!"));
     return;
   }
@@ -163,16 +164,16 @@ export async function removeCommand(componentName?: string) {
   const input = componentName === "routes" ? resolveRoutesAlias(config) : componentName;
   const ref = parseComponentRef(input);
 
-  // Look up in installed — @kitn uses plain name, third-party uses @namespace/name
+  // Look up in lock — @kitn uses plain name, third-party uses @namespace/name
   const installedKey = ref.namespace === "@kitn" ? ref.name : `${ref.namespace}/${ref.name}`;
-  const installed = config.installed?.[installedKey];
-  if (!installed) {
+  const entry = lock[installedKey];
+  if (!entry) {
     p.log.error(`Component '${ref.name}' is not installed.`);
     process.exit(1);
   }
 
   const shouldRemove = await p.confirm({
-    message: `Remove ${ref.name}? This will delete ${installed.files.length} file(s).`,
+    message: `Remove ${ref.name}? This will delete ${entry.files.length} file(s).`,
     initialValue: false,
   });
   if (p.isCancel(shouldRemove) || !shouldRemove) {
@@ -180,14 +181,13 @@ export async function removeCommand(componentName?: string) {
     process.exit(0);
   }
 
-  await removeSingleComponent(installedKey, config, cwd);
+  // Snapshot deps before removal
+  const removedDeps = new Set(entry.registryDependencies ?? []);
+
+  await removeSingleComponent(installedKey, lock, config, cwd);
 
   // Check for orphaned dependencies
-  const removedDeps = new Set(installed.registryDependencies ?? []);
-  await offerOrphanRemoval(removedDeps, config, cwd);
+  await offerOrphanRemoval(removedDeps, lock, config, cwd);
 
-  if (Object.keys(config.installed!).length === 0) {
-    delete config.installed;
-  }
-  await writeConfig(cwd, config);
+  await writeLock(cwd, lock);
 }

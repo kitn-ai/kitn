@@ -79,7 +79,7 @@ export type RegistryIndex = z.infer<typeof registryIndexSchema>;
 // Installed component tracking
 export const installedComponentSchema = z.object({
   registry: z.string().optional(),
-  type: componentType,
+  type: componentType.optional(),
   slot: z.string().optional(),
   version: z.string(),
   installedAt: z.string(),
@@ -108,9 +108,12 @@ export const configSchema = z.object({
     storage: z.string(),
   }),
   registries: z.record(z.string(), z.string()),
-  installed: z.record(z.string(), installedComponentSchema).optional(),
 });
 export type KitnConfig = z.infer<typeof configSchema>;
+
+// kitn.lock — installed component tracking (separate from config)
+export const lockSchema = z.record(z.string(), installedComponentSchema);
+export type LockFile = z.infer<typeof lockSchema>;
 
 // Map component type to alias key (excludes kitn:package which uses installDir)
 export const typeToAliasKey: Partial<Record<ComponentType, keyof KitnConfig["aliases"]>> = {

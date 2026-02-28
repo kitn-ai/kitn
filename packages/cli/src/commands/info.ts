@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { readConfig } from "../utils/config.js";
+import { readConfig, readLock } from "../utils/config.js";
 import { parseComponentRef } from "../utils/parse-ref.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
 import { typeToDir } from "../registry/schema.js";
@@ -124,7 +124,8 @@ export async function infoCommand(component: string) {
   }
 
   // Installed status
-  const installed = config.installed?.[item.name];
+  const lock = await readLock(cwd);
+  const installed = lock[item.name];
   if (installed) {
     console.log();
     console.log(

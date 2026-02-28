@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { join, dirname } from "path";
-import { readConfig, writeConfig, getInstallPath, resolveRoutesAlias } from "../utils/config.js";
+import { readConfig, writeConfig, getInstallPath, resolveRoutesAlias, readLock, writeLock } from "../utils/config.js";
 import { detectPackageManager } from "../utils/detect.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
 import { resolveDependencies } from "../registry/resolver.js";
@@ -39,6 +39,8 @@ export async function addCommand(components: string[], opts: AddOptions) {
     process.exit(1);
   }
 
+  const lock = await readLock(cwd);
+
   if (components.length === 0) {
     // Interactive browse mode — fetch index, group by type, multi-select
     const fetcher = new RegistryFetcher(config.registries);
@@ -64,7 +66,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
       process.exit(0);
     }
 
-    const installed = new Set(Object.keys(config.installed ?? {}));
+    const installed = new Set(Object.keys(lock));
 
     // Group by type, preserving order
     const typeLabels: Record<string, string> = {
@@ -317,8 +319,8 @@ export async function addCommand(components: string[], opts: AddOptions) {
   const slotReplacements = new Map<string, string>(); // oldName → newName
   for (const item of resolved) {
     if (!item.slot) continue;
-    const existing = Object.entries(config.installed ?? {}).find(
-      ([key, entry]) => key !== item.name && (entry as any).slot === item.slot
+    const existing = Object.entries(lock).find(
+      ([key, entry]) => key !== item.name && entry.slot === item.slot
     );
     if (!existing) continue;
 
@@ -345,7 +347,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
   if (slotReplacements.size > 0) {
     const baseDir = config.aliases.base ?? "src/ai";
     for (const [oldKey] of slotReplacements) {
-      const oldEntry = config.installed![oldKey];
+      const oldEntry = lock[oldKey];
       if (!oldEntry) continue;
 
       for (const filePath of oldEntry.files) {
@@ -385,7 +387,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
         }
       }
 
-      delete config.installed![oldKey];
+      delete lock[oldKey];
       p.log.info(`Replaced ${pc.dim(oldKey)} → ${pc.cyan(slotReplacements.get(oldKey)!)}`);
     }
   }
@@ -406,7 +408,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
     if (item.devDependencies) allDevDeps.push(...item.devDependencies);
 
     // Skip file processing for packages already installed with identical content
-    const existingInstall = (config.installed ?? {})[item.name];
+    const existingInstall = lock[item.name];
     if (existingInstall && item.type === "kitn:package") {
       const allContent = item.files.map((f) => f.content).join("\n");
       if (contentHash(allContent) === existingInstall.hash) {
@@ -462,12 +464,11 @@ export async function addCommand(components: string[], opts: AddOptions) {
         }
       }
 
-      // Track in installed
-      const installed = config.installed ?? {};
+      // Track in lock
       const allContent = item.files.map((f) => f.content).join("\n");
       const ref = refs.find((r) => r.name === item.name) ?? { namespace: "@kitn", name: item.name, version: undefined };
       const installedKey = ref.namespace === "@kitn" ? item.name : `${ref.namespace}/${item.name}`;
-      installed[installedKey] = {
+      lock[installedKey] = {
         registry: ref.namespace,
         type: item.type,
         ...(item.slot && { slot: item.slot }),
@@ -477,7 +478,6 @@ export async function addCommand(components: string[], opts: AddOptions) {
         hash: contentHash(allContent),
         registryDependencies: item.registryDependencies,
       };
-      config.installed = installed;
 
     } else {
       // Regular component install — single file, import rewriting
@@ -540,14 +540,13 @@ export async function addCommand(components: string[], opts: AddOptions) {
         }
       }
 
-      // Track in installed
-      const installed = config.installed ?? {};
+      // Track in lock
       const allContent = item.files.map((f) => {
         const fn = f.path.split("/").pop()!;
         return rewriteKitnImports(f.content, item.type, fn, config.aliases);
       }).join("\n");
       const installedKey = ns === "@kitn" ? item.name : `${ns}/${item.name}`;
-      installed[installedKey] = {
+      lock[installedKey] = {
         registry: ns,
         type: item.type,
         ...(item.slot && { slot: item.slot }),
@@ -560,7 +559,6 @@ export async function addCommand(components: string[], opts: AddOptions) {
         hash: contentHash(allContent),
         registryDependencies: item.registryDependencies,
       };
-      config.installed = installed;
     }
   }
 
@@ -616,6 +614,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
   }
 
   await writeConfig(cwd, config);
+  await writeLock(cwd, lock);
 
   const uniqueDeps = [...new Set(allDeps)];
   const uniqueDevDeps = [...new Set(allDevDeps)].filter((d) => !uniqueDeps.includes(d));
@@ -656,7 +655,7 @@ export async function addCommand(components: string[], opts: AddOptions) {
 
   // Show next-step hints for well-known packages
   const resolvedNames = new Set(resolved.map((r) => r.name));
-  const projectInstalled = new Set(Object.keys(config.installed ?? {}));
+  const projectInstalled = new Set(Object.keys(lock));
   const hints: string[] = [];
 
   const adapterName = resolveRoutesAlias(config);

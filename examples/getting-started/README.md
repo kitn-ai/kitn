@@ -34,7 +34,8 @@ src/
   tools/
     weather.ts          # Weather tool (auto-installed as a dependency)
   index.ts              # Hono server wiring everything together
-kitn.json               # kitn configuration tracking installed components
+kitn.json               # kitn configuration (runtime, aliases, registries)
+kitn.lock               # Installed component tracking (auto-managed)
 ```
 
 ## Usage

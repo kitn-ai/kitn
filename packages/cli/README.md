@@ -140,7 +140,7 @@ Outputs a unified diff for each file in the component. Shows "up to date" if the
 
 ### `kitn remove <component>`
 
-Remove an installed component. Deletes files and removes tracking from `kitn.json`.
+Remove an installed component. Deletes files and removes tracking from `kitn.lock`.
 
 ```bash
 kitn remove weather-agent
@@ -279,7 +279,8 @@ Created by `kitn init`. Controls where components are installed and which regist
 | `framework` | `hono` |
 | `aliases` | Directory paths for each component type |
 | `registries` | Named registries — each value is a URL string or an object with `url`, `homepage`, `description` |
-| `installed` | Auto-managed tracking of installed components (don't edit manually) |
+
+> Installed component tracking (file paths, content hashes, versions) is stored separately in `kitn.lock`. This file is auto-managed — don't edit it manually.
 
 ### Registry entries
 
@@ -313,7 +314,7 @@ The CLI automatically detects your package manager by checking for lockfiles in 
 
 Components are **source code**, not packages. `kitn add` copies TypeScript files directly into your project. You own the code and can modify it freely.
 
-The CLI tracks what it installed in `kitn.json` under `installed`, storing file paths and content hashes. This enables `kitn diff` to detect local changes and `kitn update` to apply registry updates.
+The CLI tracks what it installed in `kitn.lock`, storing file paths and content hashes. This enables `kitn diff` to detect local changes and `kitn update` to apply registry updates.
 
 ### Hosting your own registry
 

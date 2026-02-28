@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { readConfig } from "../utils/config.js";
+import { readConfig, readLock } from "../utils/config.js";
 import { resolveTypeAlias } from "../utils/type-aliases.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
 import type { RegistryIndex } from "../registry/schema.js";
@@ -70,7 +70,7 @@ export async function listCommand(typeFilter: string | undefined, opts: ListOpti
     p.log.warn(`${pc.yellow("⚠")} Failed to fetch ${e}`);
   }
 
-  const installed = config.installed ?? {};
+  const installed = await readLock(cwd);
   const typeGroups = new Map<string, IndexItemWithNamespace[]>();
 
   for (const item of allItems) {

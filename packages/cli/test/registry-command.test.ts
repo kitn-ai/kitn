@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, afterEach, mock } from "bun:test";
 import { mkdtemp, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import { writeConfig, readConfig, type KitnConfig } from "../src/utils/config.js";
+import { writeConfig, readConfig, writeLock, type KitnConfig } from "../src/utils/config.js";
 import { registryAddCommand, registryRemoveCommand, registryListCommand } from "../src/commands/registry.js";
 import { RegistryFetcher } from "../src/registry/fetcher.js";
 
@@ -144,18 +144,18 @@ describe("registryRemoveCommand", () => {
         "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
         "@myteam": "https://myteam.dev/r/{type}/{name}.json",
       },
-      installed: {
-        "@myteam/custom-agent": {
-          registry: "@myteam",
-          type: "kitn:agent",
-          version: "1.0.0",
-          installedAt: new Date().toISOString(),
-          files: ["src/ai/agents/custom-agent.ts"],
-          hash: "abc123",
-        },
-      },
     });
     await writeConfig(dir, config);
+    await writeLock(dir, {
+      "@myteam/custom-agent": {
+        registry: "@myteam",
+        type: "kitn:agent",
+        version: "1.0.0",
+        installedAt: new Date().toISOString(),
+        files: ["src/ai/agents/custom-agent.ts"],
+        hash: "abc123",
+      },
+    });
     const result = await registryRemoveCommand("@myteam", { cwd: dir });
     expect(result.affectedComponents).toEqual(["@myteam/custom-agent"]);
   });

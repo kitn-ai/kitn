@@ -1,5 +1,5 @@
 import { addCommand } from "./add.js";
-import { readConfig } from "../utils/config.js";
+import { readConfig, readLock } from "../utils/config.js";
 import * as p from "@clack/prompts";
 
 export async function updateCommand(components: string[]) {
@@ -12,13 +12,13 @@ export async function updateCommand(components: string[]) {
       process.exit(1);
     }
 
-    const installed = config.installed;
-    if (!installed || Object.keys(installed).length === 0) {
+    const lock = await readLock(cwd);
+    if (Object.keys(lock).length === 0) {
       p.log.info("No installed components to update.");
       return;
     }
 
-    components = Object.keys(installed);
+    components = Object.keys(lock);
   }
 
   await addCommand(components, { overwrite: true });

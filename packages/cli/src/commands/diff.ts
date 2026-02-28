@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { join } from "path";
-import { readConfig, resolveRoutesAlias } from "../utils/config.js";
+import { readConfig, resolveRoutesAlias, readLock } from "../utils/config.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
 import { readExistingFile, generateDiff } from "../installers/file-writer.js";
 import { parseComponentRef } from "../utils/parse-ref.js";
@@ -19,9 +19,10 @@ export async function diffCommand(componentName: string) {
   const input = componentName === "routes" ? resolveRoutesAlias(config) : componentName;
   const ref = parseComponentRef(input);
 
-  // Look up in installed — @kitn uses plain name, third-party uses @namespace/name
+  // Look up in lock — @kitn uses plain name, third-party uses @namespace/name
+  const lock = await readLock(cwd);
   const installedKey = ref.namespace === "@kitn" ? ref.name : `${ref.namespace}/${ref.name}`;
-  const installed = config.installed?.[installedKey];
+  const installed = lock[installedKey];
   if (!installed) {
     p.log.error(`Component '${ref.name}' is not installed.`);
     process.exit(1);

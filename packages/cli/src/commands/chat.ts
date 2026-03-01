@@ -202,6 +202,8 @@ async function executeStep(step: PlanStep): Promise<void> {
     }
     case "create": {
       const { createComponentInProject } = await import("./create.js");
+      // overwrite: true here because the file-exists check already happened
+      // in the plan execution loop before the spinner started
       await createComponentInProject(step.type!, step.name!, { overwrite: true });
       break;
     }
@@ -441,6 +443,40 @@ export async function handleCreatePlan(
   const results: string[] = [];
   const s = p.spinner();
   for (const step of selectedSteps) {
+    // For create steps, check if the file already exists BEFORE starting the spinner
+    if (step.action === "create" && step.type && step.name) {
+      const { componentFileExists } = await import("./create.js");
+      const existingPath = await componentFileExists(step.type, step.name);
+      if (existingPath) {
+        const action = await p.select({
+          message: `${pc.yellow(step.name + (step.type === "skill" ? ".md" : ".ts"))} already exists. What would you like to do?`,
+          options: [
+            { value: "rename", label: "Use a different name" },
+            { value: "overwrite", label: "Overwrite the existing file" },
+            { value: "skip", label: "Skip this step" },
+          ],
+        });
+        if (p.isCancel(action) || action === "skip") {
+          p.log.info(`Skipped: ${formatStepLabel(step)}`);
+          results.push(`Skipped: create ${step.name} — file already exists`);
+          continue;
+        }
+        if (action === "rename") {
+          const newName = await p.text({
+            message: `New name for the ${step.type}:`,
+            initialValue: `${step.name}-2`,
+          });
+          if (p.isCancel(newName) || !newName) {
+            p.log.info(`Skipped: ${formatStepLabel(step)}`);
+            results.push(`Skipped: create ${step.name} — no name provided`);
+            continue;
+          }
+          step.name = newName;
+        }
+        // action === "overwrite" or "rename" — proceed with create
+      }
+    }
+
     s.start(`Running: ${formatStepLabel(step)}...`);
     try {
       await executeStep(step);

@@ -11,6 +11,28 @@ import { createBarrelFile, addImportToBarrel } from "../installers/barrel-manage
 const VALID_TYPES = ["agent", "tool", "skill", "storage", "cron"] as const;
 type ComponentType = (typeof VALID_TYPES)[number];
 
+/**
+ * Check if a component file already exists at its expected path.
+ * Returns the full file path if it exists, null otherwise.
+ */
+export async function componentFileExists(
+  type: string,
+  name: string,
+  opts?: { cwd?: string }
+): Promise<string | null> {
+  if (!VALID_TYPES.includes(type as ComponentType)) return null;
+  const cwd = opts?.cwd ?? process.cwd();
+  const config = await readConfig(cwd);
+  if (!config) return null;
+
+  const validType = type as ComponentType;
+  const kitnType = typeToKitnType[validType];
+  const fileName = validType === "skill" ? `${name}.md` : `${name}.ts`;
+  const filePath = join(cwd, getInstallPath(config, kitnType, fileName));
+
+  return existsSync(filePath) ? filePath : null;
+}
+
 function generateAgentSource(name: string): string {
   const camel = toCamelCase(name);
   return `import { registerAgent } from "@kitn/core";

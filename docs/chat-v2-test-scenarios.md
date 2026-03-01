@@ -189,30 +189,103 @@ These queries don't match keywords but the LLM classifier correctly handles them
 | 99 | `kitn create agent sentiment-agent` when file exists | Prompt: "File already exists — overwrite?" |
 | 100 | User confirms overwrite | File is overwritten with fresh scaffold |
 | 101 | User declines overwrite | Skipped — no changes, no crash |
-| 102 | Chat flow creates component that already exists | Auto-overwrites (user already confirmed plan) |
+| 102 | Chat flow creates component that already exists | Prompt with 3 options: rename (pre-filled), overwrite, skip |
+| 103 | User selects "Use a different name" | Text input with `sentiment-agent-2` pre-filled |
+| 104 | User selects "Overwrite" | Existing file is overwritten |
+| 105 | User selects "Skip" | Step skipped, other plan steps continue |
+
+### 16. Cross-Model: "Create a sentiment agent" (when file exists)
+
+| # | Model | Initial Response | Expected CLI Behavior |
+|---|-------|-----------------|----------------------|
+| 106 | DeepSeek | `createPlan` immediately (name: sentiment-agent) | CLI catches exists, prompts rename/overwrite/skip |
+| 107 | GPT-4o-mini | `askUser` for clarification first | After clarification, same file-exists handling |
+| 108 | GLM-4.7 | `askUser` with 3 detailed questions | After clarification, same file-exists handling |
+
+## Model Evaluation Results
+
+### Pass Rates (80+ scenarios tested)
+
+| Model | OpenRouter ID | Pass Rate | Failures |
+|-------|---------------|-----------|----------|
+| DeepSeek Chat v3 | `deepseek/deepseek-chat-v3-0324` | 17/20 (85%) | 3 guard rejections (since fixed) |
+| GPT-4o-mini | `openai/gpt-4o-mini` | 16/20 (80%) | 3 failures + 1 partial |
+| GLM-4.7 | `z-ai/glm-4.7` | 19/20 (95%) | 1 guard rejection (since fixed) |
+
+### Head-to-Head Comparison
+
+| Criteria | DeepSeek | GPT-4o-mini | GLM-4.7 |
+|----------|----------|-------------|---------|
+| Pass rate | 85% | 80% | 95% |
+| Tool call reliability | High | **Low** (duplicates) | High |
+| Dependency resolution | Best | Inconsistent | Good |
+| askUser quality | Good (options) | Basic (free-text) | Best (detailed) |
+| Link/unlink handling | Correct | **Broken** | Correct |
+| Token cost | Medium (~3.5k in / ~90 out) | Lowest (~2.8k in / ~43 out) | Highest (~3.5k in / ~247 out) |
+| Latency | Medium | Fastest | Slowest |
+
+### DeepSeek (`deepseek/deepseek-chat-v3-0324`) — Recommended
+
+**Strengths:**
+- Most reliable at using `askUser` for vague queries before acting
+- Best at dependency resolution — auto-includes `registryDependencies` (e.g. adds `hackernews-tool` when you ask for `hackernews-agent`)
+- Correctly handles all 7 action types (add, create, remove, update, link, unlink, registry-add)
+- Clean tool call formatting — always one tool call per response
+- Uses `updateEnv` correctly for API key configuration
+
+**Weaknesses:**
+- Occasionally generates `remove` plans for non-installed components without checking
+- One case where it called `listFiles` instead of using the provided `metadata.installed` array
+- Goes straight to `createPlan` on imperative commands (less cautious than other models)
+
+### GPT-4o-mini (`openai/gpt-4o-mini`) — Not Recommended
+
+**Strengths:**
+- Lowest token cost
+- Fastest response times
+- Good at asking clarifying questions
+
+**Weaknesses:**
+- Fires duplicate tool calls — sometimes 2-3 identical `createPlan` or `askUser` calls in a single response (model-level behavior, can't fully fix with prompting)
+- Refused to execute a `link` action, inventing a semantic rule that "tools don't relate" instead of using the action
+- Inconsistent dependency resolution — missed `movies-tool` for `knowledge-agent` but got `hackernews-tool` right
+- Used `question` type (free-text) instead of `option` type for askUser — less guided UX
+
+### GLM-4.7 (`z-ai/glm-4.7`) — Strong Alternative
+
+**Strengths:**
+- Highest pass rate when model ID is correct (95%)
+- Most thorough `askUser` responses — asks 2-3 structured questions with detailed multiple-choice options
+- Best UX quality for clarification (asks about approach, use case, AND output format)
+
+**Weaknesses:**
+- Highest token usage — most verbose responses
+- Slower response times (more output tokens)
+- Less battle-tested on OpenRouter (newer model)
+
+### Recommendation
+
+**DeepSeek is the best all-around choice.** It has the best balance of reliability, correct tool usage, and cost. It handles all action types correctly, resolves dependencies consistently, and never fires duplicate tool calls.
+
+GLM-4.7 has the highest raw pass rate and produces the best UX for clarification questions, but is more expensive per request and slower. Good alternative if UX polish matters more than cost.
+
+GPT-4o-mini is the cheapest and fastest but has the most issues — duplicate tool calls and the broken `link` action make it unreliable for production use.
 
 ## Cross-Model Consistency Findings
 
-From testing the same scenarios across all 3 models:
+From testing the same 10 edge-case scenarios across all 3 models:
+
+| Metric | Result |
+|--------|--------|
+| Fully consistent (same behavior) | 3/10 (30%) |
+| Partially consistent | 3/10 (30%) |
+| Inconsistent (different behavior) | 4/10 (40%) |
 
 | Behavior | Consistency |
 |----------|-------------|
-| Guard pass/reject | High — keyword-based, model-independent |
+| Guard pass/reject | High — keyword + LLM classifier, model-independent |
 | askUser for vague queries | High — DeepSeek is most consistent |
 | createPlan structure | Medium — all produce valid plans but differ in step count |
-| Dependency resolution | Medium — some models miss `registryDependencies` |
+| Dependency resolution | Medium — DeepSeek best, GPT-4o-mini inconsistent |
 | Tool call count | Low — GPT-4o-mini sometimes fires duplicate tool calls |
-
-## Known Model-Specific Issues
-
-### GPT-4o-mini
-- Sometimes fires multiple `createPlan` or `askUser` calls in a single response
-- Addressed by "Call createPlan exactly once" in system prompt
-
-### DeepSeek
-- Most reliable at using `askUser` for clarification before planning
-- Occasionally generates `remove` plans for non-installed components
-
-### GLM-4.7
-- Model ID on OpenRouter is `z-ai/glm-4.7` (not `zhipu/glm-4-plus`)
-- Behavior comparable to DeepSeek when model ID is correct
+| askUser format | Low — DeepSeek/GLM use options, GPT-4o-mini uses free-text |

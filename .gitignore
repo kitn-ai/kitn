@@ -64,6 +64,9 @@ test-projects/
 # Worktrees
 .worktrees/
 
+# Local kitn data (conversations, exports)
+.kitn/
+
 # Misc
 .cache/
 .parcel-cache/

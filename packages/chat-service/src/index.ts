@@ -6,6 +6,7 @@ import { createMemoryStorage } from "@kitnai/core";
 import { createAIPlugin } from "@kitnai/hono-adapter";
 import { registerAssistantAgent, assistantGuard, setGuardModel } from "./agents/assistant.js";
 import { buildSystemPrompt } from "./prompts/system.js";
+import { buildCompactionPrompt } from "./prompts/compact.js";
 import type { PromptContext } from "./prompts/types.js";
 import { createPlanTool } from "./tools/create-plan.js";
 import { askUserTool, writeFileTool, readFileTool, listFilesTool, updateEnvTool } from "./tools/tools.js";
@@ -46,6 +47,58 @@ const app = new Hono();
 app.use("/*", cors());
 
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+// Conversation compaction endpoint
+app.post("/api/chat/compact", async (c) => {
+  const body = await c.req.json();
+  const { messages, model: requestModel } = body;
+
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return c.json({ error: "No messages provided." }, 400);
+  }
+
+  // Format messages into readable text for the compaction prompt
+  const formattedLines: string[] = [];
+  for (const m of messages) {
+    if (m.role === "user") {
+      formattedLines.push(`User: ${m.content ?? ""}`);
+    } else if (m.role === "assistant") {
+      formattedLines.push(`Assistant: ${m.content ?? ""}`);
+      if (m.toolCalls?.length) {
+        for (const tc of m.toolCalls) {
+          formattedLines.push(`  [Tool call: ${tc.name}]`);
+        }
+      }
+    } else if (m.role === "tool") {
+      if (m.toolResults?.length) {
+        for (const tr of m.toolResults) {
+          const resultPreview = typeof tr.result === "string" ? tr.result.slice(0, 500) : JSON.stringify(tr.result).slice(0, 500);
+          formattedLines.push(`  [Tool result (${tr.toolName}): ${resultPreview}]`);
+        }
+      }
+    }
+  }
+
+  try {
+    const modelId = requestModel ?? DEFAULT_MODEL;
+    const result = await generateText({
+      model: getModel(modelId),
+      system: buildCompactionPrompt(),
+      messages: [{ role: "user", content: formattedLines.join("\n") }],
+    });
+
+    return c.json({
+      summary: result.text ?? "",
+      usage: {
+        inputTokens: result.usage?.inputTokens ?? 0,
+        outputTokens: result.usage?.outputTokens ?? 0,
+      },
+    });
+  } catch (err: any) {
+    console.error("[/api/chat/compact] Error:", err);
+    return c.json({ error: err.message ?? "Compaction failed" }, 500);
+  }
+});
 
 // Custom /api/chat endpoint — registered BEFORE plugin router so it takes priority
 app.post("/api/chat", async (c) => {

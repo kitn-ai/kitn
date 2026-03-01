@@ -127,6 +127,7 @@ export async function resolveServiceUrl(
   if (process.env.KITN_CHAT_URL) return process.env.KITN_CHAT_URL;
 
   const userConfig = await readUserConfig();
+  if (userConfig["service-url"]) return userConfig["service-url"];
   if (userConfig["chat-url"]) return userConfig["chat-url"];
 
   if (chatServiceConfig?.url) return chatServiceConfig.url;
@@ -490,7 +491,7 @@ export async function callChatService(
   });
 
   if (!res.ok) {
-    throw new Error(`Chat service returned ${res.status}: ${res.statusText}`);
+    throw new Error(`Service returned ${res.status}: ${res.statusText}`);
   }
   return await res.json() as ChatServiceResponse;
 }
@@ -500,4 +501,84 @@ export function looksLikePlan(text: string): boolean {
   const hasActionVerbs = /\b(add|create|install|remove|link|scaffold|set up)\b/i.test(text);
   const hasComponentRefs = /\b(agent|tool|skill|storage|cron)\b/i.test(text);
   return hasNumberedSteps && hasActionVerbs && hasComponentRefs;
+}
+
+// ---------------------------------------------------------------------------
+// Token estimation & compaction
+// ---------------------------------------------------------------------------
+
+const CHARS_PER_TOKEN = 4;
+const COMPACTION_TOKEN_LIMIT = 80_000;
+const COMPACTION_PRESERVE_TOKENS = 8_000;
+
+export function estimateChatMessageTokens(messages: ChatMessage[]): number {
+  let total = 0;
+  for (const msg of messages) {
+    if (msg.content) total += msg.content.length;
+    if (msg.toolCalls) {
+      for (const tc of msg.toolCalls) {
+        total += tc.name.length;
+        total += JSON.stringify(tc.input ?? {}).length;
+      }
+    }
+    if (msg.toolResults) {
+      for (const tr of msg.toolResults) {
+        total += tr.toolName.length;
+        total += tr.result.length;
+      }
+    }
+  }
+  return Math.ceil(total / CHARS_PER_TOKEN);
+}
+
+export function checkCompaction(
+  messages: ChatMessage[],
+): { toSummarize: ChatMessage[]; toPreserve: ChatMessage[] } | null {
+  const totalTokens = estimateChatMessageTokens(messages);
+  if (totalTokens < COMPACTION_TOKEN_LIMIT) return null;
+  if (messages.length <= 1) return null;
+
+  // Walk backwards from newest to oldest, accumulating tokens for the preserve set
+  let preserveTokens = 0;
+  let splitIndex = messages.length;
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msgTokens = estimateChatMessageTokens([messages[i]]);
+    if (preserveTokens + msgTokens > COMPACTION_PRESERVE_TOKENS) break;
+    preserveTokens += msgTokens;
+    splitIndex = i;
+  }
+
+  // Ensure we preserve at least the last message
+  if (splitIndex === messages.length) {
+    splitIndex = messages.length - 1;
+  }
+
+  // Ensure we have something to summarize
+  if (splitIndex === 0) return null;
+
+  return {
+    toSummarize: messages.slice(0, splitIndex),
+    toPreserve: messages.slice(splitIndex),
+  };
+}
+
+export async function callCompactService(
+  serviceUrl: string,
+  messages: ChatMessage[],
+  model?: string,
+): Promise<{ summary: string; usage: { inputTokens: number; outputTokens: number } }> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (process.env.KITN_API_KEY) headers["Authorization"] = `Bearer ${process.env.KITN_API_KEY}`;
+
+  const res = await fetch(`${serviceUrl}/api/chat/compact`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ messages, ...(model ? { model } : {}) }),
+  });
+
+  if (!res.ok) {
+    throw new Error(`Compact service returned ${res.status}: ${res.statusText}`);
+  }
+  return await res.json() as { summary: string; usage: { inputTokens: number; outputTokens: number } };
 }

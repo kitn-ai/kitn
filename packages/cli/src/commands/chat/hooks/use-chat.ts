@@ -3,12 +3,15 @@ import type { ChatMessage, ToolCall, ToolResult, UpdateEnvInput } from "../../ch
 import type { DisplayMessage } from "../components/message.js";
 import {
   callChatService,
+  callCompactService,
+  checkCompaction,
   handleNonInteractiveTool,
   handleUpdateEnvDirect,
   hasToolCalls,
   looksLikePlan,
   type ToolCallContext,
 } from "../../chat-engine.js";
+import { appendMessage, appendCompaction } from "../storage.js";
 
 export type ChatState = "idle" | "loading" | "pending-tool" | "complete";
 
@@ -29,6 +32,8 @@ interface UseChatOptions {
   availableComponents: string[];
   installedComponents: string[];
   initialMessage?: string;
+  conversationId: string;
+  existingMessages?: ChatMessage[];
 }
 
 let nextId = 0;
@@ -37,14 +42,17 @@ function makeId() {
 }
 
 export function useChat(options: UseChatOptions) {
-  const { serviceUrl, model, metadata, cwd, availableComponents, installedComponents, initialMessage } = options;
+  const {
+    serviceUrl, model, metadata, cwd, availableComponents, installedComponents,
+    initialMessage, conversationId, existingMessages,
+  } = options;
 
   const [state, setState] = useState<ChatState>(initialMessage ? "loading" : "idle");
   const [displayMessages, setDisplayMessages] = useState<DisplayMessage[]>([]);
   const [pendingToolCall, setPendingToolCall] = useState<PendingToolCall | null>(null);
   const [totalTokens, setTotalTokens] = useState(0);
 
-  const messagesRef = useRef<ChatMessage[]>([]);
+  const messagesRef = useRef<ChatMessage[]>(existingMessages ? [...existingMessages] : []);
   const sessionStartRef = useRef(Date.now());
   const retriedRef = useRef(false);
 
@@ -54,8 +62,38 @@ export function useChat(options: UseChatOptions) {
     setDisplayMessages((prev) => [...prev, { id: makeId(), role, content }]);
   }, []);
 
+  const persistMessage = useCallback(async (msg: ChatMessage) => {
+    try {
+      await appendMessage(cwd, conversationId, msg);
+    } catch {
+      // Silent — don't break the chat if storage fails
+    }
+  }, [cwd, conversationId]);
+
+  const runCompaction = useCallback(async (): Promise<boolean> => {
+    const result = checkCompaction(messagesRef.current);
+    if (!result) return false;
+
+    addDisplayMessage("system", "Compacting conversation...");
+    try {
+      const { summary } = await callCompactService(serviceUrl, result.toSummarize, model);
+      const summaryMsg: ChatMessage = { role: "user", content: summary };
+      messagesRef.current = [summaryMsg, ...result.toPreserve];
+
+      await appendCompaction(cwd, conversationId, summary, result.toSummarize.length, result.toPreserve);
+      addDisplayMessage("system", `Compacted ${result.toSummarize.length} messages.`);
+      return true;
+    } catch (err: any) {
+      addDisplayMessage("system", `Compaction failed: ${err.message}`);
+      return false;
+    }
+  }, [serviceUrl, model, cwd, conversationId, addDisplayMessage]);
+
   const sendToService = useCallback(async () => {
     setState("loading");
+
+    // Check if compaction is needed before calling service
+    await runCompaction();
 
     try {
       const response = await callChatService(serviceUrl, messagesRef.current, metadata, model);
@@ -74,19 +112,23 @@ export function useChat(options: UseChatOptions) {
         if (response.message.content) {
           addDisplayMessage("assistant", response.message.content);
         }
-        messagesRef.current.push({
+        const assistantMsg: ChatMessage = {
           role: "assistant",
           content: response.message.content,
-        });
+        };
+        messagesRef.current.push(assistantMsg);
+        await persistMessage(assistantMsg);
 
         // Retry once if the model described a plan in prose
         if (response.message.content && looksLikePlan(response.message.content) && !retriedRef.current) {
           retriedRef.current = true;
           addDisplayMessage("system", "Requesting structured plan...");
-          messagesRef.current.push({
+          const retryMsg: ChatMessage = {
             role: "user",
             content: "You described a plan in text instead of calling createPlan. Please call the createPlan tool with the steps you just described.",
-          });
+          };
+          messagesRef.current.push(retryMsg);
+          await persistMessage(retryMsg);
           await sendToService();
           return;
         }
@@ -101,18 +143,20 @@ export function useChat(options: UseChatOptions) {
         addDisplayMessage("assistant", response.message.content);
       }
 
-      messagesRef.current.push({
+      const assistantMsg: ChatMessage = {
         role: "assistant",
         content: response.message.content,
         toolCalls: response.message.toolCalls,
-      });
+      };
+      messagesRef.current.push(assistantMsg);
+      await persistMessage(assistantMsg);
 
       await processToolCalls(response.message.toolCalls!, []);
     } catch (err: any) {
-      addDisplayMessage("system", `Error: ${err.message ?? "Could not reach chat service"}`);
+      addDisplayMessage("system", `Error: ${err.message ?? "Could not reach service"}`);
       setState("idle");
     }
-  }, [serviceUrl, metadata, model]);
+  }, [serviceUrl, metadata, model, runCompaction, persistMessage]);
 
   const processToolCalls = useCallback(async (calls: ToolCall[], accumulatedResults: ToolResult[]) => {
     const results = [...accumulatedResults];
@@ -147,9 +191,11 @@ export function useChat(options: UseChatOptions) {
     }
 
     // All tool calls processed — send results back to service
-    messagesRef.current.push({ role: "tool", toolResults: results });
+    const toolMsg: ChatMessage = { role: "tool", toolResults: results };
+    messagesRef.current.push(toolMsg);
+    await persistMessage(toolMsg);
     await sendToService();
-  }, [toolCallCtx, addDisplayMessage, sendToService]);
+  }, [toolCallCtx, addDisplayMessage, sendToService, persistMessage]);
 
   const resolveToolCall = useCallback(async (result: string) => {
     if (!pendingToolCall) return;
@@ -174,17 +220,51 @@ export function useChat(options: UseChatOptions) {
     if (remainingCalls.length > 0) {
       await processToolCalls(remainingCalls, results);
     } else {
-      messagesRef.current.push({ role: "tool", toolResults: results });
+      const toolMsg: ChatMessage = { role: "tool", toolResults: results };
+      messagesRef.current.push(toolMsg);
+      await persistMessage(toolMsg);
       await sendToService();
     }
-  }, [pendingToolCall, cwd, addDisplayMessage, processToolCalls, sendToService]);
+  }, [pendingToolCall, cwd, addDisplayMessage, processToolCalls, sendToService, persistMessage]);
 
   const sendMessage = useCallback(async (text: string) => {
     retriedRef.current = false;
     addDisplayMessage("user", text);
-    messagesRef.current.push({ role: "user", content: text });
+    const userMsg: ChatMessage = { role: "user", content: text };
+    messagesRef.current.push(userMsg);
+    await persistMessage(userMsg);
     await sendToService();
-  }, [addDisplayMessage, sendToService]);
+  }, [addDisplayMessage, sendToService, persistMessage]);
+
+  const compactNow = useCallback(async () => {
+    // Force compaction regardless of threshold
+    const { toSummarize, toPreserve } = checkCompaction(messagesRef.current) ?? {
+      toSummarize: messagesRef.current.slice(0, -2),
+      toPreserve: messagesRef.current.slice(-2),
+    };
+
+    if (toSummarize.length === 0) {
+      addDisplayMessage("system", "Not enough messages to compact.");
+      return;
+    }
+
+    addDisplayMessage("system", "Compacting conversation...");
+    try {
+      const { summary } = await callCompactService(serviceUrl, toSummarize, model);
+      const summaryMsg: ChatMessage = { role: "user", content: summary };
+      messagesRef.current = [summaryMsg, ...toPreserve];
+
+      await appendCompaction(cwd, conversationId, summary, toSummarize.length, toPreserve);
+      addDisplayMessage("system", `Compacted ${toSummarize.length} messages.`);
+    } catch (err: any) {
+      addDisplayMessage("system", `Compaction failed: ${err.message}`);
+    }
+  }, [serviceUrl, model, cwd, conversationId, addDisplayMessage]);
+
+  const clearMessages = useCallback(() => {
+    messagesRef.current = [];
+    setDisplayMessages([]);
+  }, []);
 
   // Auto-send initial message
   const initialSentRef = useRef(false);
@@ -202,5 +282,8 @@ export function useChat(options: UseChatOptions) {
     sessionStart: sessionStartRef.current,
     sendMessage,
     resolveToolCall,
+    compactNow,
+    clearMessages,
+    messagesRef,
   };
 }

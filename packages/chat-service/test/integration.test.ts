@@ -128,4 +128,48 @@ describe.skipIf(!HAS_API_KEY)("chat service integration", () => {
     const data = await res.json();
     expect(data.status).toBe("ok");
   });
+
+  test("/api/chat/compact returns summary for conversation", async () => {
+    const res = await fetch(`${SERVICE_URL}/api/chat/compact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [
+          { role: "user", content: "I want to add a weather agent to my project" },
+          { role: "assistant", content: "I'll help you add a weather agent. Let me create a plan." },
+          { role: "user", content: "Yes, and also link it to the supervisor" },
+          { role: "assistant", content: "Done! The weather agent and tool are installed and linked." },
+        ],
+      }),
+    });
+
+    expect(res.ok).toBe(true);
+    const data = await res.json();
+    expect(data.summary).toBeDefined();
+    expect(typeof data.summary).toBe("string");
+    expect(data.summary.length).toBeGreaterThan(10);
+    expect(data.usage).toBeDefined();
+    expect(typeof data.usage.inputTokens).toBe("number");
+    expect(typeof data.usage.outputTokens).toBe("number");
+  }, TIMEOUT);
+
+  test("/api/chat/compact rejects empty messages", async () => {
+    const res = await fetch(`${SERVICE_URL}/api/chat/compact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: [] }),
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  test("/api/chat/compact rejects missing messages", async () => {
+    const res = await fetch(`${SERVICE_URL}/api/chat/compact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+
+    expect(res.status).toBe(400);
+  });
 });

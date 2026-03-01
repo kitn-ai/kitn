@@ -1,0 +1,13 @@
+{
+  "name": "email-agent",
+  "type": "kitn:agent",
+  "description": "Email communication agent — compose, format, and send emails using the email tool",
+  "dependencies": ["ai"],
+  "registryDependencies": ["core", "email-tool"],
+  "files": ["email-agent.ts"],
+  "docs": "Requires the email-tool component (which needs RESEND_API_KEY). This agent drafts and sends emails based on natural language instructions.",
+  "categories": ["communication", "email"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

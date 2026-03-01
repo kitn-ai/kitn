@@ -1,0 +1,13 @@
+{
+  "name": "research-agent",
+  "type": "kitn:agent",
+  "description": "Deep research agent — searches the web, fetches pages, and synthesizes findings with citations",
+  "dependencies": ["ai"],
+  "registryDependencies": ["core", "web-search-tool", "web-fetch-tool"],
+  "files": ["research-agent.ts"],
+  "docs": "Requires web-search-tool (needs BRAVE_API_KEY) and web-fetch-tool. Performs multi-step research with source citations.",
+  "categories": ["research", "web", "analysis"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

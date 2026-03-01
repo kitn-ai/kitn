@@ -1,0 +1,13 @@
+{
+  "name": "rag-agent",
+  "type": "kitn:agent",
+  "description": "Retrieval-augmented generation agent — answers questions using a vector store for document retrieval",
+  "dependencies": ["ai"],
+  "registryDependencies": ["core"],
+  "files": ["rag-agent.ts"],
+  "docs": "A RAG agent shell that uses memory context for retrieval. Wire it to a vector search tool (like cloudflare-vectorize-tool) for full RAG capabilities. Without a vector tool, it uses kitn's built-in memory store for context.",
+  "categories": ["rag", "retrieval", "knowledge-base"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

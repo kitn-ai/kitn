@@ -1,0 +1,13 @@
+{
+  "name": "daily-standup",
+  "type": "kitn:skill",
+  "description": "Formats standup updates into done, doing, blocked — clear and consistent daily reports",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill for daily standup formatting. Phase: response.",
+  "categories": ["productivity", "standup", "agile", "status"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "email-drafter",
+  "type": "kitn:skill",
+  "description": "Drafts professional emails matching the context, relationship, and purpose",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when drafting emails. Phase: response.",
+  "categories": ["productivity", "email", "communication"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

@@ -95,6 +95,9 @@ export { withResilience, isRetryableError } from "./utils/resilience.js";
 export { compactConversation, needsCompaction, COMPACTION_METADATA_KEY } from "./utils/compaction.js";
 export type { CompactionResult } from "./utils/compaction.js";
 
+// ── Token estimation ──
+export { estimateTokens, estimateMessageTokens } from "./utils/token-estimate.js";
+
 // ── Conversation helpers ──
 export { loadConversationWithCompaction } from "./utils/conversation-helpers.js";
 

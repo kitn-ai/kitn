@@ -1,0 +1,13 @@
+{
+  "name": "root-cause",
+  "type": "kitn:skill",
+  "description": "Applies 5-whys and fishbone methodology to trace problems to their root causes",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when diagnosing problems or investigating failures. Phase: response.",
+  "categories": ["analysis", "problem-solving", "debugging"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

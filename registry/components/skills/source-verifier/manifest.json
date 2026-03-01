@@ -1,0 +1,13 @@
+{
+  "name": "source-verifier",
+  "type": "kitn:skill",
+  "description": "Flags unverified claims, adds confidence levels, and suggests verification steps",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when accuracy and source verification are important. Complements the fact-check skill with verification methodology. Phase: query.",
+  "categories": ["analysis", "verification", "accuracy"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

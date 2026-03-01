@@ -80,7 +80,7 @@ describe("POST /api/chat", () => {
           { role: "assistant", content: "I can help with that.", toolCalls: [
             { id: "1", name: "askUser", input: { items: [{ type: "option", text: "Which API?", choices: ["A", "B"] }] } }
           ]},
-          { role: "tool", toolResults: [{ toolCallId: "1", result: "User selected: A" }] },
+          { role: "tool", toolResults: [{ toolCallId: "1", toolName: "askUser", result: "User selected: A" }] },
         ],
         metadata: {
           registryIndex: [

@@ -76,16 +76,27 @@ function buildInstalledSection(ctx: PromptContext): string {
 }
 
 function buildToolInstructionsSection(): string {
-  return `## Tool Usage Instructions
+  return `## Tool Usage Instructions — MANDATORY
 
-You have the following tools available. Use them as described:
+You MUST use tools to interact with the user and perform actions. NEVER respond with plain text when a tool call is appropriate. Plain text responses should ONLY be used for brief explanations between tool calls, never as your primary response.
 
-- **askUser** — Ask the developer a clarifying question. Prefer providing options over free-text when possible. Use this when the request is ambiguous or you need to choose between alternatives.
-- **createPlan** — Create an action plan for batch operations. Always use this for add, remove, link, unlink, create, update, and registry-add actions. Call it exactly once with the complete plan.
-- **writeFile** — Write generated code to a file. Use this after plan execution to create or modify source files. Always include proper imports and follow kitn conventions.
-- **readFile** — Read an existing file to understand current code before modifying it. Use this to check what is already in place before generating updates.
-- **listFiles** — Discover project structure and find relevant files. Use this to understand the project layout before making changes.
-- **updateEnv** — Set environment variables for API keys and secrets. The value is NEVER returned to you or the user after being set. Use this for any sensitive configuration like API keys, tokens, or secret credentials.`;
+**CRITICAL RULES:**
+1. When you need information from the user → ALWAYS call \`askUser\`. Do NOT ask questions in plain text.
+2. When proposing a plan → ALWAYS call \`createPlan\`. Do NOT describe steps in plain text.
+3. When writing code → ALWAYS call \`writeFile\`. Do NOT put code in plain text.
+4. When you need to see existing code → ALWAYS call \`readFile\`. Do NOT guess.
+5. When setting API keys or secrets → ALWAYS call \`updateEnv\`.
+
+**Available tools:**
+
+- **askUser** — REQUIRED for any question or interaction with the developer. Use type "option" for multiple choice (PREFERRED over free-text). Use type "question" for free text. Use type "confirmation" for yes/no. Use type "info" for status updates. Use type "warning" for risk flags. You MUST provide the \`items\` array with at least one item.
+- **createPlan** — REQUIRED for any add, remove, link, unlink, create, update, or registry-add actions. Call it exactly once with the complete plan including summary and steps array.
+- **writeFile** — Write generated code to a file. Provide \`path\` (relative), \`content\` (full file), and optional \`description\`.
+- **readFile** — Read an existing file. Provide the \`path\` (relative to project root).
+- **listFiles** — Discover project files. Provide a glob \`pattern\` (e.g. "**/*.ts") and optional \`directory\`.
+- **updateEnv** — Set environment variables. Provide \`key\` and \`description\`. The actual value is prompted from the user and NEVER returned to you.
+
+**Example: If the user says "I want a weather agent", you MUST call askUser to clarify requirements — do NOT respond with plain text questions.**`;
 }
 
 function buildCodePatternsSection(): string {

@@ -13,19 +13,23 @@ import { askUserTool, writeFileTool, readFileTool, listFilesTool, updateEnvTool 
 
 // --- Provider setup ---
 
+const isOpenRouter = !!process.env.OPENROUTER_API_KEY;
+
 const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY ?? process.env.OPENROUTER_API_KEY,
-  baseURL: process.env.OPENROUTER_API_KEY
-    ? "https://openrouter.ai/api/v1"
-    : undefined,
+  baseURL: isOpenRouter ? "https://openrouter.ai/api/v1" : undefined,
 });
 
 const DEFAULT_MODEL = process.env.DEFAULT_MODEL ?? "gpt-4o-mini";
 
+// Use .chat() for OpenRouter (Responses API not supported) or default for OpenAI
+const getModel = (id: string) =>
+  isOpenRouter ? openai.chat(id) : openai(id);
+
 // --- Plugin setup ---
 
 const plugin = createAIPlugin({
-  model: (id: string | undefined) => openai(id ?? DEFAULT_MODEL),
+  model: (id: string | undefined) => getModel(id ?? DEFAULT_MODEL),
   storage: createMemoryStorage(),
 });
 
@@ -75,7 +79,8 @@ app.post("/api/chat", async (c) => {
 
   const systemPrompt = buildSystemPrompt(promptContext);
 
-  // Convert messages to Vercel AI SDK format
+  // Convert messages to Vercel AI SDK v6 format
+  // v6 uses `input` (not `args`) in ToolCallPart, and `output` (not `result`) in ToolResultPart
   const aiMessages = messages.map((m: any) => {
     if (m.role === "tool" && m.toolResults) {
       return {
@@ -83,7 +88,8 @@ app.post("/api/chat", async (c) => {
         content: m.toolResults.map((r: any) => ({
           type: "tool-result" as const,
           toolCallId: r.toolCallId,
-          result: r.result,
+          toolName: r.toolName ?? "unknown",
+          output: { type: "text" as const, value: typeof r.result === "string" ? r.result : JSON.stringify(r.result) },
         })),
       };
     }
@@ -96,7 +102,7 @@ app.post("/api/chat", async (c) => {
             type: "tool-call" as const,
             toolCallId: tc.id,
             toolName: tc.name,
-            args: tc.input,
+            input: tc.input ?? {},
           })),
         ],
       };
@@ -116,17 +122,17 @@ app.post("/api/chat", async (c) => {
 
   try {
     const result = await generateText({
-      model: openai(DEFAULT_MODEL),
+      model: getModel(DEFAULT_MODEL),
       system: systemPrompt,
       messages: aiMessages,
       tools,
     });
 
-    // Extract tool calls from the result
+    // Extract tool calls from the result (SDK v6 uses `input` not `args`)
     const toolCalls = result.toolCalls?.map((tc: any) => ({
       id: tc.toolCallId,
       name: tc.toolName,
-      input: tc.args,
+      input: tc.input ?? {},
     }));
 
     return c.json({
@@ -162,7 +168,7 @@ app.post("/api/chat/compact", async (c) => {
 
   try {
     const result = await generateText({
-      model: openai(DEFAULT_MODEL),
+      model: getModel(DEFAULT_MODEL),
       system: compactionPrompt,
       messages: [{ role: "user" as const, content: `Compact this conversation:\n\n${conversationText}` }],
     });

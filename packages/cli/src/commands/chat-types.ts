@@ -8,6 +8,7 @@ export interface ToolCall {
 
 export interface ToolResult {
   toolCallId: string;
+  toolName: string;
   result: string;
 }
 

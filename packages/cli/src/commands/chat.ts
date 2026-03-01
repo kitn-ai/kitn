@@ -395,25 +395,26 @@ async function handleToolCalls(toolCalls: ToolCall[], cwd: string): Promise<Tool
   const results: ToolResult[] = [];
   for (const call of toolCalls) {
     let result: string;
+    const input = call.input ?? {};
     try {
       switch (call.name) {
         case "askUser":
-          result = await handleAskUser(call.input as { items: AskUserItem[] });
+          result = await handleAskUser({ items: (input as any).items ?? [] });
           break;
         case "createPlan":
-          result = await handleCreatePlan(call.input as ChatPlan, cwd);
+          result = await handleCreatePlan(input as ChatPlan, cwd);
           break;
         case "writeFile":
-          result = await handleWriteFile(call.input as WriteFileInput, cwd);
+          result = await handleWriteFile(input as WriteFileInput, cwd);
           break;
         case "readFile":
-          result = await handleReadFile(call.input as ReadFileInput, cwd);
+          result = await handleReadFile(input as ReadFileInput, cwd);
           break;
         case "listFiles":
-          result = await handleListFiles(call.input as ListFilesInput, cwd);
+          result = await handleListFiles(input as ListFilesInput, cwd);
           break;
         case "updateEnv":
-          result = await handleUpdateEnv(call.input as UpdateEnvInput, cwd);
+          result = await handleUpdateEnv(input as UpdateEnvInput, cwd);
           break;
         default:
           result = `Unknown tool: ${call.name}`;
@@ -421,7 +422,7 @@ async function handleToolCalls(toolCalls: ToolCall[], cwd: string): Promise<Tool
     } catch (err: any) {
       result = `Error executing ${call.name}: ${err.message ?? "Unknown error"}`;
     }
-    results.push({ toolCallId: call.id, result });
+    results.push({ toolCallId: call.id, toolName: call.name, result });
   }
   return results;
 }

@@ -43,7 +43,7 @@ describe("ChatMessage types", () => {
     const msg: ChatMessage = {
       role: "tool",
       toolResults: [
-        { toolCallId: "call_1", result: "User selected: A" },
+        { toolCallId: "call_1", toolName: "askUser", result: "User selected: A" },
       ],
     };
     expect(msg.role).toBe("tool");

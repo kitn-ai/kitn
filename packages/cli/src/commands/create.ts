@@ -68,7 +68,7 @@ export const ${camel} = tool({
 registerTool({
   name: "${name}",
   description: "",
-  inputSchema: z.object({ input: z.string() }),
+  inputSchema: z.object({ input: z.string().describe("Input parameter") }),
   tool: ${camel},
 });
 `;
@@ -79,6 +79,8 @@ function generateSkillSource(name: string): string {
   return `---
 name: ${name}
 description: ""
+tags: []
+phase: both
 ---
 
 # ${title}
@@ -110,7 +112,7 @@ import { z } from "zod";
 
 export const ${camel} = tool({
   description: "Execute the ${name} cron task",
-  parameters: z.object({
+  inputSchema: z.object({
     input: z.string().describe("Task input"),
   }),
   execute: async ({ input }) => {
@@ -122,7 +124,7 @@ export const ${camel} = tool({
 registerTool({
   name: "${name}",
   description: "",
-  inputSchema: z.object({ input: z.string() }),
+  inputSchema: z.object({ input: z.string().describe("Task input") }),
   tool: ${camel},
 });
 `;

@@ -14,6 +14,24 @@ AI components live under `{base}`:
 
 Entry point: `{base}/plugin.ts` — creates the plugin and wires everything together.
 
+## Before Writing Code — Read Existing Sources
+
+**IMPORTANT:** Before generating or modifying any kitn component, read the existing source files in this project first.
+
+**`kitn.json`** contains the `aliases` section with exact paths to each component directory. Use these paths to:
+
+1. Read `{base}/plugin.ts` to understand how the plugin is configured (model provider, storage, adapters, etc.)
+2. Read existing files in `{agents}/`, `{tools}/`, `{skills}/`, `{storage}/`, and `{crons}/` to match the project's established patterns, naming conventions, and import style
+3. Check what's already imported in the barrel file (`{base}/index.ts`) to avoid duplicates
+
+**`kitn.lock`** tracks all installed registry components. Each entry includes the component name, type, version, installed file paths, and content hash. Check this file to:
+
+1. See what components are already installed — don't re-add them
+2. Find the exact file paths of installed components — read these files to understand the code patterns in use
+3. Identify component types (agent, tool, skill, storage, cron, package) for context
+
+Matching existing patterns is more reliable than generating code from scratch. If the project already has a working agent or tool, use it as a template for new ones.
+
 ## kitn.json Reference
 
 The project config file at the root:
@@ -53,10 +71,28 @@ The `kitn.lock` file (auto-managed) tracks installed components with their versi
 ## Import Conventions
 
 - `@kitn/core` — framework types and utilities (`registerAgent`, `registerTool`, `registerWithPlugin`, storage factories)
-- `@kitn/adapters/hono` — Hono adapter (`createAIPlugin`)
-- `ai` — Vercel AI SDK v6 (`tool()` function). Uses `inputSchema` not `parameters`, `toolCall.input` not `toolCall.args`
+- Adapter package — depends on your `kitn.json` `framework` setting:
+  - `@kitn/adapters/hono` for `"hono"`
+  - `@kitn/adapters/hono-openapi` for `"hono-openapi"`
+  - `@kitn/adapters/elysia` for `"elysia"`
+  - All adapters export `createAIPlugin()` with the same interface
+- `ai` — Vercel AI SDK v6 (`tool()`, `generateText()`, `streamText()`, `stepCountIs()`)
 - `zod` — schema definitions for tool inputs
-- Always use `.js` extension in relative imports (TypeScript compiles to JS)
+- Relative imports use no file extension (standard TypeScript convention)
+
+### Vercel AI SDK v6 — Critical Differences
+
+This project uses `ai@^6` (not v4). The API has breaking changes:
+
+| v4 (old, do NOT use) | v6 (correct) |
+|---|---|
+| `tool({ parameters: z.object({...}) })` | `tool({ inputSchema: z.object({...}) })` |
+| `toolCall.args` | `toolCall.input` |
+| `maxTokens: 100` | `maxOutputTokens: 100` |
+| `maxToolRoundtrips: 5` | `stopWhen: stepCountIs(5)` |
+| `result.toolResults` | `result.toolResults` (same but shape differs) |
+
+Always use `inputSchema`, never `parameters`. Always use `maxOutputTokens`, never `maxTokens`.
 
 ## Defining Tools
 
@@ -96,10 +132,58 @@ export { weatherTool };
 ```
 
 Key points:
-- `inputSchema` uses Zod — use `.describe()` on each field for better AI understanding
+- `inputSchema` uses Zod — ALWAYS use `.describe()` on every field. This is how the AI model understands what to pass. Without `.describe()`, models often pass wrong values or skip the field entirely.
 - `directExecute` enables the REST endpoint `POST /tools/:name/execute`
 - `category` is optional, for grouping in the UI
 - The `tool` field holds the Vercel AI SDK tool object used during agent execution
+- `registerTool()` takes a **single config object** (no plugin parameter). It queues at module load time.
+
+### Zod Schema Best Practices for Tools
+
+Use `.describe()` on **every** field — this is the most impactful thing you can do for tool reliability:
+
+```ts
+inputSchema: z.object({
+  location: z.string().describe("City name or coordinates (e.g. 'Tokyo', 'New York')"),
+  units: z.enum(["celsius", "fahrenheit"]).default("celsius").describe("Temperature unit"),
+  limit: z.number().int().min(1).max(30).default(10).describe("Number of results (1-30)"),
+})
+```
+
+For tools that return structured data to the LLM, use explicit return types:
+
+```ts
+execute: async ({ query }) => {
+  const results = await search(query);
+  return {
+    results: results.map(r => ({ title: r.title, url: r.url, snippet: r.snippet })),
+    totalCount: results.length,
+  };
+},
+```
+
+### Structured Output Tools
+
+For tools that validate LLM-generated structured data (e.g. plan builders, form generators), use Zod schemas as both input validation and pass-through:
+
+```ts
+const planSchema = z.object({
+  summary: z.string().describe("Brief summary of the plan"),
+  steps: z.array(z.object({
+    action: z.enum(["add", "create", "remove"]),
+    name: z.string().describe("Component name"),
+    reason: z.string().describe("Why this step is needed"),
+  })).describe("Ordered list of actions"),
+});
+
+const planTool = tool({
+  description: "Create an execution plan",
+  inputSchema: planSchema,
+  execute: async (input) => input,  // pass-through — schema validates, execute returns
+});
+```
+
+This pattern lets the AI model generate structured data that's automatically validated by Zod before your code sees it.
 
 ## Defining Agents
 
@@ -107,8 +191,8 @@ File: `{agents}/assistant.ts`
 
 ```ts
 import { registerAgent } from "@kitn/core";
-import { weatherTool } from "../tools/weather.js";
-import { calculatorTool } from "../tools/calculator.js";
+import { weatherTool } from "../tools/weather";
+import { calculatorTool } from "../tools/calculator";
 
 registerAgent({
   name: "assistant",
@@ -123,8 +207,9 @@ about weather or needs calculations. Be concise and accurate.`,
 ```
 
 Key points:
-- `tools` is a `Record<string, ToolObject>` — keys are tool names, values are AI SDK tool objects
-- `system` is the system prompt injected into every conversation
+- `registerAgent()` takes a **single config object** (no plugin parameter). It queues at module load time.
+- `tools` is a `Record<string, ToolObject>` — keys are tool names, values are AI SDK tool objects (NOT an array of strings)
+- `system` is the system prompt field (NOT `systemPrompt`)
 - `description` is used by the orchestrator for routing decisions
 - Default format is `"sse"` (streaming); set `format: "json"` for non-streaming
 
@@ -166,11 +251,20 @@ SSE events emitted in order: `session:start`, `status`, `text-delta` (streaming 
 
 ## Guards
 
-Add a `guard` to an agent to filter or block requests before execution:
+Guards filter or block agent requests before execution. Guards are added using the **plugin instance API** (not the self-register `registerAgent()` pattern):
 
 ```ts
+// Guards require the plugin instance API (plugin.agents.register)
+// They cannot be used with the module-level registerAgent() function
 plugin.agents.register({
-  ...agentConfig,
+  name: "guarded-agent",
+  description: "An agent with input filtering",
+  defaultSystem: "You are a helpful assistant.",
+  defaultFormat: "sse",
+  toolNames: Object.keys(tools),
+  tools,
+  sseHandler,
+  jsonHandler,
   guard: async (query, agentName) => {
     if (containsBlockedContent(query)) {
       return { allowed: false, reason: "Request contains blocked content" };
@@ -180,7 +274,7 @@ plugin.agents.register({
 });
 ```
 
-The guard receives the user's query and the agent name. Return `{ allowed: false, reason: "..." }` to block execution.
+The guard receives the user's query and the agent name. Return `{ allowed: false, reason: "..." }` to block execution. Note: the plugin instance API uses `defaultSystem` (not `system`) and requires manually creating handlers with `plugin.createHandlers({ tools })`.
 
 ## Skills
 
@@ -320,12 +414,14 @@ File: `{base}/plugin.ts`
 
 ```ts
 import { registerWithPlugin, createFileStorage } from "@kitn/core";
+// Import from the adapter matching your kitn.json framework setting:
+// "@kitn/adapters/hono" | "@kitn/adapters/hono-openapi" | "@kitn/adapters/elysia"
 import { createAIPlugin } from "@kitn/adapters/hono";
 
 // Import components — triggers registerAgent/registerTool calls
-import "./agents/assistant.js";
-import "./tools/weather.js";
-import "./tools/calculator.js";
+import "./agents/assistant";
+import "./tools/weather";
+import "./tools/calculator";
 
 const plugin = createAIPlugin({
   model: (id) => yourModelProvider(id ?? "default-model"),
@@ -341,6 +437,7 @@ export { plugin };
 ## Plugin Configuration
 
 ```ts
+// Import from the adapter matching your kitn.json framework setting
 import { createAIPlugin } from "@kitn/adapters/hono";
 import { createFileStorage } from "@kitn/core";
 
@@ -383,6 +480,81 @@ const plugin = createAIPlugin({
 ```
 
 Mount on your Hono server: `app.route("/api", plugin.router)`
+
+## Model Provider Setup
+
+The `model` field in plugin config is a factory function that returns an AI SDK `LanguageModel`. Here are the common provider setups:
+
+### OpenRouter (recommended for multi-model support)
+
+```ts
+import { openrouter } from "@openrouter/ai-sdk-provider";
+
+const plugin = createAIPlugin({
+  model: (id) => openrouter(id ?? "deepseek/deepseek-chat-v3-0324"),
+});
+```
+
+Requires `OPENROUTER_API_KEY` in `.env`. Supports hundreds of models via a single API key.
+
+### OpenAI
+
+```ts
+import { openai } from "@ai-sdk/openai";
+
+const plugin = createAIPlugin({
+  model: (id) => openai(id ?? "gpt-4o"),
+});
+```
+
+Requires `OPENAI_API_KEY` in `.env`.
+
+### Anthropic
+
+```ts
+import { anthropic } from "@ai-sdk/anthropic";
+
+const plugin = createAIPlugin({
+  model: (id) => anthropic(id ?? "claude-sonnet-4-20250514"),
+});
+```
+
+Requires `ANTHROPIC_API_KEY` in `.env`.
+
+### Using generateText / streamText directly
+
+When calling AI SDK functions directly (outside of agent execution):
+
+```ts
+import { generateText, streamText, stepCountIs } from "ai";
+
+// Single response (JSON mode)
+const result = await generateText({
+  model: openai("gpt-4o"),
+  system: "You are a helpful assistant.",
+  prompt: "Summarize this article...",
+  maxOutputTokens: 500,              // NOT maxTokens
+});
+
+// With tools and multi-step execution
+const result = await generateText({
+  model: openai("gpt-4o"),
+  system: "You are a helpful assistant.",
+  messages: conversationHistory,
+  tools: { weather: weatherTool },
+  stopWhen: stepCountIs(5),           // NOT maxToolRoundtrips
+});
+
+// Streaming response (SSE mode)
+const result = streamText({
+  model: openai("gpt-4o"),
+  system: "You are a helpful assistant.",
+  prompt: "Tell me about...",
+});
+for await (const text of result.textStream) {
+  process.stdout.write(text);
+}
+```
 
 ## Storage
 
@@ -457,7 +629,7 @@ interface CronStore {
   delete(id: string, scopeId?: string): Promise<boolean>;
   addExecution(input: Omit<CronExecution, "id">, scopeId?: string): Promise<CronExecution>;
   listExecutions(cronId: string, limit?: number, scopeId?: string): Promise<CronExecution[]>;
-  updateExecution(id: string, updates: Partial<CronExecution>, scopeId?: string): Promise<CronExecution>;
+  updateExecution(id: string, updates: Partial<Omit<CronExecution, "id" | "cronId">>, scopeId?: string): Promise<CronExecution>;
   getDueJobs(now: Date, scopeId?: string): Promise<CronJob[]>;
 }
 ```
@@ -622,6 +794,7 @@ interface Job {
   agentName: string;
   input: string;
   conversationId: string;
+  scopeId?: string;
   status: "queued" | "running" | "completed" | "failed" | "cancelled";
   result?: string;
   error?: string;
@@ -758,6 +931,124 @@ The project's `kitn.json` lists registries under the `registries` key. Users may
 ### Finding examples
 
 Registry components include full source code and documentation. Fetch a component's JSON to see its implementation. For example, to understand how to build a custom agent with guards, fetch the `guardrails-agent` component. To see orchestration patterns, fetch the `supervisor-agent`. Each component's `files` array contains the complete source, and `docs` contains usage instructions.
+
+## Writing Effective System Prompts
+
+System prompts are the most important factor in agent quality. Follow these patterns:
+
+### Structure
+
+```ts
+const SYSTEM_PROMPT = `You are a [role]. You help users [purpose].
+
+## Capabilities
+- [what the agent can do]
+- [what tools it has access to]
+
+## Instructions
+- [how it should behave]
+- [when to use which tool]
+
+## Constraints
+- [what it should NOT do]
+- [boundaries and limitations]`;
+```
+
+### Key principles:
+- **Be specific about tool usage.** Tell the agent exactly when to use each tool: "When the user asks about weather, call the getWeather tool with the city name."
+- **Describe output format.** If you want structured responses, say so: "Always include the temperature in Celsius and a brief description."
+- **Set boundaries.** Agents work better with clear constraints: "Only answer questions about weather. For other topics, say you can't help."
+- **Provide examples** for ambiguous cases: "If the user says 'What's it like in Paris?', interpret this as a weather query for Paris, France."
+
+### Guards for input filtering
+
+For agents exposed to end-users, add a guard to filter inappropriate requests:
+
+```ts
+// Simple keyword-based guard
+function keywordCheck(query: string): boolean {
+  const lower = query.toLowerCase();
+  const ALLOWED_KEYWORDS = ["weather", "forecast", "temperature", "climate"];
+  return ALLOWED_KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+// Two-tier guard: fast keyword check + LLM classifier fallback
+async function myGuard(query: string): Promise<{ allowed: boolean; reason?: string }> {
+  // Fast path — keywords match, allow immediately (no LLM cost)
+  if (keywordCheck(query)) return { allowed: true };
+
+  // LLM fallback — classify intent for queries that don't match keywords
+  const result = await generateText({
+    model: classifierModel,
+    system: "Classify if this query is about weather. Reply 'yes' or 'no'.",
+    prompt: query,
+    maxOutputTokens: 3,
+  });
+  const isRelevant = result.text.trim().toLowerCase().startsWith("yes");
+
+  return isRelevant
+    ? { allowed: true }
+    : { allowed: false, reason: "I can only help with weather queries." };
+}
+```
+
+The two-tier pattern (keyword fast-path + LLM classifier fallback) avoids LLM costs for obvious matches while correctly handling edge cases.
+
+## Common Mistakes
+
+These are the patterns AI coding assistants most frequently get wrong when generating kitn code:
+
+### 1. Wrong function signatures
+
+```ts
+// WRONG — registerAgent and registerTool take a single config object, NOT a plugin parameter
+registerAgent(plugin, { name: "my-agent", ... });
+registerTool(plugin, { name: "my-tool", ... });
+
+// CORRECT — no plugin parameter, queue at module load time
+registerAgent({ name: "my-agent", description: "...", system: "...", tools: {} });
+registerTool({ name: "my-tool", description: "...", inputSchema: z.object({...}), tool: myTool });
+```
+
+### 2. Wrong field names
+
+```ts
+// WRONG
+registerAgent({ systemPrompt: "..." });     // field is "system", not "systemPrompt"
+registerAgent({ tools: ["my-tool"] });       // tools is an object, not an array of strings
+tool({ parameters: z.object({...}) });       // field is "inputSchema", not "parameters"
+generateText({ maxTokens: 100 });            // field is "maxOutputTokens" in v6
+
+// CORRECT
+registerAgent({ system: "..." });
+registerAgent({ tools: { myTool: myToolObject } });
+tool({ inputSchema: z.object({...}) });
+generateText({ maxOutputTokens: 100 });
+```
+
+### 3. Missing .describe() on Zod fields
+
+```ts
+// BAD — model won't understand what to pass
+inputSchema: z.object({ q: z.string() })
+
+// GOOD — model understands the field's purpose
+inputSchema: z.object({ q: z.string().describe("Search query text") })
+```
+
+### 4. Calling registerAgent/registerTool after plugin creation
+
+```ts
+// WRONG — register functions queue at module load, they don't need the plugin
+const plugin = createAIPlugin({ ... });
+registerAgent({ ... }); // too late, already flushed
+
+// CORRECT — import triggers registration, then flush
+import "./agents/my-agent";  // calls registerAgent() at import time
+import "./tools/my-tool";    // calls registerTool() at import time
+const plugin = createAIPlugin({ ... });
+await registerWithPlugin(plugin);  // flushes the queue
+```
 
 ## CLI Commands
 

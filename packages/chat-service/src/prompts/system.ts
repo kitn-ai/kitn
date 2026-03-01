@@ -18,7 +18,7 @@ kitn is a TypeScript framework for building multi-agent AI systems. Here is what
 - **Agents** — Autonomous units with a system prompt, a set of tools, optional guards (input/output validation), skills (prompt files), delegation to other agents, and orchestrator mode for multi-agent coordination.
 - **Tools** — Functions with Zod input schemas and an execute handler. Registered with registerTool() and wired to agents via linking.
 - **Skills** — Markdown prompt files with YAML frontmatter. They extend an agent's system prompt with domain knowledge or instructions.
-- **Storage** — Pluggable storage sub-store architecture. Built-in providers: createFileStorage() (JSON files) and createMemoryStorage() (in-memory). Sub-stores: conversations, memory, skills, tasks, prompts, audio, commands, crons, jobs. Mix and match backends per sub-store.
+- **Storage** — Pluggable storage sub-store architecture. Built-in providers: createFileStorage() (JSON files) and createMemoryStorage() (in-memory). Sub-stores: conversations, memory, skills, tasks, prompts, commands, crons, jobs. Mix and match backends per sub-store.
 - **Crons** — Scheduled jobs with cron expressions. Register handlers, manage schedules, and execute on triggers. Opt-in via cronScheduler in plugin config.
 - **Voice** — Text-to-speech and speech-to-text integration. Supports OpenAI and Groq providers. Opt-in via voice config.
 - **MCP** — Model Context Protocol server mode. Expose agents and tools as MCP-compatible endpoints.
@@ -107,20 +107,28 @@ When generating code for kitn projects, follow these conventions:
 
 ### Imports
 - Use \`@kitn/core\` for core imports (registerAgent, registerTool, createFileStorage, createMemoryStorage, etc.)
-- Use \`@kitn/adapters/hono\` for the Hono adapter
-- Use \`.js\` extensions in all relative imports (TypeScript compiles to JS)
+- Use the adapter package matching the project's framework: \`@kitn/adapters/hono\`, \`@kitn/adapters/hono-openapi\`, or \`@kitn/adapters/elysia\`
+- Relative imports use no file extension (standard TypeScript convention)
 - Use the \`ai\` package for Vercel AI SDK functions (tool, streamText, generateText, etc.)
 
 ### Agent Registration
 \`\`\`ts
 import { registerAgent } from "@kitn/core";
+import { myTool } from "../tools/my-tool";
 
-registerAgent(plugin, {
+const SYSTEM_PROMPT = "You are a helpful assistant.";
+
+registerAgent({
   name: "my-agent",
-  systemPrompt: "You are a helpful assistant.",
-  tools: ["my-tool"],
+  description: "General-purpose assistant",
+  system: SYSTEM_PROMPT,
+  tools: {
+    myTool: myTool,
+  },
 });
 \`\`\`
+
+Note: \`registerAgent\` takes a single config object (no plugin parameter). The \`tools\` field is a \`Record<string, ToolObject>\` mapping tool names to AI SDK tool objects.
 
 ### Tool Registration
 \`\`\`ts
@@ -128,30 +136,51 @@ import { registerTool } from "@kitn/core";
 import { tool } from "ai";
 import { z } from "zod";
 
-registerTool(plugin, {
-  name: "my-tool",
-  tool: tool({
-    description: "Does something useful",
-    parameters: z.object({
-      input: z.string().describe("The input value"),
-    }),
-    execute: async ({ input }) => {
-      return { result: input };
-    },
+export const myTool = tool({
+  description: "Does something useful",
+  inputSchema: z.object({
+    input: z.string().describe("The input value"),
   }),
+  execute: async ({ input }) => {
+    return { result: input };
+  },
+});
+
+registerTool({
+  name: "my-tool",
+  description: "Does something useful",
+  inputSchema: z.object({ input: z.string() }),
+  tool: myTool,
 });
 \`\`\`
 
-### Cron Registration
+Note: \`registerTool\` takes a single config object (no plugin parameter). Use \`inputSchema\` (NOT \`parameters\`). This is Vercel AI SDK v6.
+
+### Cron Tools
 \`\`\`ts
-plugin.crons.register({
-  name: "my-cron",
-  schedule: "0 * * * *",
-  handler: async (ctx) => {
-    // runs every hour
+import { registerTool } from "@kitn/core";
+import { tool } from "ai";
+import { z } from "zod";
+
+export const myCronTool = tool({
+  description: "Execute a scheduled task",
+  inputSchema: z.object({
+    input: z.string().describe("Task input"),
+  }),
+  execute: async ({ input }) => {
+    return { result: input };
   },
 });
+
+registerTool({
+  name: "my-cron-tool",
+  description: "Execute a scheduled task",
+  inputSchema: z.object({ input: z.string() }),
+  tool: myCronTool,
+});
 \`\`\`
+
+Cron jobs are created via API: \`POST /api/crons { name, schedule, agentName, input }\`
 
 ### Skill Files
 Skill files are markdown with YAML frontmatter:

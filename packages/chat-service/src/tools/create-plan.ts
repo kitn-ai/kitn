@@ -10,7 +10,7 @@ const planStepSchema = z.object({
   type: z
     .string()
     .optional()
-    .describe("Component type for create: 'agent', 'tool', 'skill', 'storage'"),
+    .describe("Component type for create: 'agent', 'tool', 'skill', 'storage', 'cron'"),
   name: z
     .string()
     .optional()

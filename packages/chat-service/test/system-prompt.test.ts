@@ -122,4 +122,41 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain("ONLY use \"add\" for components that are explicitly listed above");
     expect(prompt).toContain("do not invent component names");
   });
+
+  test("includes capabilities reference section", () => {
+    const prompt = buildSystemPrompt({ registryIndex: [], installed: [] });
+    expect(prompt).toContain("agent");
+    expect(prompt).toContain("tool");
+    expect(prompt).toContain("skill");
+    expect(prompt).toContain("cron");
+    expect(prompt).toContain("storage");
+  });
+
+  test("includes tool usage instructions", () => {
+    const prompt = buildSystemPrompt({ registryIndex: [], installed: [] });
+    expect(prompt).toContain("askUser");
+    expect(prompt).toContain("createPlan");
+    expect(prompt).toContain("writeFile");
+    expect(prompt).toContain("readFile");
+    expect(prompt).toContain("listFiles");
+    expect(prompt).toContain("updateEnv");
+  });
+
+  test("includes code generation patterns", () => {
+    const prompt = buildSystemPrompt({ registryIndex: [], installed: [] });
+    expect(prompt).toContain("@kitn/core");
+    expect(prompt).toContain(".js");
+    expect(prompt).toContain("registerAgent");
+  });
+
+  test("includes update action in constraints", () => {
+    const prompt = buildSystemPrompt({ registryIndex: [], installed: [] });
+    expect(prompt).toContain("update");
+  });
+
+  test("includes secret handling instructions", () => {
+    const prompt = buildSystemPrompt({ registryIndex: [], installed: [] });
+    expect(prompt).toContain("updateEnv");
+    expect(prompt).toContain("secret");
+  });
 });

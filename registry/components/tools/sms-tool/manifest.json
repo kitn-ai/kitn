@@ -1,0 +1,18 @@
+{
+  "name": "sms-tool",
+  "type": "kitn:tool",
+  "description": "Send SMS messages via Twilio API",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "TWILIO_ACCOUNT_SID": { "description": "Twilio Account SID", "url": "https://console.twilio.com/", "required": true, "secret": false },
+    "TWILIO_AUTH_TOKEN": { "description": "Twilio Auth Token", "required": true, "secret": true },
+    "TWILIO_PHONE_NUMBER": { "description": "Twilio phone number to send from (e.g. +1234567890)", "required": true, "secret": false }
+  },
+  "files": ["sms-tool.ts"],
+  "docs": "Requires TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER env vars.",
+  "categories": ["api", "sms", "communication"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

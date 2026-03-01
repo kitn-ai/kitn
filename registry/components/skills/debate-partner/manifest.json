@@ -1,0 +1,13 @@
+{
+  "name": "debate-partner",
+  "type": "kitn:skill",
+  "description": "Takes opposing positions to stress-test ideas and strengthen arguments",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill to challenge ideas constructively. Phase: both.",
+  "categories": ["interaction", "debate", "critical-thinking", "argumentation"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

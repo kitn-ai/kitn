@@ -1,0 +1,13 @@
+{
+  "name": "feedback-synthesizer",
+  "type": "kitn:skill",
+  "description": "Aggregates and categorizes user feedback into themes, patterns, and action items",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when analyzing user feedback, reviews, or survey responses. Phase: response.",
+  "categories": ["customer", "feedback", "analysis", "synthesis"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

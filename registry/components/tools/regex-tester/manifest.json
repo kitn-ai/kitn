@@ -1,0 +1,13 @@
+{
+  "name": "regex-tester",
+  "type": "kitn:tool",
+  "description": "Test regex patterns against text — match, extract groups, replace, and explain patterns",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "files": ["regex-tester.ts"],
+  "docs": "Tests regular expressions against text. No API keys needed.",
+  "categories": ["utility", "regex", "testing"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

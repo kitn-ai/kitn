@@ -1,0 +1,13 @@
+{
+  "name": "localization-adapter",
+  "type": "kitn:skill",
+  "description": "Adapts content for specific locales — units, date formats, currency, cultural references",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when adapting content for specific regions or locales. Phase: response.",
+  "categories": ["language", "localization", "i18n", "cultural"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

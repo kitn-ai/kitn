@@ -1,0 +1,13 @@
+{
+  "name": "translator",
+  "type": "kitn:skill",
+  "description": "Translates text between languages preserving tone, idioms, and cultural context",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill for nuanced translation that preserves meaning and cultural context. Phase: response.",
+  "categories": ["language", "translation", "localization"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

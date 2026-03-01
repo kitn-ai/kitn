@@ -1,0 +1,13 @@
+{
+  "name": "brainstorm-facilitator",
+  "type": "kitn:skill",
+  "description": "Facilitates structured ideation using SCAMPER, mind mapping, and creative techniques",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill to facilitate structured brainstorming sessions. Phase: both.",
+  "categories": ["interaction", "brainstorming", "ideation", "creativity"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

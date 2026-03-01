@@ -1,0 +1,13 @@
+{
+  "name": "notification-agent",
+  "type": "kitn:agent",
+  "description": "Multi-channel notification agent — routes alerts to email, Slack, SMS, or webhooks based on rules",
+  "dependencies": ["ai"],
+  "registryDependencies": ["core", "email-tool", "slack-tool", "sms-tool", "webhook-tool"],
+  "files": ["notification-agent.ts"],
+  "docs": "Routes notifications to the appropriate channel based on urgency and type. Requires: email-tool (RESEND_API_KEY), slack-tool (SLACK_BOT_TOKEN), sms-tool (TWILIO_* vars), webhook-tool (no keys). Not all tools are required — the agent adapts to available channels.",
+  "categories": ["notification", "multi-channel", "alerting"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

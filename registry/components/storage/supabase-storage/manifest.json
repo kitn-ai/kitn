@@ -1,0 +1,13 @@
+{
+  "name": "supabase-storage",
+  "type": "kitn:storage",
+  "description": "Supabase storage adapter using the Supabase client library — works with Supabase hosted and self-hosted",
+  "dependencies": [],
+  "registryDependencies": ["core"],
+  "files": ["supabase-storage.ts"],
+  "docs": "Install `@supabase/supabase-js`. Call `createSupabaseStorage({ client: supabase })`. Create the required tables in your Supabase dashboard or use the auto-migrate option (requires service role key).",
+  "categories": ["storage", "supabase", "database", "postgres"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "faq-generator",
+  "type": "kitn:skill",
+  "description": "Generates FAQ documents from product descriptions, support transcripts, or user feedback",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when generating FAQ content from source material. Phase: response.",
+  "categories": ["customer", "faq", "documentation"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

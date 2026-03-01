@@ -1,0 +1,13 @@
+{
+  "name": "json-validator",
+  "type": "kitn:tool",
+  "description": "Validate, format, and minify JSON — check syntax, pretty-print, or compact",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "files": ["json-validator.ts"],
+  "docs": "Validates and formats JSON. No API keys or external dependencies needed.",
+  "categories": ["utility", "json", "validation"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "cloudflare-r2-tool",
+  "type": "kitn:tool",
+  "description": "Cloudflare R2 object storage — list, presign, and manage objects (S3-compatible wrapper with Cloudflare defaults)",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core", "s3-tool"],
+  "envVars": {
+    "R2_ACCESS_KEY_ID": { "description": "R2 access key ID", "required": true, "secret": true },
+    "R2_SECRET_ACCESS_KEY": { "description": "R2 secret access key", "required": true, "secret": true },
+    "CF_ACCOUNT_ID": { "description": "Cloudflare account ID", "required": true, "secret": false }
+  },
+  "files": ["cloudflare-r2-tool.ts"],
+  "docs": "Cloudflare R2 wrapper around the s3-tool with R2-specific defaults. Requires R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and CF_ACCOUNT_ID. Automatically configures the S3-compatible endpoint.",
+  "categories": ["cloudflare", "r2", "storage", "s3"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

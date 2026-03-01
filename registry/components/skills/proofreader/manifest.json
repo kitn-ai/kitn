@@ -1,0 +1,13 @@
+{
+  "name": "proofreader",
+  "type": "kitn:skill",
+  "description": "Catches grammar, spelling, punctuation, and style issues with clear corrections and explanations",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when the user asks for proofreading or editing. Phase: response.",
+  "categories": ["writing", "grammar", "editing", "proofreading"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

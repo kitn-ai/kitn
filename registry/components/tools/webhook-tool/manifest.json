@@ -1,0 +1,13 @@
+{
+  "name": "webhook-tool",
+  "type": "kitn:tool",
+  "description": "Send HTTP webhook callbacks with signature verification",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "files": ["webhook-tool.ts"],
+  "docs": "Send webhook HTTP callbacks with optional HMAC-SHA256 signature headers. No API keys required — the signing secret is per-webhook.",
+  "categories": ["api", "webhook", "events"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

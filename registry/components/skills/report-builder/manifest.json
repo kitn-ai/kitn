@@ -1,0 +1,13 @@
+{
+  "name": "report-builder",
+  "type": "kitn:skill",
+  "description": "Generates formatted reports with sections, headings, data tables, and executive summaries",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when generating formal reports. Phase: response.",
+  "categories": ["structured-output", "report", "documentation"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "cloudflare-kv-tool",
+  "type": "kitn:tool",
+  "description": "Read and write Cloudflare Workers KV namespaces",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "CF_ACCOUNT_ID": { "description": "Cloudflare account ID", "required": true, "secret": false },
+    "CF_API_TOKEN": { "description": "Cloudflare API token with Workers KV permissions", "required": true, "secret": true }
+  },
+  "files": ["cloudflare-kv-tool.ts"],
+  "docs": "Requires CF_ACCOUNT_ID and CF_API_TOKEN env vars. Read/write key-value pairs in Cloudflare Workers KV.",
+  "categories": ["cloudflare", "kv", "storage"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

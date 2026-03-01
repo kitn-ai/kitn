@@ -8,8 +8,7 @@
   ],
   "registryDependencies": [
     "core",
-    "weather-agent",
-    "hackernews-agent"
+    "weather-agent"
   ],
   "files": [
     "supervisor-agent.ts"

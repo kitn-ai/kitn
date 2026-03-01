@@ -1,0 +1,16 @@
+{
+  "name": "translate-tool",
+  "type": "kitn:tool",
+  "description": "Translate text between languages using DeepL API",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "DEEPL_API_KEY": { "description": "DeepL API authentication key", "url": "https://www.deepl.com/pro-api", "required": true, "secret": true }
+  },
+  "files": ["translate-tool.ts"],
+  "docs": "Requires DEEPL_API_KEY env var. Translates text using DeepL with language detection.",
+  "categories": ["api", "translation", "language"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

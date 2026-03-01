@@ -1,0 +1,13 @@
+{
+  "name": "sqlite-storage",
+  "type": "kitn:storage",
+  "description": "SQLite storage adapter using better-sqlite3 — synchronous, file-based, zero-config database",
+  "dependencies": [],
+  "registryDependencies": ["core"],
+  "files": ["sqlite-storage.ts"],
+  "docs": "Install `better-sqlite3` and `@types/better-sqlite3`. Call `createSqliteStorage({ database: db })` where `db` is a better-sqlite3 Database instance. Tables are auto-created.",
+  "categories": ["storage", "sqlite", "database", "sql"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

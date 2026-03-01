@@ -1,0 +1,13 @@
+{
+  "name": "markdown-converter",
+  "type": "kitn:tool",
+  "description": "Convert between Markdown, HTML, and plain text",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "files": ["markdown-converter.ts"],
+  "docs": "Converts between Markdown, HTML, and plain text using simple regex transforms. No API keys needed.",
+  "categories": ["utility", "markdown", "conversion"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

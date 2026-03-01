@@ -1,0 +1,13 @@
+{
+  "name": "github-agent",
+  "type": "kitn:agent",
+  "description": "GitHub management agent — search repos, triage issues, read files, and automate workflows",
+  "dependencies": ["ai"],
+  "registryDependencies": ["core", "github-tool"],
+  "files": ["github-agent.ts"],
+  "docs": "Requires the github-tool component (which needs GITHUB_TOKEN). Manages GitHub repositories through natural language.",
+  "categories": ["devtools", "github", "automation"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

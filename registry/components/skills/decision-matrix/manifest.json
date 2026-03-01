@@ -1,0 +1,13 @@
+{
+  "name": "decision-matrix",
+  "type": "kitn:skill",
+  "description": "Builds weighted scoring matrices for multi-criteria decisions",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when the user needs to make a structured decision with multiple criteria. Phase: response.",
+  "categories": ["productivity", "decision", "analysis", "matrix"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

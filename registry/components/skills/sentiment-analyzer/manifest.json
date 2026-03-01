@@ -1,0 +1,13 @@
+{
+  "name": "sentiment-analyzer",
+  "type": "kitn:skill",
+  "description": "Identifies emotional tone, polarity, and intensity in text",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when analyzing sentiment, emotional tone, or audience reaction. Phase: response.",
+  "categories": ["analysis", "sentiment", "emotion"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

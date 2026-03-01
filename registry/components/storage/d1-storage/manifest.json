@@ -1,0 +1,13 @@
+{
+  "name": "d1-storage",
+  "type": "kitn:storage",
+  "description": "Cloudflare D1 storage adapter — serverless SQLite at the edge",
+  "dependencies": [],
+  "registryDependencies": ["core"],
+  "files": ["d1-storage.ts"],
+  "docs": "Pass a D1 database binding from your Cloudflare Worker. Call `createD1Storage({ database: env.DB })`. Tables are auto-created. Uses the D1 client API.",
+  "categories": ["storage", "cloudflare", "d1", "database", "sql", "edge"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

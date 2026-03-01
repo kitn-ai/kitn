@@ -1,0 +1,13 @@
+{
+  "name": "data-interpreter",
+  "type": "kitn:skill",
+  "description": "Explains data, trends, and statistics in plain language with actionable insights",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when interpreting data, charts, statistics, or metrics. Phase: response.",
+  "categories": ["analysis", "data", "statistics", "insights"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

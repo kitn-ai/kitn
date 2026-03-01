@@ -1,0 +1,13 @@
+{
+  "name": "meeting-summarizer",
+  "type": "kitn:skill",
+  "description": "Structures meeting notes into attendees, decisions, action items, and follow-ups",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when processing meeting notes or transcripts. Phase: response.",
+  "categories": ["productivity", "meetings", "notes"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

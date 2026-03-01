@@ -1,0 +1,13 @@
+{
+  "name": "redis-storage",
+  "type": "kitn:storage",
+  "description": "Redis storage adapter using hash and sorted set patterns — fast in-memory storage with optional persistence",
+  "dependencies": [],
+  "registryDependencies": ["core"],
+  "files": ["redis-storage.ts"],
+  "docs": "Install `ioredis`. Call `createRedisStorage({ client: redis })` where `redis` is an ioredis instance. Uses hash maps for entities, sorted sets for time-ordered data.",
+  "categories": ["storage", "redis", "database", "cache"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

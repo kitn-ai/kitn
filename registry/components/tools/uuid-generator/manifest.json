@@ -1,0 +1,13 @@
+{
+  "name": "uuid-generator",
+  "type": "kitn:tool",
+  "description": "Generate unique identifiers — UUID v4, UUID v7, and nanoid",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "files": ["uuid-generator.ts"],
+  "docs": "Generates unique identifiers in multiple formats. No API keys needed.",
+  "categories": ["utility", "id", "generator"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

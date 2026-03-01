@@ -1,0 +1,13 @@
+{
+  "name": "support-responder",
+  "type": "kitn:skill",
+  "description": "Empathetic, solution-oriented customer support responses that resolve issues efficiently",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill for customer-facing support interactions. Phase: response.",
+  "categories": ["customer", "support", "service"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

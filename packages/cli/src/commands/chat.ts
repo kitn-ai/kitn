@@ -116,7 +116,7 @@ function formatStepLabel(step: PlanStep): string {
     case "remove":
       return `Remove ${pc.red(step.component!)}`;
     case "create":
-      return `Create ${pc.green(`${step.type}/${step.name}`)}`;
+      return `Create ${pc.green(step.name!)} ${pc.dim(`(${step.type})`)}`;
     case "link":
       return `Link ${pc.cyan(step.toolName!)} → ${pc.cyan(step.agentName!)}`;
     case "unlink":

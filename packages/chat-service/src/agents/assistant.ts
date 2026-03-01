@@ -6,7 +6,8 @@ import { buildSystemPrompt, type PromptContext } from "../prompts/system.js";
 export const COMPONENT_KEYWORDS = [
   "agent", "tool", "skill", "storage", "component", "cron",
   "rule", "rules", "voice", "orchestrator", "mcp", "job", "memory",
-  "command", "hook", "guard",
+  "command", "hook", "guard", "package", "adapter", "core", "hono",
+  "scheduler", "webhook",
 ];
 
 // Action keywords — only pass the guard when combined with a component keyword

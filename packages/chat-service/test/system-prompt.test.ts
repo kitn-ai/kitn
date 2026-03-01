@@ -119,8 +119,8 @@ describe("buildSystemPrompt", () => {
       installed: [],
     });
 
-    expect(prompt).toContain("ONLY use \"add\" for components that are explicitly listed above");
-    expect(prompt).toContain("do not invent component names");
+    expect(prompt).toContain("The component MUST appear in the \"Available Components\" list above");
+    expect(prompt).toContain("ALWAYS check Available Components FIRST");
   });
 
   test("includes capabilities reference section", () => {

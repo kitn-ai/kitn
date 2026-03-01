@@ -186,6 +186,15 @@ function buildConstraintsSection(): string {
 - Use "update" only if the user explicitly wants to update an installed component.
 - Do NOT include core, hono, or other already-installed packages in the plan.
 
+### ALWAYS check Available Components FIRST
+Before using "create", ALWAYS check the Available Components list. Many common features already have registry components:
+- **Cron / scheduling** → add \`cron-tools\` (tool) + \`cron-manager-agent\` (agent) + a scheduler like \`upstash-scheduler\` (cron)
+- **Memory / remember** → add \`memory-store\` (storage) + \`memory-agent\` (agent)
+- **Web search** → add \`web-search-tool\` (tool) + \`web-search-agent\` (agent)
+- **HackerNews** → add \`hackernews-tool\` (tool) + \`hackernews-agent\` (agent)
+
+Only use "create" when the user wants something genuinely custom that has NO equivalent in the Available Components list.
+
 ### Other rules
 - Only plan these actions: add, create, link, remove, unlink, update, registry-add
 - For "registry-add", include the namespace and url fields.

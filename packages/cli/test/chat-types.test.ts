@@ -66,10 +66,10 @@ describe("ChatMessage types", () => {
         content: "Here's what I'll do",
         toolCalls: [{ id: "1", name: "createPlan", input: {} }],
       },
-      usage: { promptTokens: 100, completionTokens: 50 },
+      usage: { inputTokens: 100, outputTokens: 50 },
     };
     expect(response.message.role).toBe("assistant");
-    expect(response.usage.promptTokens).toBe(100);
+    expect(response.usage.inputTokens).toBe(100);
   });
 
   test("AskUserItem shapes are valid", () => {

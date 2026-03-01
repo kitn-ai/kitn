@@ -15,11 +15,11 @@ describe("conversation loop helpers", () => {
     const { hasToolCalls } = await import("../src/commands/chat.js");
     const withCalls: ChatServiceResponse = {
       message: { role: "assistant", content: "", toolCalls: [{ id: "1", name: "askUser", input: {} }] },
-      usage: { promptTokens: 100, completionTokens: 50 },
+      usage: { inputTokens: 100, outputTokens: 50 },
     };
     const withoutCalls: ChatServiceResponse = {
       message: { role: "assistant", content: "Done!" },
-      usage: { promptTokens: 100, completionTokens: 50 },
+      usage: { inputTokens: 100, outputTokens: 50 },
     };
     expect(hasToolCalls(withCalls)).toBe(true);
     expect(hasToolCalls(withoutCalls)).toBe(false);

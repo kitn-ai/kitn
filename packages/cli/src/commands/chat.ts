@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { readFile as fsReadFile, writeFile as fsWriteFile, mkdir, readdir } from "fs/promises";
-import { join, dirname } from "path";
+import { join, dirname, resolve } from "path";
 import { readConfig, readLock } from "../utils/config.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
 import { readUserConfig } from "./config.js";
@@ -64,8 +64,8 @@ export function formatSessionStats(elapsedMs: number, totalTokens: number): stri
   return `Session: ${formatElapsed(elapsedMs)} | ${formatTokens(totalTokens)} tokens`;
 }
 
-export function shouldCompact(totalPromptTokens: number, threshold: number): boolean {
-  return totalPromptTokens >= threshold;
+export function shouldCompact(lastPromptTokens: number, threshold: number): boolean {
+  return lastPromptTokens >= threshold;
 }
 
 export function applyCompaction(messages: ChatMessage[], summary: string, keepRecent: number = 2): ChatMessage[] {
@@ -321,7 +321,10 @@ export async function handleCreatePlan(plan: ChatPlan, cwd: string): Promise<str
 // ---------------------------------------------------------------------------
 
 export async function handleWriteFile(input: WriteFileInput, cwd: string): Promise<string> {
-  const fullPath = join(cwd, input.path);
+  const fullPath = resolve(cwd, input.path);
+  if (!fullPath.startsWith(resolve(cwd))) {
+    return `Rejected: path '${input.path}' would escape project directory`;
+  }
   await mkdir(dirname(fullPath), { recursive: true });
   await fsWriteFile(fullPath, input.content, "utf-8");
   p.log.success(`Wrote ${pc.cyan(input.path)}${input.description ? ` — ${input.description}` : ""}`);
@@ -329,8 +332,12 @@ export async function handleWriteFile(input: WriteFileInput, cwd: string): Promi
 }
 
 export async function handleReadFile(input: ReadFileInput, cwd: string): Promise<string> {
+  const fullPath = resolve(cwd, input.path);
+  if (!fullPath.startsWith(resolve(cwd))) {
+    return `Rejected: path '${input.path}' would escape project directory`;
+  }
   try {
-    return await fsReadFile(join(cwd, input.path), "utf-8");
+    return await fsReadFile(fullPath, "utf-8");
   } catch {
     return `File not found: ${input.path}`;
   }
@@ -517,7 +524,7 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
   if (globalRegistryIndex) metadata.globalRegistryIndex = globalRegistryIndex;
 
   let totalTokens = 0;
-  let totalPromptTokens = 0;
+  let lastInputTokens = 0;
   const sessionStart = Date.now();
   const MAX_PROMPT_TOKENS = 100_000;
 
@@ -525,8 +532,8 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
   while (true) {
     const turnStart = Date.now();
 
-    // Check for compaction
-    if (shouldCompact(totalPromptTokens, MAX_PROMPT_TOKENS)) {
+    // Check for compaction — use last turn's input tokens (represents full context size)
+    if (shouldCompact(lastInputTokens, MAX_PROMPT_TOKENS)) {
       s.start("Compacting conversation...");
       await compactConversation(messages, serviceUrl);
       s.stop(pc.dim("Conversation compacted."));
@@ -559,8 +566,8 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
     }
 
     const elapsed = Date.now() - turnStart;
-    totalTokens += response.usage.completionTokens;
-    totalPromptTokens += response.usage.promptTokens;
+    totalTokens += response.usage.outputTokens;
+    lastInputTokens = response.usage.inputTokens;
 
     // Handle rejected
     if ((response as any).rejected) {
@@ -571,12 +578,12 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
 
     // If no tool calls — just text, conversation ends
     if (!hasToolCalls(response)) {
-      s.stop(`Done ${pc.dim(`(${formatElapsed(elapsed)} | ${formatTokens(response.usage.completionTokens)} tokens)`)}`);
+      s.stop(`Done ${pc.dim(`(${formatElapsed(elapsed)} | ${formatTokens(response.usage.outputTokens)} tokens)`)}`);
       if (response.message.content) p.log.message(response.message.content);
       break;
     }
 
-    s.stop(`${pc.dim(`(${formatElapsed(elapsed)} | ${formatTokens(response.usage.completionTokens)} tokens)`)}`);
+    s.stop(`${pc.dim(`(${formatElapsed(elapsed)} | ${formatTokens(response.usage.outputTokens)} tokens)`)}`);
 
     // Append assistant message to history
     messages.push({

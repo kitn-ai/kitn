@@ -25,7 +25,7 @@ const DEFAULT_MODEL = process.env.DEFAULT_MODEL ?? "gpt-4o-mini";
 // --- Plugin setup ---
 
 const plugin = createAIPlugin({
-  model: (id) => openai(id ?? DEFAULT_MODEL),
+  model: (id: string | undefined) => openai(id ?? DEFAULT_MODEL),
   storage: createMemoryStorage(),
 });
 
@@ -62,7 +62,7 @@ app.post("/api/chat", async (c) => {
       rejected: true,
       text: guardResult.reason,
       message: { role: "assistant", content: guardResult.reason ?? "Request not allowed." },
-      usage: { promptTokens: 0, completionTokens: 0 },
+      usage: { inputTokens: 0, outputTokens: 0 },
     });
   }
 
@@ -87,6 +87,20 @@ app.post("/api/chat", async (c) => {
         })),
       };
     }
+    if (m.role === "assistant" && m.toolCalls?.length) {
+      return {
+        role: "assistant" as const,
+        content: [
+          ...(m.content ? [{ type: "text" as const, text: m.content }] : []),
+          ...m.toolCalls.map((tc: any) => ({
+            type: "tool-call" as const,
+            toolCallId: tc.id,
+            toolName: tc.name,
+            args: tc.input,
+          })),
+        ],
+      };
+    }
     return { role: m.role as "user" | "assistant", content: m.content ?? "" };
   });
 
@@ -106,7 +120,6 @@ app.post("/api/chat", async (c) => {
       system: systemPrompt,
       messages: aiMessages,
       tools,
-      maxSteps: 1,
     });
 
     // Extract tool calls from the result
@@ -123,8 +136,8 @@ app.post("/api/chat", async (c) => {
         toolCalls: toolCalls?.length ? toolCalls : undefined,
       },
       usage: {
-        promptTokens: result.usage?.promptTokens ?? 0,
-        completionTokens: result.usage?.completionTokens ?? 0,
+        inputTokens: result.usage?.inputTokens ?? 0,
+        outputTokens: result.usage?.outputTokens ?? 0,
       },
     });
   } catch (err: any) {
@@ -156,8 +169,8 @@ app.post("/api/chat/compact", async (c) => {
     return c.json({
       summary: result.text,
       usage: {
-        promptTokens: result.usage?.promptTokens ?? 0,
-        completionTokens: result.usage?.completionTokens ?? 0,
+        inputTokens: result.usage?.inputTokens ?? 0,
+        outputTokens: result.usage?.outputTokens ?? 0,
       },
     });
   } catch (err: any) {

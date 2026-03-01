@@ -66,6 +66,6 @@ export function registerAssistantAgent(plugin: AIPluginInstance, promptContext: 
     tools,
     sseHandler,
     jsonHandler,
-    guard: async (query) => assistantGuard(query),
+    guard: async (query: string) => assistantGuard(query),
   });
 }

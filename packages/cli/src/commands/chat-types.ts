@@ -47,8 +47,8 @@ export interface ChatServiceResponse {
     toolCalls?: ToolCall[];
   };
   usage: {
-    promptTokens: number;
-    completionTokens: number;
+    inputTokens: number;
+    outputTokens: number;
   };
 }
 

@@ -40,8 +40,8 @@ describe("POST /api/chat", () => {
     expect(data.message.role).toBe("assistant");
     expect(typeof data.message.content).toBe("string");
     expect(data.usage).toBeDefined();
-    expect(typeof data.usage.promptTokens).toBe("number");
-    expect(typeof data.usage.completionTokens).toBe("number");
+    expect(typeof data.usage.inputTokens).toBe("number");
+    expect(typeof data.usage.outputTokens).toBe("number");
   }, TIMEOUT);
 
   itLive("rejects off-topic with rejected flag", async () => {

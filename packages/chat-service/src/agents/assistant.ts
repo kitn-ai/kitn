@@ -3,19 +3,24 @@ import { createPlanTool } from "../tools/create-plan.js";
 import { buildSystemPrompt, type PromptContext } from "../prompts/system.js";
 
 // Component-type keywords — the request must mention what kind of thing they want
-const COMPONENT_KEYWORDS = [
+export const COMPONENT_KEYWORDS = [
   "agent", "tool", "skill", "storage", "component", "cron",
+  "rule", "rules", "voice", "orchestrator", "mcp", "job", "memory",
+  "command", "hook", "guard",
 ];
 
 // Action keywords — only pass the guard when combined with a component keyword
-const ACTION_KEYWORDS = [
+export const ACTION_KEYWORDS = [
   "add", "create", "remove", "install", "uninstall", "link", "unlink",
   "scaffold", "setup", "set up", "build", "wire", "connect",
+  "update", "configure", "generate", "delete",
 ];
 
 // Standalone keywords — these pass the guard on their own (informational queries)
-const STANDALONE_KEYWORDS = [
+export const STANDALONE_KEYWORDS = [
   "available", "registry", "what can", "what do you have", "kitn",
+  "capabilities", "help", "what can i do", "env", "environment",
+  "api key", ".env",
 ];
 
 export interface GuardResult {

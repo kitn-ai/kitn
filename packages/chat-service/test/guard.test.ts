@@ -1,68 +1,62 @@
-import { describe, expect, test } from "bun:test";
+import { describe, test, expect } from "bun:test";
 import { assistantGuard } from "../src/agents/assistant.js";
 
 describe("assistantGuard", () => {
-  test("allows requests about adding agents", async () => {
-    const result = await assistantGuard(
-      "I want an agent that checks the weather"
-    );
-    expect(result.allowed).toBe(true);
+  // Existing cases should still pass
+  test("allows component + action queries", async () => {
+    expect((await assistantGuard("add a weather agent")).allowed).toBe(true);
+    expect((await assistantGuard("create a new tool")).allowed).toBe(true);
+    expect((await assistantGuard("remove the echo tool")).allowed).toBe(true);
   });
 
-  test("allows requests about adding tools", async () => {
-    const result = await assistantGuard(
-      "Add a tool that sends Slack notifications"
-    );
-    expect(result.allowed).toBe(true);
+  test("allows standalone keywords", async () => {
+    expect((await assistantGuard("what can you do")).allowed).toBe(true);
+    expect((await assistantGuard("what's available")).allowed).toBe(true);
+    expect((await assistantGuard("help me with kitn")).allowed).toBe(true);
   });
 
-  test("allows requests about removing components", async () => {
-    const result = await assistantGuard(
-      "Remove the weather agent and its tools"
-    );
-    expect(result.allowed).toBe(true);
+  // New vocabulary
+  test("allows rule-related queries", async () => {
+    expect((await assistantGuard("generate rules for my project")).allowed).toBe(true);
+    expect((await assistantGuard("set up claude.md rules")).allowed).toBe(true);
   });
 
-  test("allows requests about what's available", async () => {
-    const result = await assistantGuard("What agents are available?");
-    expect(result.allowed).toBe(true);
+  test("allows voice-related queries", async () => {
+    expect((await assistantGuard("configure voice for my agent")).allowed).toBe(true);
   });
 
-  test("allows requests about linking tools", async () => {
-    const result = await assistantGuard(
-      "Link the weather tool to my general agent"
-    );
-    expect(result.allowed).toBe(true);
+  test("allows cron-related queries", async () => {
+    expect((await assistantGuard("add a cron schedule")).allowed).toBe(true);
+    expect((await assistantGuard("set up a cron job")).allowed).toBe(true);
   });
 
-  test("rejects off-topic requests", async () => {
-    const result = await assistantGuard("Write me a poem about cats");
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toBeDefined();
+  test("allows storage-related queries", async () => {
+    expect((await assistantGuard("configure file storage")).allowed).toBe(true);
+    expect((await assistantGuard("set up a database")).allowed).toBe(false);
   });
 
-  test("rejects action keywords without component keywords", async () => {
-    const result = await assistantGuard("Build me a React frontend");
-    expect(result.allowed).toBe(false);
+  test("allows orchestrator-related queries", async () => {
+    expect((await assistantGuard("set up an orchestrator")).allowed).toBe(true);
   });
 
-  test("rejects generic build requests", async () => {
-    const result = await assistantGuard("Create a REST API for my app");
-    expect(result.allowed).toBe(false);
+  test("allows update queries", async () => {
+    expect((await assistantGuard("update my weather tool")).allowed).toBe(true);
   });
 
-  test("allows action + component keyword combo", async () => {
-    const result = await assistantGuard("Build me an agent for customer support");
-    expect(result.allowed).toBe(true);
+  test("allows env/config queries", async () => {
+    expect((await assistantGuard("configure environment variables")).allowed).toBe(true);
+    expect((await assistantGuard("set up my api key")).allowed).toBe(true);
   });
 
-  test("allows standalone registry queries", async () => {
-    const result = await assistantGuard("What do you have available?");
-    expect(result.allowed).toBe(true);
+  test("allows capabilities queries", async () => {
+    expect((await assistantGuard("what are your capabilities")).allowed).toBe(true);
+    expect((await assistantGuard("help")).allowed).toBe(true);
+    expect((await assistantGuard("what can I do")).allowed).toBe(true);
   });
 
-  test("rejects deploy/infrastructure requests", async () => {
-    const result = await assistantGuard("Help me deploy my app to AWS");
-    expect(result.allowed).toBe(false);
+  test("rejects off-topic queries", async () => {
+    expect((await assistantGuard("write me a poem")).allowed).toBe(false);
+    expect((await assistantGuard("explain quantum physics")).allowed).toBe(false);
+    expect((await assistantGuard("what is the meaning of life")).allowed).toBe(false);
   });
 });

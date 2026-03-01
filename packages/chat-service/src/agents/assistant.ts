@@ -8,6 +8,12 @@ export const COMPONENT_KEYWORDS = [
   "rule", "rules", "voice", "orchestrator", "mcp", "job", "memory",
   "command", "hook", "guard", "package", "adapter", "core", "hono",
   "scheduler", "webhook",
+  // Database/storage backends (custom storage is a first-class use case)
+  "postgres", "redis", "mongo", "database", "sqlite", "supabase", "dynamodb",
+  // Monitoring/notification patterns
+  "monitor", "monitoring", "notification", "notify",
+  // Model/provider selection
+  "model", "provider", "openai", "anthropic", "groq", "openrouter",
 ];
 
 // Action keywords — only pass the guard when combined with a component keyword
@@ -22,6 +28,9 @@ export const STANDALONE_KEYWORDS = [
   "available", "registry", "what can", "what do you have", "kitn",
   "capabilities", "help", "what can i do", "env", "environment",
   "api key", ".env",
+  // Informational queries about project state
+  "installed", "what have", "show me", "list", "what's set up",
+  "get started", "getting started", "how do i",
 ];
 
 export interface GuardResult {

@@ -225,6 +225,8 @@ async function executeStep(step: PlanStep): Promise<void> {
       await addCommand([step.component!], { overwrite: true, yes: true });
       break;
     }
+    default:
+      throw new Error(`Unknown action type: ${(step as any).action}`);
   }
 }
 
@@ -282,34 +284,96 @@ export function validatePlan(
   const availableSet = new Set(availableComponents);
   const installedSet = new Set(installedComponents);
 
+  // Collect names being added/created in this plan for forward-reference checks
+  const beingAdded = new Set(
+    plan.steps
+      .filter((s) => s.action === "add" && s.component)
+      .map((s) => s.component!),
+  );
+  const beingCreated = new Set(
+    plan.steps
+      .filter((s) => s.action === "create" && s.name)
+      .map((s) => s.name!),
+  );
+
   for (const step of plan.steps) {
-    if (step.action === "add" && step.component) {
-      if (!availableSet.has(step.component)) {
-        errors.push(
-          `Cannot add "${step.component}" — it does not exist in the registry. ` +
-          `Use "create" action instead to scaffold a new custom component. ` +
-          `Available components: ${availableComponents.join(", ") || "none"}`
-        );
-      } else if (installedSet.has(step.component)) {
-        errors.push(
-          `"${step.component}" is already installed. Use "update" action to update it, or skip this step.`
-        );
-      }
-    }
-    if (step.action === "update" && step.component) {
-      if (!installedSet.has(step.component)) {
-        errors.push(
-          `Cannot update "${step.component}" — it is not installed. Use "add" to install it first.`
-        );
-      }
-    }
-    if (step.action === "link") {
-      if (step.toolName && !availableSet.has(step.toolName) && !installedSet.has(step.toolName)) {
-        if (!plan.steps.some((s) => s.action === "create" && s.name === step.toolName)) {
+    switch (step.action) {
+      case "add": {
+        if (!step.component) break;
+        if (!availableSet.has(step.component)) {
           errors.push(
-            `Cannot link tool "${step.toolName}" — it is not installed or being created in this plan.`
+            `Cannot add "${step.component}" — it does not exist in the registry. ` +
+            `Use "create" action instead to scaffold a new custom component. ` +
+            `Available components: ${availableComponents.join(", ") || "none"}`
+          );
+        } else if (installedSet.has(step.component)) {
+          errors.push(
+            `"${step.component}" is already installed. Use "update" action to update it, or skip this step.`
           );
         }
+        break;
+      }
+      case "create": {
+        if (!step.type) {
+          errors.push(`Create step is missing "type" (must be one of: agent, tool, skill, storage, cron).`);
+        }
+        if (!step.name) {
+          errors.push(`Create step is missing "name" for the new component.`);
+        }
+        break;
+      }
+      case "remove": {
+        if (!step.component) break;
+        if (!installedSet.has(step.component)) {
+          errors.push(
+            `Cannot remove "${step.component}" — it is not installed.`
+          );
+        }
+        break;
+      }
+      case "update": {
+        if (!step.component) break;
+        if (!installedSet.has(step.component)) {
+          errors.push(
+            `Cannot update "${step.component}" — it is not installed. Use "add" to install it first.`
+          );
+        }
+        break;
+      }
+      case "link": {
+        if (!step.toolName) {
+          errors.push(`Link step is missing "toolName".`);
+        } else if (
+          !installedSet.has(step.toolName) &&
+          !beingAdded.has(step.toolName) &&
+          !beingCreated.has(step.toolName)
+        ) {
+          errors.push(
+            `Cannot link tool "${step.toolName}" — it is not installed or being added/created in this plan.`
+          );
+        }
+        if (!step.agentName) {
+          errors.push(`Link step is missing "agentName".`);
+        }
+        break;
+      }
+      case "unlink": {
+        if (!step.toolName) {
+          errors.push(`Unlink step is missing "toolName".`);
+        }
+        if (!step.agentName) {
+          errors.push(`Unlink step is missing "agentName".`);
+        }
+        break;
+      }
+      case "registry-add": {
+        if (!step.namespace) {
+          errors.push(`Registry-add step is missing "namespace" (e.g. "@community").`);
+        }
+        if (!step.url) {
+          errors.push(`Registry-add step is missing "url" template.`);
+        }
+        break;
       }
     }
   }
@@ -406,13 +470,29 @@ export async function handleReadFile(input: ReadFileInput, cwd: string): Promise
 }
 
 export async function handleListFiles(input: ListFilesInput, cwd: string): Promise<string> {
-  const searchDir = input.directory ? join(cwd, input.directory) : cwd;
+  const searchDir = input.directory ? resolve(cwd, input.directory) : cwd;
+  if (!searchDir.startsWith(resolve(cwd))) {
+    return `Rejected: directory '${input.directory}' would escape project directory`;
+  }
   try {
     const entries = await readdir(searchDir, { recursive: true });
+    const pattern = input.pattern;
     const filtered = entries.filter((e) => {
-      if (input.pattern.startsWith("*.")) {
-        const ext = input.pattern.slice(1);
-        return String(e).endsWith(ext);
+      const name = String(e);
+      // Support *.ext patterns
+      if (pattern.startsWith("*.")) {
+        return name.endsWith(pattern.slice(1));
+      }
+      // Support **/*.ext patterns
+      if (pattern.startsWith("**/") && pattern.includes("*.")) {
+        const ext = pattern.slice(pattern.lastIndexOf("*.") + 1);
+        return name.endsWith(ext);
+      }
+      // Support directory/*.ext patterns
+      if (pattern.includes("/*.")) {
+        const dir = pattern.split("/*.")[0];
+        const ext = pattern.split("/*.")[1];
+        return name.startsWith(dir) && name.endsWith(ext);
       }
       return true;
     });

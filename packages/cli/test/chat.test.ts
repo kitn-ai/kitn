@@ -167,13 +167,27 @@ describe("formatPlan", () => {
 });
 
 describe("validatePlan", () => {
-  const available = ["weather-tool", "weather-agent", "core", "hono"];
-  const installed = ["core", "hono"];
+  // Full registry: all 37 components from the real registry
+  const available = [
+    "coding-agent", "recipe-agent", "supervisor-agent", "human-in-loop-agent",
+    "taskboard-agent", "knowledge-agent", "skills-agent", "weather-agent",
+    "memory-agent", "guardrails-agent", "cron-manager-agent", "compact-agent",
+    "hackernews-agent", "web-search-agent",
+    "hackernews-tool", "movies-tool", "cron-tools", "web-search-tool",
+    "weather-tool", "web-fetch-tool",
+    "step-by-step-reasoning", "concise-summarizer", "fact-check", "eli5", "pros-and-cons",
+    "memory-store", "conversation-store",
+    "core", "hono-openapi", "mcp-server", "elysia", "hono", "mcp-client",
+    "vercel-scheduler", "upstash-scheduler", "cloudflare-scheduler", "bullmq-scheduler",
+  ];
+  const installed = ["core", "hono", "weather-tool", "weather-agent"];
+
+  // --- ADD action tests ---
 
   test("accepts valid add for available, non-installed component", () => {
     const plan: ChatPlan = {
-      summary: "Add weather",
-      steps: [{ action: "add", component: "weather-tool", reason: "Need weather" }],
+      summary: "Add cron tools",
+      steps: [{ action: "add", component: "cron-tools", reason: "Need cron" }],
     };
     expect(validatePlan(plan, available, installed)).toEqual([]);
   });
@@ -199,6 +213,34 @@ describe("validatePlan", () => {
     expect(errors[0]).toContain("already installed");
   });
 
+  test("rejects add for multiple already-installed components", () => {
+    const plan: ChatPlan = {
+      summary: "Add things",
+      steps: [
+        { action: "add", component: "core", reason: "Need core" },
+        { action: "add", component: "hono", reason: "Need hono" },
+      ],
+    };
+    const errors = validatePlan(plan, available, installed);
+    expect(errors).toHaveLength(2);
+    expect(errors[0]).toContain("core");
+    expect(errors[1]).toContain("hono");
+  });
+
+  test("accepts add for multiple valid registry components", () => {
+    const plan: ChatPlan = {
+      summary: "Add cron setup",
+      steps: [
+        { action: "add", component: "cron-tools", reason: "Cron tools" },
+        { action: "add", component: "cron-manager-agent", reason: "Cron agent" },
+        { action: "add", component: "upstash-scheduler", reason: "Scheduler" },
+      ],
+    };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  // --- CREATE action tests ---
+
   test("accepts create for custom components", () => {
     const plan: ChatPlan = {
       summary: "Create custom agent",
@@ -207,10 +249,20 @@ describe("validatePlan", () => {
     expect(validatePlan(plan, available, installed)).toEqual([]);
   });
 
+  test("accepts create for any custom type", () => {
+    const plan: ChatPlan = {
+      summary: "Create custom tool",
+      steps: [{ action: "create", type: "tool", name: "slack-notifier", reason: "Slack integration" }],
+    };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  // --- UPDATE action tests ---
+
   test("rejects update for non-installed component", () => {
     const plan: ChatPlan = {
-      summary: "Update weather tool",
-      steps: [{ action: "update", component: "weather-tool", reason: "Update" }],
+      summary: "Update recipe-agent",
+      steps: [{ action: "update", component: "recipe-agent", reason: "Update" }],
     };
     const errors = validatePlan(plan, available, installed);
     expect(errors).toHaveLength(1);
@@ -222,6 +274,141 @@ describe("validatePlan", () => {
       summary: "Update core",
       steps: [{ action: "update", component: "core", reason: "Update" }],
     };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  test("accepts update for installed tool", () => {
+    const plan: ChatPlan = {
+      summary: "Update weather-tool",
+      steps: [{ action: "update", component: "weather-tool", reason: "Update" }],
+    };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  // --- LINK action tests ---
+
+  test("accepts link for installed tool to installed agent", () => {
+    const plan: ChatPlan = {
+      summary: "Link weather",
+      steps: [{ action: "link", toolName: "weather-tool", agentName: "weather-agent", reason: "Wire" }],
+    };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  test("rejects link for tool that is not installed or being created", () => {
+    const plan: ChatPlan = {
+      summary: "Link unknown tool",
+      steps: [{ action: "link", toolName: "nonexistent-tool", agentName: "weather-agent", reason: "Wire" }],
+    };
+    const errors = validatePlan(plan, available, installed);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("nonexistent-tool");
+    expect(errors[0]).toContain("not installed or being added/created");
+  });
+
+  test("accepts link for tool being created in same plan", () => {
+    const plan: ChatPlan = {
+      summary: "Create and link",
+      steps: [
+        { action: "create", type: "tool", name: "custom-tool", reason: "New tool" },
+        { action: "link", toolName: "custom-tool", agentName: "weather-agent", reason: "Wire" },
+      ],
+    };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  test("accepts link for tool being added from registry in same plan", () => {
+    const plan: ChatPlan = {
+      summary: "Add and link",
+      steps: [
+        { action: "add", component: "hackernews-tool", reason: "HN tool" },
+        { action: "link", toolName: "hackernews-tool", agentName: "weather-agent", reason: "Wire" },
+      ],
+    };
+    // hackernews-tool is available but not installed, but it's being added in the plan
+    // The link validation checks if tool is in available OR installed OR being created
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  // --- REMOVE action tests ---
+
+  test("accepts remove for any component (no validation needed)", () => {
+    const plan: ChatPlan = {
+      summary: "Remove weather",
+      steps: [{ action: "remove", component: "weather-agent", reason: "Not needed" }],
+    };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  // --- UNLINK action tests ---
+
+  test("accepts unlink for any tool-agent pair", () => {
+    const plan: ChatPlan = {
+      summary: "Unlink",
+      steps: [{ action: "unlink", toolName: "weather-tool", agentName: "weather-agent", reason: "Disconnect" }],
+    };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  // --- REGISTRY-ADD action tests ---
+
+  test("accepts registry-add with namespace and url", () => {
+    const plan: ChatPlan = {
+      summary: "Add registry",
+      steps: [{
+        action: "registry-add",
+        namespace: "@acme",
+        url: "https://acme.com/r/{type}/{name}.json",
+        reason: "External registry",
+      }],
+    };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  // --- MULTI-STEP plan tests ---
+
+  test("validates complex multi-step plan with mixed actions", () => {
+    const plan: ChatPlan = {
+      summary: "Full setup",
+      steps: [
+        { action: "add", component: "hackernews-tool", reason: "HN data" },
+        { action: "add", component: "hackernews-agent", reason: "HN agent" },
+        { action: "create", type: "tool", name: "custom-summarizer", reason: "Custom" },
+        { action: "link", toolName: "hackernews-tool", agentName: "hackernews-agent", reason: "Wire" },
+      ],
+    };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  test("catches multiple errors across different action types", () => {
+    const plan: ChatPlan = {
+      summary: "Bad plan",
+      steps: [
+        { action: "add", component: "unicorn-tool", reason: "Magic" },
+        { action: "add", component: "core", reason: "Already there" },
+        { action: "update", component: "recipe-agent", reason: "Not installed" },
+        { action: "link", toolName: "ghost-tool", agentName: "weather-agent", reason: "Wire" },
+      ],
+    };
+    const errors = validatePlan(plan, available, installed);
+    expect(errors).toHaveLength(4);
+    expect(errors[0]).toContain("unicorn-tool");
+    expect(errors[1]).toContain("core");
+    expect(errors[2]).toContain("recipe-agent");
+    expect(errors[3]).toContain("ghost-tool");
+  });
+
+  test("accepts empty plan", () => {
+    const plan: ChatPlan = { summary: "Nothing", steps: [] };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  test("handles plan with add step missing component name", () => {
+    const plan: ChatPlan = {
+      summary: "Missing name",
+      steps: [{ action: "add", reason: "No component" }],
+    };
+    // Should not crash — just skip validation for steps without component
     expect(validatePlan(plan, available, installed)).toEqual([]);
   });
 });

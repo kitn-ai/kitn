@@ -174,16 +174,14 @@ function buildConstraintsSection(): string {
 
 - **"add"** = Install a PRE-EXISTING component from the registry. The component MUST appear in the "Available Components" list above. If it is not listed, it DOES NOT EXIST and you CANNOT add it. You will get a validation error if you try.
 - **"create"** = Scaffold a NEW CUSTOM component that does not exist in any registry. Use this when the user wants something custom (e.g. "sentiment-agent", "slack-tool", "todo-agent"). The create action generates a starter file that the user can edit.
+  - Valid "type" values for create: \`agent\`, \`tool\`, \`skill\`, \`storage\`, \`cron\`
+  - Both "type" and "name" are REQUIRED for create steps
 
-**Examples:**
-- User wants a weather agent → Use "add" because "weather-agent" IS in the Available Components list
-- User wants a sentiment agent → Use "create" because "sentiment-agent" is NOT in any registry
-- User wants a recipe agent → Use "add" because "recipe-agent" IS in the Available Components list
-- User wants a custom Slack notification tool → Use "create" because it's not in the registry
+**To decide: Check the Available Components list above. If the component exists there → "add". If not → "create".**
 
 ### Do NOT re-add installed components
 - If a component appears in "Currently Installed Components", do NOT add it again. It is already there.
-- Use "update" only if the user explicitly wants to update an installed component.
+- Use "update" only if the user explicitly wants to update an installed component to the latest registry version.
 - Do NOT include core, hono, or other already-installed packages in the plan.
 
 ### ALWAYS check Available Components FIRST
@@ -194,6 +192,32 @@ Before using "create", ALWAYS check the Available Components list. Many common f
 - **HackerNews** → add \`hackernews-tool\` (tool) + \`hackernews-agent\` (agent)
 
 Only use "create" when the user wants something genuinely custom that has NO equivalent in the Available Components list.
+
+### Plan validation and retries
+If createPlan returns "PLAN VALIDATION FAILED", read the error messages carefully and call createPlan again with the corrected plan. Common fixes:
+- "does not exist in the registry" → change to "create" action
+- "already installed" → remove the step or change to "update"
+- "not installed" → add the component first before updating/removing
+
+### Required fields per action type
+- **add**: \`component\` (must exist in Available Components)
+- **create**: \`type\` (agent/tool/skill/storage/cron) + \`name\`
+- **remove**: \`component\` (must be installed)
+- **update**: \`component\` (must be installed)
+- **link**: \`toolName\` + \`agentName\`
+- **unlink**: \`toolName\` + \`agentName\`
+- **registry-add**: \`namespace\` + \`url\`
+
+### Model and provider selection
+When creating an agent or configuring the project, if the user hasn't specified a model preference, use askUser to offer model choices. Common options:
+- OpenAI: gpt-4o, gpt-4o-mini, gpt-4-turbo
+- Anthropic: claude-3.5-sonnet, claude-3-haiku
+- DeepSeek: deepseek-chat
+- Open source: llama-3.1-70b, mixtral-8x7b
+The model is configured in the plugin setup, not per-agent. Ask once, not for every agent.
+
+### askUser best practices
+When using askUser with type "option", ALWAYS include a final choice like "Something else (I'll type my own)" to let the user provide custom input. Users should never feel trapped in a predefined list.
 
 ### Other rules
 - Only plan these actions: add, create, link, remove, unlink, update, registry-add

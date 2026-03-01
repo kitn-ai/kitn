@@ -1,0 +1,13 @@
+{
+  "name": "drizzle-storage",
+  "type": "kitn:storage",
+  "description": "Drizzle ORM storage adapter — works with PostgreSQL, MySQL, and SQLite via Drizzle",
+  "dependencies": [],
+  "registryDependencies": ["core"],
+  "files": ["drizzle-storage.ts"],
+  "docs": "Install `drizzle-orm` and your driver (`@neondatabase/serverless`, `better-sqlite3`, `mysql2`, etc.). Call `createDrizzleStorage({ db, dialect })`. Tables and schema are defined inline — run `drizzle.migrate()` or use the auto-migrate option.",
+  "categories": ["storage", "drizzle", "orm", "database"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 
 const planStepSchema = z.object({
-  action: z.enum(["add", "create", "link", "remove", "unlink", "registry-add"]),
+  action: z.enum(["add", "create", "link", "remove", "unlink", "registry-add", "update"]),
   component: z
     .string()
     .optional()
@@ -47,6 +47,6 @@ export type ChatPlan = z.infer<typeof chatPlanSchema>;
 export const createPlanTool = tool({
   description:
     "Create an execution plan of kitn CLI actions. Call this once with the complete plan after analyzing the user's request against the available and installed components.",
-  inputSchema: chatPlanSchema,
+  parameters: chatPlanSchema,
   execute: async (input: ChatPlan) => input,
 });

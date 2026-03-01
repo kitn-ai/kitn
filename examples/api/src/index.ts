@@ -47,7 +47,7 @@ const plugin = createAIPlugin({
   model: (id) => openrouter(id ?? env.DEFAULT_MODEL),
   storage: createFileStorage({ dataDir: "./data" }),
   resilience: { maxRetries: 2, baseDelayMs: 500 },
-  compaction: { threshold: 20, preserveRecent: 4 },
+  compaction: { tokenLimit: 80_000, preserveTokens: 8_000 },
   hooks: { level: "summary" },
   // Enable /crons API routes (actual scheduling handled by InternalScheduler below)
   cronScheduler: { async schedule() {}, async unschedule() {} },

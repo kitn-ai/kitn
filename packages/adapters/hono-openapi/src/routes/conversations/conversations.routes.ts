@@ -91,7 +91,7 @@ export function createConversationsRoutes(ctx: PluginContext) {
       method: "post", path: "/{id}/compact", tags: ["Conversations"], summary: "Compact conversation by summarizing older messages",
       request: {
         params: z.object({ id: z.string().openapi({ example: "conv_kanban_taskboard" }) }),
-        body: { content: { "application/json": { schema: z.object({ preserveRecent: z.number().optional(), prompt: z.string().optional(), model: z.string().optional() }) } }, required: false },
+        body: { content: { "application/json": { schema: z.object({ preserveTokens: z.number().optional(), tokenLimit: z.number().optional(), prompt: z.string().optional(), model: z.string().optional() }) } }, required: false },
       },
       responses: {
         200: { description: "Compaction result", content: { "application/json": { schema: z.object({ conversationId: z.string(), summary: z.string(), summarizedCount: z.number(), preservedCount: z.number(), newMessageCount: z.number() }) } } },

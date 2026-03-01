@@ -1,0 +1,13 @@
+{
+  "name": "interview-prep",
+  "type": "kitn:skill",
+  "description": "Conducts mock interviews with realistic questions and constructive feedback",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill for interview practice. Supports behavioral, technical, and case interviews. Phase: both.",
+  "categories": ["interaction", "interview", "career", "practice"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

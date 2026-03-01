@@ -1,0 +1,13 @@
+{
+  "name": "role-play",
+  "type": "kitn:skill",
+  "description": "Adopts specified personas for practice scenarios — customer, manager, investor, stakeholder",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill for role-play practice scenarios. Phase: both.",
+  "categories": ["interaction", "roleplay", "practice", "persona"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

@@ -110,14 +110,19 @@ describe("createComponentInProject", () => {
     expect(existsSync(join(testDir, "src/ai/index.ts"))).toBe(false);
   });
 
-  test("throws if file already exists", async () => {
+  test("overwrites existing file when overwrite option is set", async () => {
     await setupProject(testDir);
     await mkdir(join(testDir, "src/ai/agents"), { recursive: true });
     await writeFile(join(testDir, "src/ai/agents/weather-agent.ts"), "existing");
 
-    expect(
-      createComponentInProject("agent", "weather-agent", { cwd: testDir })
-    ).rejects.toThrow("already exists");
+    const { filePath } = await createComponentInProject("agent", "weather-agent", {
+      cwd: testDir,
+      overwrite: true,
+    });
+
+    const content = await readFile(filePath, "utf-8");
+    expect(content).toContain("registerAgent");
+    expect(content).not.toBe("existing");
   });
 
   test("throws if no kitn.json", async () => {

@@ -120,7 +120,7 @@ const BARREL_TYPES: ComponentType[] = ["agent", "tool", "skill", "cron"];
 export async function createComponentInProject(
   type: string,
   name: string,
-  opts?: { cwd?: string }
+  opts?: { cwd?: string; overwrite?: boolean }
 ): Promise<{ filePath: string; barrelUpdated: boolean }> {
   if (!VALID_TYPES.includes(type as ComponentType)) {
     throw new Error(
@@ -145,8 +145,13 @@ export async function createComponentInProject(
   // Check file doesn't already exist
   const dummyContent = ""; // only need to check existence
   const status = await checkFileStatus(filePath, dummyContent);
-  if (status !== FileStatus.New) {
-    throw new Error(`File already exists: ${filePath}`);
+  if (status !== FileStatus.New && !opts?.overwrite) {
+    const shouldOverwrite = await p.confirm({
+      message: `${pc.yellow("File already exists:")} ${filePath}\n  Overwrite it with a fresh scaffold?`,
+    });
+    if (p.isCancel(shouldOverwrite) || !shouldOverwrite) {
+      throw new Error(`Skipped — ${filePath} already exists.`);
+    }
   }
 
   // Generate source

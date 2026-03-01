@@ -182,6 +182,15 @@ These queries don't match keywords but the LLM classifier correctly handles them
 | 97 | "explain quantum physics to me" | Reject | off-topic |
 | 98 | "build me a React app" | Reject | off-topic |
 
+### 15. File-Exists Handling (CLI create flow)
+
+| # | Scenario | Expected Behavior |
+|---|----------|-------------------|
+| 99 | `kitn create agent sentiment-agent` when file exists | Prompt: "File already exists — overwrite?" |
+| 100 | User confirms overwrite | File is overwritten with fresh scaffold |
+| 101 | User declines overwrite | Skipped — no changes, no crash |
+| 102 | Chat flow creates component that already exists | Auto-overwrites (user already confirmed plan) |
+
 ## Cross-Model Consistency Findings
 
 From testing the same scenarios across all 3 models:

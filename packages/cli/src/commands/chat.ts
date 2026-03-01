@@ -201,8 +201,8 @@ async function executeStep(step: PlanStep): Promise<void> {
       break;
     }
     case "create": {
-      const { createCommand } = await import("./create.js");
-      await createCommand(step.type!, step.name!);
+      const { createComponentInProject } = await import("./create.js");
+      await createComponentInProject(step.type!, step.name!, { overwrite: true });
       break;
     }
     case "link": {

@@ -61,6 +61,9 @@ registry/_staging/
 # Test projects (CLI testing scratch space)
 test-projects/
 
+# Worktrees
+.worktrees/
+
 # Misc
 .cache/
 .parcel-cache/

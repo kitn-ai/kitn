@@ -1,0 +1,16 @@
+{
+  "name": "image-generator",
+  "type": "kitn:tool",
+  "description": "Generate images from text prompts using OpenAI DALL-E API",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "OPENAI_API_KEY": { "description": "OpenAI API key", "url": "https://platform.openai.com/api-keys", "required": true, "secret": true }
+  },
+  "files": ["image-generator.ts"],
+  "docs": "Requires OPENAI_API_KEY env var. Generates images using DALL-E.",
+  "categories": ["api", "image", "ai", "creative"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

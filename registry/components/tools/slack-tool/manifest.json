@@ -1,0 +1,16 @@
+{
+  "name": "slack-tool",
+  "type": "kitn:tool",
+  "description": "Send messages and interact with Slack workspaces",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "SLACK_BOT_TOKEN": { "description": "Slack Bot User OAuth Token (xoxb-...)", "url": "https://api.slack.com/apps", "required": true, "secret": true }
+  },
+  "files": ["slack-tool.ts"],
+  "docs": "Requires SLACK_BOT_TOKEN env var. Send messages, list channels, and search in Slack.",
+  "categories": ["api", "slack", "messaging"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

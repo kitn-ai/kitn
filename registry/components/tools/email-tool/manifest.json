@@ -1,0 +1,16 @@
+{
+  "name": "email-tool",
+  "type": "kitn:tool",
+  "description": "Send emails via Resend API — supports HTML, text, and attachments",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "RESEND_API_KEY": { "description": "Resend API key", "url": "https://resend.com/api-keys", "required": true, "secret": true }
+  },
+  "files": ["email-tool.ts"],
+  "docs": "Requires RESEND_API_KEY env var. Send transactional emails via Resend. Supports HTML body, text body, and from/to/subject.",
+  "categories": ["api", "email", "communication"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

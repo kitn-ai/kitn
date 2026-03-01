@@ -1,0 +1,21 @@
+{
+  "name": "github-tool",
+  "type": "kitn:tool",
+  "description": "Interact with GitHub — search repos, list issues, create issues, get file contents, list PRs",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "GITHUB_TOKEN": {
+      "description": "GitHub personal access token (classic or fine-grained)",
+      "url": "https://github.com/settings/tokens",
+      "required": true,
+      "secret": true
+    }
+  },
+  "files": ["github-tool.ts"],
+  "docs": "Requires GITHUB_TOKEN env var. Provides tools for searching repos, listing/creating issues, reading files, and listing PRs.",
+  "categories": ["api", "github", "devtools"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

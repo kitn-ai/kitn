@@ -1,0 +1,16 @@
+{
+  "name": "screenshot-tool",
+  "type": "kitn:tool",
+  "description": "Capture screenshots of web pages using ScreenshotOne API",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "SCREENSHOTONE_API_KEY": { "description": "ScreenshotOne access key", "url": "https://screenshotone.com/", "required": true, "secret": true }
+  },
+  "files": ["screenshot-tool.ts"],
+  "docs": "Requires SCREENSHOTONE_API_KEY env var. Captures webpage screenshots as URLs.",
+  "categories": ["api", "screenshot", "web"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "pdf-generator",
+  "type": "kitn:tool",
+  "description": "Generate PDFs from HTML content using a headless browser service",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "SCREENSHOTONE_API_KEY": { "description": "ScreenshotOne access key (reuses screenshot service for PDF generation)", "url": "https://screenshotone.com/", "required": true, "secret": true }
+  },
+  "files": ["pdf-generator.ts"],
+  "docs": "Requires SCREENSHOTONE_API_KEY env var. Generates PDFs from HTML or URLs via ScreenshotOne's PDF endpoint.",
+  "categories": ["api", "pdf", "document"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

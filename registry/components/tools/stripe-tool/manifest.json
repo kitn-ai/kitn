@@ -1,0 +1,16 @@
+{
+  "name": "stripe-tool",
+  "type": "kitn:tool",
+  "description": "Interact with Stripe — list customers, create charges, manage subscriptions",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "STRIPE_SECRET_KEY": { "description": "Stripe secret API key (sk_live_... or sk_test_...)", "url": "https://dashboard.stripe.com/apikeys", "required": true, "secret": true }
+  },
+  "files": ["stripe-tool.ts"],
+  "docs": "Requires STRIPE_SECRET_KEY env var. Provides read-only access to customers, charges, and subscriptions.",
+  "categories": ["api", "stripe", "payments"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

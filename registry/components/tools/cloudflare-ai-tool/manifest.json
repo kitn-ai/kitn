@@ -1,0 +1,17 @@
+{
+  "name": "cloudflare-ai-tool",
+  "type": "kitn:tool",
+  "description": "Run AI inference on Cloudflare Workers AI — text generation, embeddings, image classification",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "CF_ACCOUNT_ID": { "description": "Cloudflare account ID", "required": true, "secret": false },
+    "CF_API_TOKEN": { "description": "Cloudflare API token with Workers AI permissions", "required": true, "secret": true }
+  },
+  "files": ["cloudflare-ai-tool.ts"],
+  "docs": "Requires CF_ACCOUNT_ID and CF_API_TOKEN. Run inference on Cloudflare Workers AI models.",
+  "categories": ["cloudflare", "ai", "inference"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

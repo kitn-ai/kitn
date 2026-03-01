@@ -1,0 +1,17 @@
+{
+  "name": "cloudflare-vectorize-tool",
+  "type": "kitn:tool",
+  "description": "Vector search using Cloudflare Vectorize — insert, query, and manage vector indexes",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "CF_ACCOUNT_ID": { "description": "Cloudflare account ID", "required": true, "secret": false },
+    "CF_API_TOKEN": { "description": "Cloudflare API token with Vectorize permissions", "required": true, "secret": true }
+  },
+  "files": ["cloudflare-vectorize-tool.ts"],
+  "docs": "Requires CF_ACCOUNT_ID and CF_API_TOKEN. Query and manage Cloudflare Vectorize indexes.",
+  "categories": ["cloudflare", "vector", "search", "rag"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

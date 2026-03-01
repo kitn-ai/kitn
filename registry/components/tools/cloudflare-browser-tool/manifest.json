@@ -1,0 +1,17 @@
+{
+  "name": "cloudflare-browser-tool",
+  "type": "kitn:tool",
+  "description": "Headless browser via Cloudflare Browser Rendering API — screenshots, scraping, PDF generation",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "envVars": {
+    "CF_ACCOUNT_ID": { "description": "Cloudflare account ID", "required": true, "secret": false },
+    "CF_API_TOKEN": { "description": "Cloudflare API token with Browser Rendering permissions", "required": true, "secret": true }
+  },
+  "files": ["cloudflare-browser-tool.ts"],
+  "docs": "Requires CF_ACCOUNT_ID and CF_API_TOKEN. Uses Cloudflare Browser Rendering API for headless browser operations.",
+  "categories": ["cloudflare", "browser", "scraping"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

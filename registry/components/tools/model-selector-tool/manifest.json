@@ -1,0 +1,13 @@
+{
+  "name": "model-selector-tool",
+  "type": "kitn:tool",
+  "description": "Queries the OpenRouter model catalog — filter by capabilities, cost, modality, context length, and features to find the best model for a task",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "files": ["model-selector-tool.ts"],
+  "docs": "Fetches the OpenRouter model catalog (/api/v1/models) and returns filtered, compact results. No API key required for the catalog endpoint. Supports filtering by: text search, required capabilities (tools, reasoning, vision, audio, structured output), price ceiling, minimum context length, and modality. Returns only the fields needed for model selection, keeping token usage low.",
+  "categories": ["ai", "models", "selection", "utility"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

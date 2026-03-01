@@ -1,0 +1,13 @@
+{
+  "name": "model-advisor-agent",
+  "type": "kitn:agent",
+  "description": "Model recommendation agent — helps choose the best LLM for a task based on requirements, budget, and capabilities",
+  "dependencies": ["ai"],
+  "registryDependencies": ["core", "model-selector-tool"],
+  "files": ["model-advisor-agent.ts"],
+  "docs": "Conversational agent that helps users pick the right LLM. Asks about their use case, budget, required features (tools, reasoning, vision, etc.), and uses the model-selector-tool to query the OpenRouter catalog. Provides ranked recommendations with reasoning.",
+  "categories": ["ai", "models", "recommendation", "advisor"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

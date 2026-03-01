@@ -1,0 +1,13 @@
+{
+  "name": "task-planner-agent",
+  "type": "kitn:agent",
+  "description": "Task decomposition agent — breaks down goals, requests, or problems into structured, actionable task lists",
+  "dependencies": ["ai"],
+  "registryDependencies": ["core", "json-validator"],
+  "files": ["task-planner-agent.ts"],
+  "docs": "Takes unstructured goals or requests and produces structured task lists with priorities, dependencies, and estimated effort. Can be invoked by users directly or by other agents that need task planning. Uses json-validator for structured output.",
+  "categories": ["planning", "tasks", "decomposition", "productivity"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

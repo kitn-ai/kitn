@@ -5,10 +5,10 @@
   "main": "src/index.ts",
   "types": "src/index.ts",
   "dependencies": {
-    "@asteasolutions/zod-to-openapi": "^8.4.1"
+    "@asteasolutions/zod-to-openapi": "^8.4.1",
+    "@kitnai/core": "workspace:*"
   },
   "peerDependencies": {
-    "@kitnai/core": "workspace:*",
     "zod": "^4.0.0"
   },
   "devDependencies": {

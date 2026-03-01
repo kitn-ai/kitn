@@ -44,10 +44,10 @@ export interface FallbackContext {
 }
 
 export interface CompactionConfig {
-  /** Auto-compact when message count exceeds threshold (default: 20) */
-  threshold?: number;
-  /** Number of recent messages to preserve (default: 4) */
-  preserveRecent?: number;
+  /** Token limit that triggers compaction (default: 80_000) */
+  tokenLimit?: number;
+  /** Estimated tokens to preserve from recent messages (default: 8_000) */
+  preserveTokens?: number;
   /** Custom system prompt for summarization LLM call */
   prompt?: string;
   /** Model to use for compaction (defaults to plugin default) */

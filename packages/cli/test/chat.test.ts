@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { resolveServiceUrl, buildRequestPayload, formatPlan } from "../src/commands/chat.js";
+import { resolveServiceUrl, buildRequestPayload, formatPlan, fetchGlobalRegistries } from "../src/commands/chat.js";
 import type { ChatPlan } from "../src/commands/chat-types.js";
 
 describe("resolveServiceUrl", () => {
@@ -128,6 +128,26 @@ describe("formatPlan", () => {
     expect(output).toContain("Tool no longer used by this agent");
   });
 
+  test("formats registry-add steps", () => {
+    const plan: ChatPlan = {
+      summary: "Add community registry and install sentiment tool",
+      steps: [
+        {
+          action: "registry-add",
+          namespace: "@community",
+          url: "https://community.example.com/r/{type}/{name}.json",
+          reason: "Need access to community components",
+        },
+        { action: "add", component: "@community/sentiment-tool", reason: "User wants sentiment analysis" },
+      ],
+    };
+    const output = formatPlan(plan);
+    expect(output).toContain("@community");
+    expect(output).toContain("sentiment-tool");
+    expect(output).toContain("1.");
+    expect(output).toContain("2.");
+  });
+
   test("formats multiple steps with numbering", () => {
     const plan: ChatPlan = {
       summary: "Set up weather features",
@@ -141,5 +161,98 @@ describe("formatPlan", () => {
     expect(output).toContain("1.");
     expect(output).toContain("2.");
     expect(output).toContain("3.");
+  });
+});
+
+describe("fetchGlobalRegistries", () => {
+  test("returns empty array when all registries are already configured", async () => {
+    // @kitn is the only entry in the global directory, and it's typically configured
+    const result = await fetchGlobalRegistries(["@kitn"]);
+    expect(result).toEqual([]);
+  });
+
+  test("returns empty array on network failure", async () => {
+    // Mock by using a non-existent configured namespace — the function handles errors gracefully
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = () => Promise.reject(new Error("Network error"));
+    try {
+      const result = await fetchGlobalRegistries([]);
+      expect(result).toEqual([]);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("filters out configured namespaces from global directory", async () => {
+    const mockDirectory = [
+      { name: "@kitn", url: "https://kitn.example.com/r/{type}/{name}.json" },
+      { name: "@community", url: "https://community.example.com/r/{type}/{name}.json" },
+    ];
+    const mockIndex = {
+      version: "1.0.0",
+      items: [
+        { name: "test-tool", type: "kitn:tool", description: "A test tool" },
+      ],
+    };
+
+    let fetchCount = 0;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async (url: string) => {
+      fetchCount++;
+      if (url.includes("registries.json")) {
+        return new Response(JSON.stringify(mockDirectory));
+      }
+      if (url.includes("community.example.com") && url.includes("registry.json")) {
+        return new Response(JSON.stringify(mockIndex));
+      }
+      return new Response("Not found", { status: 404 });
+    }) as typeof fetch;
+
+    try {
+      const result = await fetchGlobalRegistries(["@kitn"]);
+      expect(result).toHaveLength(1);
+      expect(result[0].namespace).toBe("@community");
+      expect(result[0].url).toBe("https://community.example.com/r/{type}/{name}.json");
+      expect(result[0].items).toHaveLength(1);
+      expect(result[0].items[0].name).toBe("test-tool");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test("skips registries whose index fetch fails", async () => {
+    const mockDirectory = [
+      { name: "@failing", url: "https://failing.example.com/r/{type}/{name}.json" },
+      { name: "@working", url: "https://working.example.com/r/{type}/{name}.json" },
+    ];
+    const mockIndex = {
+      version: "1.0.0",
+      items: [
+        { name: "good-tool", type: "kitn:tool", description: "A working tool" },
+      ],
+    };
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async (url: string) => {
+      if (url.includes("registries.json")) {
+        return new Response(JSON.stringify(mockDirectory));
+      }
+      if (url.includes("failing.example.com")) {
+        return new Response("Server error", { status: 500 });
+      }
+      if (url.includes("working.example.com") && url.includes("registry.json")) {
+        return new Response(JSON.stringify(mockIndex));
+      }
+      return new Response("Not found", { status: 404 });
+    }) as typeof fetch;
+
+    try {
+      const result = await fetchGlobalRegistries([]);
+      expect(result).toHaveLength(1);
+      expect(result[0].namespace).toBe("@working");
+      expect(result[0].items[0].name).toBe("good-tool");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });

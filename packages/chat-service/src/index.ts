@@ -9,6 +9,7 @@ import {
   buildSystemPrompt,
   type PromptContext,
   type RegistryItem,
+  type GlobalRegistryEntry,
 } from "./prompts/system.js";
 import { createPlanTool } from "./tools/create-plan.js";
 
@@ -46,7 +47,11 @@ app.post("/api/chat", async (c) => {
   const body = await c.req.json();
   const { message, metadata } = body as {
     message: string;
-    metadata?: { registryIndex?: RegistryItem[]; installed?: string[] };
+    metadata?: {
+      registryIndex?: RegistryItem[];
+      installed?: string[];
+      globalRegistryIndex?: GlobalRegistryEntry[];
+    };
   };
 
   if (!message) {
@@ -61,6 +66,7 @@ app.post("/api/chat", async (c) => {
   const promptContext: PromptContext = {
     registryIndex: metadata?.registryIndex ?? [],
     installed: metadata?.installed ?? [],
+    globalRegistryIndex: metadata?.globalRegistryIndex,
   };
 
   const systemPrompt = buildSystemPrompt(promptContext);

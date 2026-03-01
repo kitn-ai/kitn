@@ -2,7 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 
 const planStepSchema = z.object({
-  action: z.enum(["add", "create", "link", "remove", "unlink"]),
+  action: z.enum(["add", "create", "link", "remove", "unlink", "registry-add"]),
   component: z
     .string()
     .optional()
@@ -21,6 +21,14 @@ const planStepSchema = z.object({
     .describe("Description for create (what the component does)"),
   toolName: z.string().optional().describe("Tool name for link/unlink"),
   agentName: z.string().optional().describe("Agent name for link/unlink"),
+  namespace: z
+    .string()
+    .optional()
+    .describe("Registry namespace for registry-add (e.g. '@community')"),
+  url: z
+    .string()
+    .optional()
+    .describe("Registry URL template for registry-add"),
   reason: z.string().describe("Why this step is needed"),
 });
 

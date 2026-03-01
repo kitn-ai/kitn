@@ -70,6 +70,36 @@ describe("createPlanTool", () => {
     expect(result).toEqual(plan);
   });
 
+  test("accepts a valid 'registry-add' step and returns it", async () => {
+    const plan = {
+      summary: "Add the @community registry and install their sentiment tool",
+      steps: [
+        {
+          action: "registry-add" as const,
+          namespace: "@community",
+          url: "https://community.example.com/r/{type}/{name}.json",
+          reason: "User needs a component from the @community registry",
+        },
+        {
+          action: "add" as const,
+          component: "@community/sentiment-tool",
+          reason: "User wants sentiment analysis capability",
+        },
+      ],
+    };
+
+    const result = await createPlanTool.execute!(plan, {
+      toolCallId: "test-registry-add",
+      messages: [],
+    });
+
+    expect(result).toEqual(plan);
+    expect(result.steps).toHaveLength(2);
+    expect(result.steps[0].action).toBe("registry-add");
+    expect(result.steps[0].namespace).toBe("@community");
+    expect(result.steps[0].url).toContain("{type}");
+  });
+
   test("accepts a multi-step plan", async () => {
     const plan = {
       summary: "Set up a weather-aware assistant with custom Slack notifications",

@@ -1,7 +1,9 @@
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, readFile } from "fs/promises";
 import { join, dirname } from "path";
 import type { KitnConfig } from "../utils/config.js";
 import { getRegistryUrl } from "../utils/config.js";
+
+const TEMPLATE_PATH = join(import.meta.dirname, "rules-template.md");
 
 // ---------- Types ----------
 
@@ -38,7 +40,7 @@ const FALLBACK_CONFIG: RulesConfig = {
       format: "mdc",
       frontmatter: {
         description: "kitn AI agent framework conventions and patterns",
-        globs: "src/ai/**/*.ts, kitn.json",
+        globs: "src/ai/**/*.ts, src/ai/**/*.md, kitn.json, kitn.lock",
       },
     },
     {
@@ -62,34 +64,14 @@ const FALLBACK_CONFIG: RulesConfig = {
   ],
 };
 
-const FALLBACK_TEMPLATE = `# kitn AI Agent Framework
+let _fallbackTemplate: string | undefined;
 
-This project uses **kitn** to build multi-agent AI systems.
-
-## Project Structure
-
-AI components live under \`{base}\`:
-
-- \`{agents}/\` — Agent definitions
-- \`{tools}/\` — Tool definitions
-- \`{skills}/\` — Skill files (markdown)
-- \`{storage}/\` — Storage providers
-- \`{crons}/\` — Cron job definitions
-
-## Patterns
-
-- Agents: \`registerAgent({ name, system, tools })\` from \`@kitn/core\`
-- Tools: \`tool()\` from \`ai\` + \`registerTool()\` from \`@kitn/core\`
-- Always use \`.js\` extension in relative imports
-- Use \`@kitn/core\` for core imports, \`ai\` for Vercel AI SDK
-
-## CLI
-
-- \`kitn add <name>\` — install from registry
-- \`kitn create <type> <name>\` — scaffold locally
-- \`kitn link tool <name> --to <agent>\` — wire a tool to an agent
-- \`kitn list\` — browse components
-`;
+async function loadFallbackTemplate(): Promise<string> {
+  if (!_fallbackTemplate) {
+    _fallbackTemplate = await readFile(TEMPLATE_PATH, "utf-8");
+  }
+  return _fallbackTemplate;
+}
 
 // ---------- Registry fetch helpers ----------
 
@@ -131,7 +113,7 @@ export async function fetchRulesTemplate(
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.text();
   } catch {
-    return FALLBACK_TEMPLATE;
+    return loadFallbackTemplate();
   }
 }
 

@@ -6,6 +6,64 @@ import { readUserConfig } from "./config.js";
 import type { ChatPlan, PlanStep } from "./chat-types.js";
 
 const DEFAULT_SERVICE_URL = "https://chat.kitn.dev";
+const GLOBAL_REGISTRY_URL = "https://kitn-ai.github.io/registry/registries.json";
+
+interface GlobalDirectoryEntry {
+  name: string;
+  url: string;
+  homepage?: string;
+  description?: string;
+}
+
+interface GlobalRegistryEntry {
+  namespace: string;
+  url: string;
+  items: Array<{ name: string; type: string; description: string; registryDependencies?: string[] }>;
+}
+
+/**
+ * Fetch the global registry directory and return indices for registries
+ * not already configured in the user's kitn.json.
+ */
+export async function fetchGlobalRegistries(
+  configuredNamespaces: string[],
+): Promise<GlobalRegistryEntry[]> {
+  let directory: GlobalDirectoryEntry[];
+  try {
+    const res = await fetch(GLOBAL_REGISTRY_URL);
+    if (!res.ok) return [];
+    directory = await res.json();
+  } catch {
+    return [];
+  }
+
+  const unconfigured = directory.filter(
+    (entry) => !configuredNamespaces.includes(entry.name),
+  );
+
+  if (unconfigured.length === 0) return [];
+
+  const results: GlobalRegistryEntry[] = [];
+  for (const entry of unconfigured) {
+    try {
+      const indexUrl = entry.url.replace("{type}/{name}.json", "registry.json");
+      const res = await fetch(indexUrl);
+      if (!res.ok) continue;
+      const index = await res.json();
+      const items = (index.items ?? []).map((item: any) => ({
+        name: item.name,
+        type: item.type,
+        description: item.description,
+        registryDependencies: item.registryDependencies,
+      }));
+      results.push({ namespace: entry.name, url: entry.url, items });
+    } catch {
+      // Skip failing registries
+    }
+  }
+
+  return results;
+}
 
 /**
  * Resolve the chat service URL.
@@ -63,6 +121,8 @@ function formatStepLabel(step: PlanStep): string {
       return `Link ${pc.cyan(step.toolName!)} → ${pc.cyan(step.agentName!)}`;
     case "unlink":
       return `Unlink ${pc.red(step.toolName!)} from ${pc.cyan(step.agentName!)}`;
+    case "registry-add":
+      return `Add registry ${pc.magenta(step.namespace!)}`;
   }
 }
 
@@ -87,22 +147,38 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
 
   let registryIndex: unknown;
   let installed: string[];
+  let globalRegistryIndex: GlobalRegistryEntry[] | undefined;
 
   try {
+    const configuredNamespaces = Object.keys(config.registries);
     const fetcher = new RegistryFetcher(config.registries);
-    const indices = [];
-    for (const namespace of Object.keys(config.registries)) {
-      try {
-        const index = await fetcher.fetchIndex(namespace);
-        indices.push(index);
-      } catch {
-        // Skip failing registries
-      }
-    }
-    registryIndex = indices;
 
-    const lock = await readLock(cwd);
+    // Fetch configured registries and global directory in parallel
+    const [indices, globalEntries, lock] = await Promise.all([
+      Promise.all(
+        configuredNamespaces.map(async (ns) => {
+          try {
+            return await fetcher.fetchIndex(ns);
+          } catch {
+            return null;
+          }
+        }),
+      ),
+      fetchGlobalRegistries(configuredNamespaces),
+      readLock(cwd),
+    ]);
+
+    // Flatten registry indices into a flat list of items for the service
+    registryIndex = indices
+      .filter(Boolean)
+      .flatMap((index: any) => (index.items ?? []).map((item: any) => ({
+        name: item.name,
+        type: item.type,
+        description: item.description,
+        registryDependencies: item.registryDependencies,
+      })));
     installed = Object.keys(lock);
+    globalRegistryIndex = globalEntries.length > 0 ? globalEntries : undefined;
   } catch {
     s.stop(pc.red("Failed to gather context"));
     p.log.error("Could not read project context. Check your kitn.json and network connection.");
@@ -115,7 +191,9 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
   s.start("Thinking...");
 
   const serviceUrl = await resolveServiceUrl(opts?.url, config.chatService);
-  const payload = buildRequestPayload(message, { registryIndex, installed });
+  const metadata: Record<string, unknown> = { registryIndex, installed };
+  if (globalRegistryIndex) metadata.globalRegistryIndex = globalRegistryIndex;
+  const payload = buildRequestPayload(message, metadata);
 
   let response: Response;
   try {
@@ -172,39 +250,52 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
 
   // --- Confirm ---
   const steps = data.plan.steps;
-  const action = await p.select({
-    message: "How would you like to proceed?",
-    options: [
-      { value: "all", label: "Yes, run all steps" },
-      { value: "select", label: "Select which steps to run" },
-      { value: "cancel", label: "Cancel" },
-    ],
-  });
-
-  if (p.isCancel(action) || action === "cancel") {
-    p.cancel("Cancelled.");
-    return;
-  }
-
   let selectedSteps: PlanStep[];
 
-  if (action === "select") {
-    const choices = await p.multiselect({
-      message: "Select steps to run:",
-      options: steps.map((step, i) => ({
-        value: i,
-        label: `${formatStepLabel(step)} - ${step.reason}`,
-      })),
+  if (steps.length === 1) {
+    const confirm = await p.confirm({
+      message: `Run: ${formatStepLabel(steps[0])}?`,
     });
 
-    if (p.isCancel(choices)) {
+    if (p.isCancel(confirm) || !confirm) {
       p.cancel("Cancelled.");
       return;
     }
 
-    selectedSteps = (choices as number[]).map((i) => steps[i]);
-  } else {
     selectedSteps = steps;
+  } else {
+    const action = await p.select({
+      message: "How would you like to proceed?",
+      options: [
+        { value: "all", label: "Yes, run all steps" },
+        { value: "select", label: "Select which steps to run" },
+        { value: "cancel", label: "Cancel" },
+      ],
+    });
+
+    if (p.isCancel(action) || action === "cancel") {
+      p.cancel("Cancelled.");
+      return;
+    }
+
+    if (action === "select") {
+      const choices = await p.multiselect({
+        message: "Select steps to run:",
+        options: steps.map((step, i) => ({
+          value: i,
+          label: `${formatStepLabel(step)} - ${step.reason}`,
+        })),
+      });
+
+      if (p.isCancel(choices)) {
+        p.cancel("Cancelled.");
+        return;
+      }
+
+      selectedSteps = (choices as number[]).map((i) => steps[i]);
+    } else {
+      selectedSteps = steps;
+    }
   }
 
   // --- Execute plan ---
@@ -213,6 +304,11 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
 
     try {
       switch (step.action) {
+        case "registry-add": {
+          const { registryAddCommand } = await import("./registry.js");
+          await registryAddCommand(step.namespace!, step.url!, { overwrite: true });
+          break;
+        }
         case "add": {
           const { addCommand } = await import("./add.js");
           await addCommand([step.component!], { yes: true });

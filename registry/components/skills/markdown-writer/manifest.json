@@ -1,0 +1,13 @@
+{
+  "name": "markdown-writer",
+  "type": "kitn:skill",
+  "description": "Writes well-structured markdown documents with proper headings, formatting, frontmatter, and table of contents",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when generating markdown documents, READMEs, documentation, or any structured text output. Phase: response.",
+  "categories": ["writing", "markdown", "documentation", "formatting"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

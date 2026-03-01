@@ -34,7 +34,6 @@ export async function componentFileExists(
 }
 
 function generateAgentSource(name: string): string {
-  const camel = toCamelCase(name);
   return `import { registerAgent } from "@kitn/core";
 
 const SYSTEM_PROMPT = "You are a helpful assistant.";

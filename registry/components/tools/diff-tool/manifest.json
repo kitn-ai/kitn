@@ -1,0 +1,13 @@
+{
+  "name": "diff-tool",
+  "type": "kitn:tool",
+  "description": "Compute text diffs between two strings — unified diff format",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "files": ["diff-tool.ts"],
+  "docs": "Computes line-by-line diffs between two texts. No external dependencies.",
+  "categories": ["utility", "diff", "text"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

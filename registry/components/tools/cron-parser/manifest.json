@@ -1,0 +1,13 @@
+{
+  "name": "cron-parser",
+  "type": "kitn:tool",
+  "description": "Parse cron expressions — show next run times and human-readable descriptions",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "files": ["cron-parser.ts"],
+  "docs": "Parses cron expressions and computes next run times. No external dependencies.",
+  "categories": ["utility", "cron", "scheduling"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "plain-language",
+  "type": "kitn:skill",
+  "description": "Rewrites jargon-heavy text into clear, accessible language anyone can understand",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill to simplify complex or jargon-heavy text. Phase: response.",
+  "categories": ["writing", "clarity", "simplification"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

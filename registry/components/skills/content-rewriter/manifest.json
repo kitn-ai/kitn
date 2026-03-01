@@ -1,0 +1,13 @@
+{
+  "name": "content-rewriter",
+  "type": "kitn:skill",
+  "description": "Rewrites content to match a target style, audience, or format while preserving the original meaning",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when content needs to be adapted for a different audience, format, or style. Phase: response.",
+  "categories": ["writing", "rewriting", "adaptation"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

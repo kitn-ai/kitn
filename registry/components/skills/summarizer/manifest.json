@@ -1,0 +1,13 @@
+{
+  "name": "summarizer",
+  "type": "kitn:skill",
+  "description": "Produces structured summaries in multiple formats — executive summary, key findings, or abstract",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill for structured summarization. Differs from concise-summarizer (bullet points) by supporting multiple summary formats. Phase: response.",
+  "categories": ["writing", "summary", "structured"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

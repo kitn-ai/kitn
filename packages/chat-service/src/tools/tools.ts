@@ -17,6 +17,7 @@ export const askUserTool = tool({
   inputSchema: z.object({
     items: z.array(askUserItemSchema).describe("Questions or messages to show"),
   }),
+  execute: async (input) => input,
 });
 
 export const writeFileTool = tool({
@@ -28,6 +29,7 @@ export const writeFileTool = tool({
     content: z.string().describe("The full file content to write"),
     description: z.string().optional().describe("Brief description of what was generated"),
   }),
+  execute: async (input) => input,
 });
 
 export const readFileTool = tool({
@@ -37,6 +39,7 @@ export const readFileTool = tool({
   inputSchema: z.object({
     path: z.string().describe("Relative path from project root"),
   }),
+  execute: async (input) => input,
 });
 
 export const listFilesTool = tool({
@@ -47,6 +50,7 @@ export const listFilesTool = tool({
     pattern: z.string().describe("Glob pattern (e.g. '**/*.ts', 'src/agents/*.ts')"),
     directory: z.string().optional().describe("Directory to search in, relative to project root"),
   }),
+  execute: async (input) => input,
 });
 
 export const updateEnvTool = tool({
@@ -58,4 +62,5 @@ export const updateEnvTool = tool({
     key: z.string().describe("Environment variable name (e.g. 'OPENWEATHER_API_KEY')"),
     description: z.string().describe("Description shown to the user when prompting for the value"),
   }),
+  execute: async (input) => input,
 });

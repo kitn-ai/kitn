@@ -141,6 +141,7 @@ app.post("/api/chat", async (c) => {
       },
     });
   } catch (err: any) {
+    console.error("[/api/chat] Error:", err);
     return c.json({ error: err.message ?? "LLM call failed" }, 500);
   }
 });

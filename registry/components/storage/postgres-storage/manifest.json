@@ -1,0 +1,13 @@
+{
+  "name": "postgres-storage",
+  "type": "kitn:storage",
+  "description": "PostgreSQL storage adapter — implements all 8 StorageProvider sub-stores. Works with any pg-compatible driver (node-postgres, @neondatabase/serverless, @vercel/postgres, etc.)",
+  "dependencies": [],
+  "registryDependencies": ["core"],
+  "files": ["postgres-storage.ts"],
+  "docs": "Install your preferred pg driver (e.g. `pg`, `@neondatabase/serverless`, `@vercel/postgres`). Call `createPostgresStorage({ client: pool })` where `client` has a `.query(text, params)` method. Tables are auto-created on first use. All 8 sub-stores are implemented: conversations, memory, skills, tasks, prompts, commands, crons, jobs.",
+  "categories": ["storage", "postgres", "database", "sql"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

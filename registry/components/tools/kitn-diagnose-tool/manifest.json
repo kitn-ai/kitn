@@ -1,0 +1,13 @@
+{
+  "name": "kitn-diagnose-tool",
+  "type": "kitn:tool",
+  "description": "Diagnoses kitn project issues — validates config, checks installed components, detects broken imports and missing files",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "files": ["kitn-diagnose-tool.ts"],
+  "docs": "Inspects a kitn project by reading kitn.json, kitn.lock, and installed component files. Reports: missing files, incorrect imports, stale lock entries, missing dependencies, and common configuration issues. Designed to be used by the kitn-doctor-agent or called directly.",
+  "categories": ["devtools", "diagnostics", "kitn", "debugging"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

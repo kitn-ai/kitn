@@ -1,0 +1,13 @@
+{
+  "name": "kitn-doctor-agent",
+  "type": "kitn:agent",
+  "description": "Troubleshooting agent for kitn projects — diagnoses configuration, import, and dependency issues with guided fixes",
+  "dependencies": ["ai"],
+  "registryDependencies": ["core", "kitn-diagnose-tool"],
+  "files": ["kitn-doctor-agent.ts"],
+  "docs": "Interactive troubleshooting agent for kitn projects. Uses the kitn-diagnose-tool to inspect the project, then provides guided fixes for issues found. Handles: wrong imports (@kitnai vs @kitn), missing files, stale lock entries, missing dependencies, and configuration problems.",
+  "categories": ["devtools", "diagnostics", "kitn", "debugging"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

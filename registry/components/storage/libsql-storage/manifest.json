@@ -1,0 +1,13 @@
+{
+  "name": "libsql-storage",
+  "type": "kitn:storage",
+  "description": "LibSQL/Turso storage adapter — SQLite-compatible with remote sync and edge replication",
+  "dependencies": [],
+  "registryDependencies": ["core"],
+  "files": ["libsql-storage.ts"],
+  "docs": "Install `@libsql/client`. Call `createLibsqlStorage({ client })` where `client` is a libsql Client instance. Works with local SQLite files and remote Turso databases.",
+  "categories": ["storage", "libsql", "turso", "database", "sql", "edge"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

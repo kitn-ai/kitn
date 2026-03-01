@@ -252,12 +252,24 @@ export async function handleAskUser(input: { items: AskUserItem[] }): Promise<st
       }
       case "option": {
         if (!item.choices?.length) { responses.push("No choices provided."); break; }
-        const selected = await p.select({
-          message: item.text,
-          options: item.choices.map((c) => ({ value: c, label: c })),
-        });
+        const CUSTOM_SENTINEL = "__custom__";
+        // Check if the model already included a custom/other option
+        const hasCustomOption = item.choices.some(
+          (c) => /something else|type my own|other|custom/i.test(c),
+        );
+        const options = item.choices.map((c) => ({ value: c, label: c }));
+        if (!hasCustomOption) {
+          options.push({ value: CUSTOM_SENTINEL, label: "Something else (I'll type my own)" });
+        }
+        const selected = await p.select({ message: item.text, options });
         if (p.isCancel(selected)) return "User cancelled.";
-        responses.push(`User selected: ${selected}`);
+        if (selected === CUSTOM_SENTINEL) {
+          const custom = await p.text({ message: "Type your answer:", placeholder: "Your response..." });
+          if (p.isCancel(custom)) return "User cancelled.";
+          responses.push(`User typed: ${custom}`);
+        } else {
+          responses.push(`User selected: ${selected}`);
+        }
         break;
       }
       case "question": {

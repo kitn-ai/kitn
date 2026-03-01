@@ -4,7 +4,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import { generateText } from "ai";
 import { createMemoryStorage } from "@kitnai/core";
 import { createAIPlugin } from "@kitnai/hono-adapter";
-import { registerAssistantAgent, assistantGuard } from "./agents/assistant.js";
+import { registerAssistantAgent, assistantGuard, setGuardModel } from "./agents/assistant.js";
 import { buildSystemPrompt } from "./prompts/system.js";
 import { buildCompactionPrompt } from "./prompts/compact.js";
 import type { PromptContext } from "./prompts/types.js";
@@ -21,6 +21,7 @@ const openai = createOpenAI({
 });
 
 const DEFAULT_MODEL = process.env.DEFAULT_MODEL ?? "gpt-4o-mini";
+const CLASSIFIER_MODEL = process.env.CLASSIFIER_MODEL ?? "openai/gpt-4o-mini";
 
 // Use .chat() for OpenRouter (Responses API not supported) or default for OpenAI
 const getModel = (id: string) =>
@@ -35,6 +36,9 @@ const plugin = createAIPlugin({
 
 const defaultContext: PromptContext = { registryIndex: [], installed: [] };
 registerAssistantAgent(plugin, defaultContext);
+
+// Inject a fast/cheap model for the guard classifier (separate from the main model)
+setGuardModel(getModel(CLASSIFIER_MODEL));
 
 // --- Hono app ---
 

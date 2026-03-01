@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { resolveServiceUrl, buildServicePayload, formatPlan, fetchGlobalRegistries, validatePlan } from "../src/commands/chat.js";
+import { resolveServiceUrl, buildServicePayload, formatPlan, fetchGlobalRegistries, validatePlan, handleListFiles } from "../src/commands/chat.js";
 import type { ChatPlan } from "../src/commands/chat-types.js";
 
 describe("resolveServiceUrl", () => {
@@ -522,5 +522,40 @@ describe("fetchGlobalRegistries", () => {
     } finally {
       globalThis.fetch = originalFetch;
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// handleListFiles — path traversal and glob matching
+// ---------------------------------------------------------------------------
+
+describe("handleListFiles", () => {
+  const cwd = process.cwd();
+
+  test("rejects path traversal via ../", async () => {
+    const result = await handleListFiles({ pattern: "*.ts", directory: "../../etc" }, cwd);
+    expect(result).toContain("Rejected");
+    expect(result).toContain("escape project directory");
+  });
+
+  test("allows subdirectory within project", async () => {
+    const result = await handleListFiles({ pattern: "*.ts", directory: "packages/cli/src" }, cwd);
+    expect(result).not.toContain("Rejected");
+  });
+
+  test("lists files without directory (uses cwd)", async () => {
+    const result = await handleListFiles({ pattern: "*.json" }, cwd);
+    // Should find at least package.json
+    expect(result).toContain("package.json");
+  });
+
+  test("returns 'no files found' for non-matching pattern", async () => {
+    const result = await handleListFiles({ pattern: "*.nonexistent_extension_xyz" }, cwd);
+    expect(result).toContain("No files found");
+  });
+
+  test("handles non-existent directory gracefully", async () => {
+    const result = await handleListFiles({ pattern: "*.ts", directory: "this_dir_does_not_exist_xyz" }, cwd);
+    expect(result).toContain("Directory not found");
   });
 });

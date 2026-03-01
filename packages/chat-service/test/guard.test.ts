@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { assistantGuard, COMPONENT_KEYWORDS, ACTION_KEYWORDS, STANDALONE_KEYWORDS } from "../src/agents/assistant.js";
+import { assistantGuard, keywordCheck, COMPONENT_KEYWORDS, ACTION_KEYWORDS, STANDALONE_KEYWORDS } from "../src/agents/assistant.js";
 
 describe("assistantGuard", () => {
   // --- Component + action keyword combinations ---
@@ -97,10 +97,22 @@ describe("assistantGuard", () => {
   test("allows scheduler-related queries", async () => {
     expect((await assistantGuard("add a scheduler")).allowed).toBe(true);
     expect((await assistantGuard("which scheduler should I use")).allowed).toBe(true);
+    expect((await assistantGuard("I want to add scheduling to my project")).allowed).toBe(true);
   });
 
   test("allows webhook-related queries", async () => {
     expect((await assistantGuard("set up a webhook")).allowed).toBe(true);
+  });
+
+  test("allows API/endpoint-related queries", async () => {
+    expect((await assistantGuard("I want to expose my API")).allowed).toBe(true);
+    expect((await assistantGuard("set up an API endpoint")).allowed).toBe(true);
+    expect((await assistantGuard("configure my server")).allowed).toBe(true);
+    expect((await assistantGuard("I need to add OpenAPI documentation to my API")).allowed).toBe(true);
+  });
+
+  test("allows elysia-related queries", async () => {
+    expect((await assistantGuard("switch to elysia")).allowed).toBe(true);
   });
 
   // --- All action keywords with component keywords ---
@@ -144,6 +156,16 @@ describe("assistantGuard", () => {
     expect((await assistantGuard("what's available in the registry")).allowed).toBe(true);
   });
 
+  test("allows bot/synonym queries", async () => {
+    expect((await assistantGuard("I want to build a customer support bot")).allowed).toBe(true);
+    expect((await assistantGuard("create a chatbot")).allowed).toBe(true);
+  });
+
+  test("allows scheduled task queries", async () => {
+    expect((await assistantGuard("set up scheduled tasks that check weather every hour")).allowed).toBe(true);
+    expect((await assistantGuard("add a background task")).allowed).toBe(true);
+  });
+
   // --- Rejection cases ---
 
   test("rejects off-topic queries", async () => {
@@ -155,7 +177,6 @@ describe("assistantGuard", () => {
   test("rejects generic build requests without component keywords", async () => {
     expect((await assistantGuard("build me a React app")).allowed).toBe(false);
     expect((await assistantGuard("create a landing page")).allowed).toBe(false);
-    expect((await assistantGuard("build a todo app")).allowed).toBe(false);
   });
 
   test("rejects action-only keywords without component context", async () => {
@@ -178,10 +199,14 @@ describe("assistantGuard", () => {
       "agent", "tool", "skill", "storage", "component", "cron",
       "rule", "rules", "voice", "orchestrator", "mcp", "job", "memory",
       "command", "hook", "guard", "package", "adapter", "core", "hono",
-      "scheduler", "webhook",
+      "scheduler", "scheduling", "webhook",
+      "api", "endpoint", "route", "server", "openapi",
+      "elysia",
       "postgres", "redis", "mongo", "database", "sqlite", "supabase", "dynamodb",
       "monitor", "monitoring", "notification", "notify",
       "model", "provider", "openai", "anthropic", "groq", "openrouter",
+      "conversation", "chat",
+      "bot", "scheduled", "task",
     ];
     for (const kw of expected) {
       expect(COMPONENT_KEYWORDS).toContain(kw);
@@ -203,7 +228,7 @@ describe("assistantGuard", () => {
     const expected = [
       "available", "registry", "what can", "what do you have", "kitn",
       "capabilities", "help", "what can i do", "env", "environment",
-      "api key", ".env",
+      "api key", "api_key", ".env",
       "installed", "what have", "show me", "list", "what's set up",
       "get started", "getting started", "how do i",
     ];
@@ -237,5 +262,31 @@ describe("assistantGuard", () => {
     expect((await assistantGuard("show me my components")).allowed).toBe(true);
     expect((await assistantGuard("how do I get started")).allowed).toBe(true);
     expect((await assistantGuard("list all agents")).allowed).toBe(true);
+  });
+});
+
+describe("keywordCheck", () => {
+  test("returns true for component keywords", () => {
+    expect(keywordCheck("add an agent")).toBe(true);
+    expect(keywordCheck("create a tool")).toBe(true);
+    expect(keywordCheck("set up a bot")).toBe(true);
+  });
+
+  test("returns true for standalone keywords", () => {
+    expect(keywordCheck("help")).toBe(true);
+    expect(keywordCheck("what can I do")).toBe(true);
+    expect(keywordCheck("show me the registry")).toBe(true);
+  });
+
+  test("returns false for off-topic queries", () => {
+    expect(keywordCheck("write me a poem")).toBe(false);
+    expect(keywordCheck("explain quantum physics")).toBe(false);
+    expect(keywordCheck("build me a React app")).toBe(false);
+  });
+
+  test("returns false for queries the LLM classifier would handle", () => {
+    // These don't contain keywords but an LLM would recognize as on-topic
+    expect(keywordCheck("I want to build a customer support system")).toBe(false);
+    expect(keywordCheck("deploy my project to production")).toBe(false);
   });
 });

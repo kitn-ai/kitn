@@ -43,11 +43,6 @@ export function buildServicePayload(messages: ChatMessage[], metadata: Record<st
   return { messages, metadata };
 }
 
-/** Backward-compatible alias used by existing tests */
-export function buildRequestPayload(message: string, metadata: Record<string, unknown>) {
-  return { message, metadata };
-}
-
 export function hasToolCalls(response: ChatServiceResponse): boolean {
   return !!(response.message.toolCalls && response.message.toolCalls.length > 0);
 }
@@ -82,7 +77,7 @@ export function applyCompaction(messages: ChatMessage[], summary: string, keepRe
 }
 
 // ---------------------------------------------------------------------------
-// Registry helpers (kept from v1)
+// Registry helpers
 // ---------------------------------------------------------------------------
 
 /**
@@ -151,7 +146,7 @@ export async function resolveServiceUrl(
 }
 
 // ---------------------------------------------------------------------------
-// Plan formatting (kept from v1, with "update" case added)
+// Plan formatting
 // ---------------------------------------------------------------------------
 
 /**

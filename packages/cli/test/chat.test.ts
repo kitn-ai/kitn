@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { resolveServiceUrl, buildRequestPayload, formatPlan, fetchGlobalRegistries } from "../src/commands/chat.js";
+import { resolveServiceUrl, buildServicePayload, formatPlan, fetchGlobalRegistries } from "../src/commands/chat.js";
 import type { ChatPlan } from "../src/commands/chat-types.js";
 
 describe("resolveServiceUrl", () => {
@@ -42,19 +42,21 @@ describe("resolveServiceUrl", () => {
   });
 });
 
-describe("buildRequestPayload", () => {
-  test("returns message and metadata", () => {
+describe("buildServicePayload", () => {
+  test("returns messages array and metadata", () => {
     const metadata = { registryIndex: [], installed: ["weather-agent"] };
-    const result = buildRequestPayload("add a weather tool", metadata);
+    const messages = [{ role: "user" as const, content: "add a weather tool" }];
+    const result = buildServicePayload(messages, metadata);
     expect(result).toEqual({
-      message: "add a weather tool",
+      messages: [{ role: "user", content: "add a weather tool" }],
       metadata: { registryIndex: [], installed: ["weather-agent"] },
     });
   });
 
   test("handles empty metadata", () => {
-    const result = buildRequestPayload("hello", {});
-    expect(result).toEqual({ message: "hello", metadata: {} });
+    const messages = [{ role: "user" as const, content: "hello" }];
+    const result = buildServicePayload(messages, {});
+    expect(result).toEqual({ messages: [{ role: "user", content: "hello" }], metadata: {} });
   });
 });
 

@@ -1,5 +1,5 @@
 /**
- * Integration tests for POST /api/chat v2.
+ * Integration tests for POST /api/chat.
  *
  * These tests make real HTTP calls and require the chat-service to be running
  * on port 4002 (the default). They also hit a real LLM, so they are slow and
@@ -24,7 +24,7 @@ try {
 
 const itLive = serviceAvailable ? test : test.skip;
 
-describe("POST /api/chat v2", () => {
+describe("POST /api/chat", () => {
   itLive("returns structured response with messages array", async () => {
     const res = await fetch(`${SERVICE_URL}/api/chat`, {
       method: "POST",

@@ -6,6 +6,7 @@ import { createMemoryStorage } from "@kitnai/core";
 import { createAIPlugin } from "@kitnai/hono-adapter";
 import { registerAssistantAgent, assistantGuard } from "./agents/assistant.js";
 import { buildSystemPrompt } from "./prompts/system.js";
+import { buildCompactionPrompt } from "./prompts/compact.js";
 import type { PromptContext } from "./prompts/types.js";
 import { createPlanTool } from "./tools/create-plan.js";
 import { askUserTool, writeFileTool, readFileTool, listFilesTool, updateEnvTool } from "./tools/tools.js";
@@ -128,6 +129,39 @@ app.post("/api/chat", async (c) => {
     });
   } catch (err: any) {
     return c.json({ error: err.message ?? "LLM call failed" }, 500);
+  }
+});
+
+// Conversation compaction endpoint — summarises long conversations
+app.post("/api/chat/compact", async (c) => {
+  const { messages } = await c.req.json();
+
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return c.json({ error: "No messages to compact" }, 400);
+  }
+
+  const compactionPrompt = buildCompactionPrompt();
+
+  const conversationText = messages
+    .map((m: any) => `${m.role}: ${m.content ?? "[tool call/result]"}`)
+    .join("\n");
+
+  try {
+    const result = await generateText({
+      model: openai(DEFAULT_MODEL),
+      system: compactionPrompt,
+      messages: [{ role: "user" as const, content: `Compact this conversation:\n\n${conversationText}` }],
+    });
+
+    return c.json({
+      summary: result.text,
+      usage: {
+        promptTokens: result.usage?.promptTokens ?? 0,
+        completionTokens: result.usage?.completionTokens ?? 0,
+      },
+    });
+  } catch (err: any) {
+    return c.json({ error: err.message ?? "Compaction failed" }, 500);
   }
 });
 

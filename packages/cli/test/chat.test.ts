@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { resolveServiceUrl, buildServicePayload, formatPlan, fetchGlobalRegistries } from "../src/commands/chat.js";
+import { resolveServiceUrl, buildServicePayload, formatPlan, fetchGlobalRegistries, validatePlan } from "../src/commands/chat.js";
 import type { ChatPlan } from "../src/commands/chat-types.js";
 
 describe("resolveServiceUrl", () => {
@@ -163,6 +163,85 @@ describe("formatPlan", () => {
     expect(output).toContain("1.");
     expect(output).toContain("2.");
     expect(output).toContain("3.");
+  });
+});
+
+describe("validatePlan", () => {
+  const available = ["weather-tool", "weather-agent", "core", "hono"];
+  const installed = ["core", "hono"];
+
+  test("accepts valid add for available, non-installed component", () => {
+    const plan: ChatPlan = {
+      summary: "Add weather",
+      steps: [{ action: "add", component: "weather-tool", reason: "Need weather" }],
+    };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  test("rejects add for non-existent component", () => {
+    const plan: ChatPlan = {
+      summary: "Add sentiment",
+      steps: [{ action: "add", component: "sentiment-agent", reason: "Need sentiment" }],
+    };
+    const errors = validatePlan(plan, available, installed);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("does not exist in the registry");
+    expect(errors[0]).toContain("create");
+  });
+
+  test("rejects add for already-installed component", () => {
+    const plan: ChatPlan = {
+      summary: "Add core",
+      steps: [{ action: "add", component: "core", reason: "Need core" }],
+    };
+    const errors = validatePlan(plan, available, installed);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("already installed");
+  });
+
+  test("accepts create for custom components", () => {
+    const plan: ChatPlan = {
+      summary: "Create custom agent",
+      steps: [{ action: "create", type: "agent", name: "sentiment-agent", reason: "Custom" }],
+    };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+
+  test("rejects update for non-installed component", () => {
+    const plan: ChatPlan = {
+      summary: "Update weather tool",
+      steps: [{ action: "update", component: "weather-tool", reason: "Update" }],
+    };
+    const errors = validatePlan(plan, available, installed);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("not installed");
+  });
+
+  test("accepts update for installed component", () => {
+    const plan: ChatPlan = {
+      summary: "Update core",
+      steps: [{ action: "update", component: "core", reason: "Update" }],
+    };
+    expect(validatePlan(plan, available, installed)).toEqual([]);
+  });
+});
+
+describe("buildServicePayload with model", () => {
+  test("includes model when provided", () => {
+    const result = buildServicePayload(
+      [{ role: "user" as const, content: "hello" }],
+      {},
+      "openai/gpt-4o-mini",
+    );
+    expect(result.model).toBe("openai/gpt-4o-mini");
+  });
+
+  test("omits model when not provided", () => {
+    const result = buildServicePayload(
+      [{ role: "user" as const, content: "hello" }],
+      {},
+    );
+    expect(result).not.toHaveProperty("model");
   });
 });
 

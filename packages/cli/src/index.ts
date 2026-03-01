@@ -140,7 +140,8 @@ program
   .description("AI-powered scaffolding assistant")
   .argument("[message]", "What you want to do")
   .option("-u, --url <url>", "Chat service URL")
-  .action(async (message: string | undefined, opts: { url?: string }) => {
+  .option("-m, --model <model>", "Model to use (e.g. openai/gpt-4o-mini)")
+  .action(async (message: string | undefined, opts: { url?: string; model?: string }) => {
     const { chatCommand } = await import("./commands/chat.js");
     await chatCommand(message, opts);
   });

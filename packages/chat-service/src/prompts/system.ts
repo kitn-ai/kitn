@@ -70,7 +70,8 @@ function buildInstalledSection(ctx: PromptContext): string {
   if (ctx.installed.length === 0) {
     lines.push("No components installed yet.");
   } else {
-    lines.push(ctx.installed.join(", "));
+    lines.push("The following components are ALREADY INSTALLED. Do NOT add them again:");
+    lines.push(ctx.installed.map((c) => `- ${c}`).join("\n"));
   }
   return lines.join("\n");
 }
@@ -167,13 +168,28 @@ Your domain-specific instructions here.
 }
 
 function buildConstraintsSection(): string {
-  return `## Constraints
+  return `## Constraints — READ CAREFULLY
 
-- CRITICAL: ONLY use "add" for components that are explicitly listed above. If a component is not in the "Available Components" or "Components from Other Registries" lists, it does NOT exist — do not invent component names.
+### "add" vs "create" — THIS IS THE MOST IMPORTANT DISTINCTION
+
+- **"add"** = Install a PRE-EXISTING component from the registry. The component MUST appear in the "Available Components" list above. If it is not listed, it DOES NOT EXIST and you CANNOT add it. You will get a validation error if you try.
+- **"create"** = Scaffold a NEW CUSTOM component that does not exist in any registry. Use this when the user wants something custom (e.g. "sentiment-agent", "slack-tool", "todo-agent"). The create action generates a starter file that the user can edit.
+
+**Examples:**
+- User wants a weather agent → Use "add" because "weather-agent" IS in the Available Components list
+- User wants a sentiment agent → Use "create" because "sentiment-agent" is NOT in any registry
+- User wants a recipe agent → Use "add" because "recipe-agent" IS in the Available Components list
+- User wants a custom Slack notification tool → Use "create" because it's not in the registry
+
+### Do NOT re-add installed components
+- If a component appears in "Currently Installed Components", do NOT add it again. It is already there.
+- Use "update" only if the user explicitly wants to update an installed component.
+- Do NOT include core, hono, or other already-installed packages in the plan.
+
+### Other rules
 - Only plan these actions: add, create, link, remove, unlink, update, registry-add
-- The "update" action is only valid for components that are currently installed.
 - For "registry-add", include the namespace and url fields.
-- Use updateEnv for API keys and secret credentials. The value is never returned after being set.
+- Use updateEnv for API keys and secret credentials.
 - Keep the summary concise (one sentence).
 - Order steps logically: registry-adds first, then removes/unlinks, then updates, then adds, then creates, then links.
 - Framework packages (core, hono, hono-openapi, elysia) are NOT tools — never link them to agents.

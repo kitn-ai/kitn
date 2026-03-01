@@ -47,7 +47,7 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 // Custom /api/chat endpoint — registered BEFORE plugin router so it takes priority
 app.post("/api/chat", async (c) => {
   const body = await c.req.json();
-  const { messages, metadata } = body;
+  const { messages, metadata, model: requestModel } = body;
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return c.json({ rejected: true, text: "No messages provided." }, 400);
@@ -121,8 +121,9 @@ app.post("/api/chat", async (c) => {
   };
 
   try {
+    const modelId = requestModel ?? DEFAULT_MODEL;
     const result = await generateText({
-      model: getModel(DEFAULT_MODEL),
+      model: getModel(modelId),
       system: systemPrompt,
       messages: aiMessages,
       tools,

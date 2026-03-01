@@ -39,8 +39,8 @@ interface GlobalRegistryEntry {
 // Pure helper functions (exported for testing)
 // ---------------------------------------------------------------------------
 
-export function buildServicePayload(messages: ChatMessage[], metadata: Record<string, unknown>) {
-  return { messages, metadata };
+export function buildServicePayload(messages: ChatMessage[], metadata: Record<string, unknown>, model?: string) {
+  return { messages, metadata, ...(model ? { model } : {}) };
 }
 
 export function hasToolCalls(response: ChatServiceResponse): boolean {
@@ -269,7 +269,69 @@ export async function handleAskUser(input: { items: AskUserItem[] }): Promise<st
   return responses.join("\n");
 }
 
-export async function handleCreatePlan(plan: ChatPlan, cwd: string): Promise<string> {
+/**
+ * Validate plan steps against registry and installed components.
+ * Returns error messages for invalid steps, or empty array if all valid.
+ */
+export function validatePlan(
+  plan: ChatPlan,
+  availableComponents: string[],
+  installedComponents: string[],
+): string[] {
+  const errors: string[] = [];
+  const availableSet = new Set(availableComponents);
+  const installedSet = new Set(installedComponents);
+
+  for (const step of plan.steps) {
+    if (step.action === "add" && step.component) {
+      if (!availableSet.has(step.component)) {
+        errors.push(
+          `Cannot add "${step.component}" — it does not exist in the registry. ` +
+          `Use "create" action instead to scaffold a new custom component. ` +
+          `Available components: ${availableComponents.join(", ") || "none"}`
+        );
+      } else if (installedSet.has(step.component)) {
+        errors.push(
+          `"${step.component}" is already installed. Use "update" action to update it, or skip this step.`
+        );
+      }
+    }
+    if (step.action === "update" && step.component) {
+      if (!installedSet.has(step.component)) {
+        errors.push(
+          `Cannot update "${step.component}" — it is not installed. Use "add" to install it first.`
+        );
+      }
+    }
+    if (step.action === "link") {
+      if (step.toolName && !availableSet.has(step.toolName) && !installedSet.has(step.toolName)) {
+        if (!plan.steps.some((s) => s.action === "create" && s.name === step.toolName)) {
+          errors.push(
+            `Cannot link tool "${step.toolName}" — it is not installed or being created in this plan.`
+          );
+        }
+      }
+    }
+  }
+  return errors;
+}
+
+export async function handleCreatePlan(
+  plan: ChatPlan,
+  cwd: string,
+  availableComponents?: string[],
+  installedComponents?: string[],
+): Promise<string> {
+  // Validate plan if context is available
+  if (availableComponents && installedComponents) {
+    const errors = validatePlan(plan, availableComponents, installedComponents);
+    if (errors.length > 0) {
+      p.log.warn("Plan has issues:");
+      for (const err of errors) p.log.error(err);
+      return `PLAN VALIDATION FAILED. Fix these issues and call createPlan again:\n${errors.join("\n")}`;
+    }
+  }
+
   p.log.message(formatPlan(plan));
   const steps = plan.steps;
   let selectedSteps: PlanStep[];
@@ -391,7 +453,13 @@ export async function handleUpdateEnvDirect(input: UpdateEnvInput, cwd: string, 
 // Tool call dispatcher
 // ---------------------------------------------------------------------------
 
-async function handleToolCalls(toolCalls: ToolCall[], cwd: string): Promise<ToolResult[]> {
+interface ToolCallContext {
+  cwd: string;
+  availableComponents: string[];
+  installedComponents: string[];
+}
+
+async function handleToolCalls(toolCalls: ToolCall[], ctx: ToolCallContext): Promise<ToolResult[]> {
   const results: ToolResult[] = [];
   for (const call of toolCalls) {
     let result: string;
@@ -402,19 +470,19 @@ async function handleToolCalls(toolCalls: ToolCall[], cwd: string): Promise<Tool
           result = await handleAskUser({ items: (input as any).items ?? [] });
           break;
         case "createPlan":
-          result = await handleCreatePlan(input as ChatPlan, cwd);
+          result = await handleCreatePlan(input as ChatPlan, ctx.cwd, ctx.availableComponents, ctx.installedComponents);
           break;
         case "writeFile":
-          result = await handleWriteFile(input as WriteFileInput, cwd);
+          result = await handleWriteFile(input as WriteFileInput, ctx.cwd);
           break;
         case "readFile":
-          result = await handleReadFile(input as ReadFileInput, cwd);
+          result = await handleReadFile(input as ReadFileInput, ctx.cwd);
           break;
         case "listFiles":
-          result = await handleListFiles(input as ListFilesInput, cwd);
+          result = await handleListFiles(input as ListFilesInput, ctx.cwd);
           break;
         case "updateEnv":
-          result = await handleUpdateEnv(input as UpdateEnvInput, cwd);
+          result = await handleUpdateEnv(input as UpdateEnvInput, ctx.cwd);
           break;
         default:
           result = `Unknown tool: ${call.name}`;
@@ -457,7 +525,7 @@ async function compactConversation(messages: ChatMessage[], serviceUrl: string):
 // Main command
 // ---------------------------------------------------------------------------
 
-export async function chatCommand(message: string | undefined, opts?: { url?: string }): Promise<void> {
+export async function chatCommand(message: string | undefined, opts?: { url?: string; model?: string }): Promise<void> {
   const cwd = process.cwd();
   const config = await readConfig(cwd);
   if (!config) {
@@ -488,7 +556,7 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
   try {
     const configuredNamespaces = Object.keys(config.registries);
     const fetcher = new RegistryFetcher(config.registries);
-    const [indices, globalEntries, lock] = await Promise.all([
+    const [indices, globalEntries, lock, rawConfig] = await Promise.all([
       Promise.all(
         configuredNamespaces.map(async (ns) => {
           try {
@@ -500,6 +568,7 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
       ),
       fetchGlobalRegistries(configuredNamespaces),
       readLock(cwd),
+      fsReadFile(join(cwd, "kitn.json"), "utf-8").then((r) => JSON.parse(r)).catch(() => null),
     ]);
     registryIndex = indices
       .filter(Boolean)
@@ -509,7 +578,10 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
         description: item.description,
         registryDependencies: item.registryDependencies,
       })));
-    installed = Object.keys(lock);
+    // Read installed from kitn.lock (preferred) or kitn.json installed key (legacy)
+    const lockKeys = Object.keys(lock);
+    const configInstalledKeys = rawConfig?.installed ? Object.keys(rawConfig.installed) : [];
+    installed = lockKeys.length > 0 ? lockKeys : configInstalledKeys;
     globalRegistryIndex = globalEntries.length > 0 ? globalEntries : undefined;
   } catch {
     s.stop(pc.red("Failed to gather context"));
@@ -523,6 +595,11 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
   const serviceUrl = await resolveServiceUrl(opts?.url, config.chatService);
   const metadata: Record<string, unknown> = { registryIndex, installed };
   if (globalRegistryIndex) metadata.globalRegistryIndex = globalRegistryIndex;
+  const requestModel = opts?.model;
+
+  // Build available component names for plan validation
+  const availableComponents = (registryIndex as any[]).map((item: any) => item.name);
+  const toolCallCtx: ToolCallContext = { cwd, availableComponents, installedComponents: installed };
 
   let totalTokens = 0;
   let lastInputTokens = 0;
@@ -551,7 +628,7 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
       const res = await fetch(`${serviceUrl}/api/chat`, {
         method: "POST",
         headers,
-        body: JSON.stringify(buildServicePayload(messages, metadata)),
+        body: JSON.stringify(buildServicePayload(messages, metadata, requestModel)),
       });
 
       if (!res.ok) {
@@ -594,7 +671,7 @@ export async function chatCommand(message: string | undefined, opts?: { url?: st
     });
 
     // Handle each tool call
-    const toolResults = await handleToolCalls(response.message.toolCalls!, cwd);
+    const toolResults = await handleToolCalls(response.message.toolCalls!, toolCallCtx);
 
     // Append tool results to history
     messages.push({ role: "tool", toolResults });

@@ -1,4 +1,4 @@
-import type { AIPluginInstance } from "@kitnai/hono-adapter";
+import type { AIPluginInstance } from "@kitnai/hono-openapi-adapter";
 
 /**
  * Register a documentation agent powered by Context7 MCP tools.
@@ -17,7 +17,7 @@ export function registerDocsAgent(plugin: AIPluginInstance) {
     "context7_resolve-library-id": resolveReg.tool,
     "context7_query-docs": queryReg.tool,
   };
-  const { sseHandler, jsonHandler } = plugin.createHandlers({ tools, agentName: "docs" });
+  const { sseHandler, jsonHandler } = plugin.createHandlers({ tools });
 
   plugin.agents.register({
     name: "docs",

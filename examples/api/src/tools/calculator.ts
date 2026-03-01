@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import type { AIPluginInstance } from "@kitnai/hono-adapter";
+import type { AIPluginInstance } from "@kitnai/hono-openapi-adapter";
 
 function safeEvaluate(expression: string): number {
   // Only allow numbers, operators, parentheses, spaces, and decimal points

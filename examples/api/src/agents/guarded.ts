@@ -1,4 +1,4 @@
-import type { AIPluginInstance } from "@kitnai/hono-adapter";
+import type { AIPluginInstance } from "@kitnai/hono-openapi-adapter";
 import { echoTool } from "../tools/echo.js";
 
 export function registerGuardedAgent(plugin: AIPluginInstance) {

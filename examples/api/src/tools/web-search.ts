@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import type { AIPluginInstance } from "@kitnai/hono-adapter";
+import type { AIPluginInstance } from "@kitnai/hono-openapi-adapter";
 import { env } from "../env.js";
 
 const BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search";

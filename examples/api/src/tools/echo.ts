@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import type { AIPluginInstance } from "@kitnai/hono-adapter";
+import type { AIPluginInstance } from "@kitnai/hono-openapi-adapter";
 
 export const echoTool = tool({
   description: "Echoes back the input message",

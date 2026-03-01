@@ -1,6 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
-import type { AIPluginInstance } from "@kitnai/hono-adapter";
+import type { AIPluginInstance } from "@kitnai/hono-openapi-adapter";
 
 const HN_BASE = "https://hacker-news.firebaseio.com/v0";
 

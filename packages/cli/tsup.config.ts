@@ -10,6 +10,9 @@ export default defineConfig({
   banner: { js: "#!/usr/bin/env node" },
   splitting: false,
   sourcemap: true,
+  esbuildOptions(options) {
+    options.jsx = "automatic";
+  },
   define: {
     __CLI_VERSION__: JSON.stringify(pkg.version),
   },

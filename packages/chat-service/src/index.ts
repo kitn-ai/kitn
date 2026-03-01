@@ -6,7 +6,6 @@ import { createMemoryStorage } from "@kitnai/core";
 import { createAIPlugin } from "@kitnai/hono-adapter";
 import { registerAssistantAgent, assistantGuard, setGuardModel } from "./agents/assistant.js";
 import { buildSystemPrompt } from "./prompts/system.js";
-import { buildCompactionPrompt } from "./prompts/compact.js";
 import type { PromptContext } from "./prompts/types.js";
 import { createPlanTool } from "./tools/create-plan.js";
 import { askUserTool, writeFileTool, readFileTool, listFilesTool, updateEnvTool } from "./tools/tools.js";
@@ -63,8 +62,9 @@ app.post("/api/chat", async (c) => {
     return c.json({ rejected: true, text: "No user message found." }, 400);
   }
 
-  // Guard check
-  const guardResult = await assistantGuard(lastUserMsg.content);
+  // Guard check — skip guard on follow-up messages
+  const hasHistory = messages.length > 1;
+  const guardResult = await assistantGuard(lastUserMsg.content, "assistant", { hasHistory });
   if (!guardResult.allowed) {
     return c.json({
       rejected: true,
@@ -154,39 +154,6 @@ app.post("/api/chat", async (c) => {
   } catch (err: any) {
     console.error("[/api/chat] Error:", err);
     return c.json({ error: err.message ?? "LLM call failed" }, 500);
-  }
-});
-
-// Conversation compaction endpoint — summarises long conversations
-app.post("/api/chat/compact", async (c) => {
-  const { messages } = await c.req.json();
-
-  if (!messages || !Array.isArray(messages) || messages.length === 0) {
-    return c.json({ error: "No messages to compact" }, 400);
-  }
-
-  const compactionPrompt = buildCompactionPrompt();
-
-  const conversationText = messages
-    .map((m: any) => `${m.role}: ${m.content ?? "[tool call/result]"}`)
-    .join("\n");
-
-  try {
-    const result = await generateText({
-      model: getModel(DEFAULT_MODEL),
-      system: compactionPrompt,
-      messages: [{ role: "user" as const, content: `Compact this conversation:\n\n${conversationText}` }],
-    });
-
-    return c.json({
-      summary: result.text,
-      usage: {
-        inputTokens: result.usage?.inputTokens ?? 0,
-        outputTokens: result.usage?.outputTokens ?? 0,
-      },
-    });
-  } catch (err: any) {
-    return c.json({ error: err.message ?? "Compaction failed" }, 500);
   }
 });
 

@@ -265,6 +265,33 @@ describe("assistantGuard", () => {
   });
 });
 
+describe("follow-up handling", () => {
+  test("allows follow-ups when hasHistory is true", async () => {
+    const result = await assistantGuard("do it", undefined, { hasHistory: true });
+    expect(result.allowed).toBe(true);
+  });
+
+  test("allows vague follow-ups when hasHistory is true", async () => {
+    const result = await assistantGuard("that sounds good", undefined, { hasHistory: true });
+    expect(result.allowed).toBe(true);
+  });
+
+  test("allows off-topic follow-ups when hasHistory is true", async () => {
+    const result = await assistantGuard("write me a poem", undefined, { hasHistory: true });
+    expect(result.allowed).toBe(true);
+  });
+
+  test("still rejects off-topic first messages", async () => {
+    const result = await assistantGuard("tell me a joke");
+    expect(result.allowed).toBe(false);
+  });
+
+  test("still rejects off-topic with hasHistory false", async () => {
+    const result = await assistantGuard("tell me a joke", undefined, { hasHistory: false });
+    expect(result.allowed).toBe(false);
+  });
+});
+
 describe("keywordCheck", () => {
   test("returns true for component keywords", () => {
     expect(keywordCheck("add an agent")).toBe(true);

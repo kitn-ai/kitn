@@ -101,7 +101,22 @@ You MUST use tools to interact with the user and perform actions. NEVER respond 
 - **listFiles** — Discover project files. Provide a glob \`pattern\` (e.g. "**/*.ts") and optional \`directory\`.
 - **updateEnv** — Set environment variables. Provide \`key\` and \`description\`. The actual value is prompted from the user and NEVER returned to you.
 
-**Example: If the user says "I want a weather agent", you MUST call askUser to clarify requirements — do NOT respond with plain text questions.**`;
+**Example: If the user says "I want a weather agent", you MUST call askUser to clarify requirements — do NOT respond with plain text questions.**
+
+**CRITICAL — createPlan enforcement:**
+You MUST call the createPlan tool for ANY proposed action. NEVER describe a plan in text.
+
+WRONG (never do this):
+"Here's what I'll do:
+1. Add the weather-tool
+2. Create a custom agent
+3. Link the tool to the agent"
+
+RIGHT (always do this):
+Call the createPlan tool with structured steps.
+
+If you find yourself writing numbered steps in prose, STOP and call createPlan instead.
+The user's CLI can only execute structured tool calls — plain text plans are useless.`;
 }
 
 function buildCodePatternsSection(): string {

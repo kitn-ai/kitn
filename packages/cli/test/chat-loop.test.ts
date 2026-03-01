@@ -46,3 +46,30 @@ describe("conversation loop helpers", () => {
     expect(result).toContain("6.8k");
   });
 });
+
+describe("looksLikePlan", () => {
+  test("detects plan-like text", async () => {
+    const { looksLikePlan } = await import("../src/commands/chat.js");
+    expect(looksLikePlan("Here's what I'll do:\n1. Add the weather-tool\n2. Create a custom agent")).toBe(true);
+  });
+
+  test("rejects plain informational text", async () => {
+    const { looksLikePlan } = await import("../src/commands/chat.js");
+    expect(looksLikePlan("Here are the available components:\n- weather-tool\n- echo-tool")).toBe(false);
+  });
+
+  test("rejects text without numbered steps", async () => {
+    const { looksLikePlan } = await import("../src/commands/chat.js");
+    expect(looksLikePlan("I can help you add a weather agent to your project.")).toBe(false);
+  });
+
+  test("detects plans with create/scaffold verbs", async () => {
+    const { looksLikePlan } = await import("../src/commands/chat.js");
+    expect(looksLikePlan("1. Scaffold a new tool\n2. Link it to the agent")).toBe(true);
+  });
+
+  test("rejects numbered list without action verbs", async () => {
+    const { looksLikePlan } = await import("../src/commands/chat.js");
+    expect(looksLikePlan("1. The weather-tool provides forecasts\n2. The echo-tool repeats input")).toBe(false);
+  });
+});

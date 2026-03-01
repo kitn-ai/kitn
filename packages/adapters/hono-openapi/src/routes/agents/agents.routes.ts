@@ -263,7 +263,11 @@ export function createAgentsRoutes(ctx: PluginContext) {
 
       // Check guard before any execution
       if (agent.guard) {
-        const guardResult = await agent.guard(message, name);
+        const conversationId = body.conversationId;
+        const guardResult = await agent.guard(message, name, {
+          hasHistory: !!conversationId,
+          conversationId,
+        });
         if (!guardResult.allowed) {
           return c.json({ error: `Guard blocked: ${guardResult.reason ?? "query not allowed"}` }, 403);
         }
@@ -293,7 +297,7 @@ export function createAgentsRoutes(ctx: PluginContext) {
       // TODO: thread scopeId through handler options once handler factories in @kitnai/core support it
       if (format === "sse") {
         const bus = new AgentEventBus();
-        const delegationCtx: DelegationContext = { chain: [], depth: 0, events: bus, orchestrator: name };
+        const delegationCtx: DelegationContext = { chain: [], depth: 0, events: bus, orchestrator: name, conversationId: body.conversationId };
         return delegationStore.run(delegationCtx, () => handler(c.req, { systemPrompt, memoryContext, body }));
       }
 

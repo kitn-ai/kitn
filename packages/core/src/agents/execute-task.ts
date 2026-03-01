@@ -138,6 +138,7 @@ export async function executeTask(
     depth: depth + 1,
     events: parentCtx?.events,
     abortSignal: parentCtx?.abortSignal,
+    conversationId: parentCtx?.conversationId,
   };
 
   const augmentedTools: Record<string, any> = {
@@ -151,7 +152,10 @@ export async function executeTask(
   // Invoke guard if present
   if (registration.guard) {
     emitStatus({ code: STATUS_CODES.GUARD_CHECK, message: "Running pre-execution guard", agent });
-    const guardResult = await registration.guard(query, agent);
+    const guardResult = await registration.guard(query, agent, {
+      hasHistory: !!parentCtx?.conversationId,
+      conversationId: parentCtx?.conversationId,
+    });
     if (!guardResult.allowed) {
       bus?.emit(BUS_EVENTS.DELEGATE_END, {
         from, to: agent, summary: `Blocked: ${guardResult.reason ?? "guard rejected"}`, error: true,

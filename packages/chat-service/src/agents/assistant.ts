@@ -89,7 +89,14 @@ kitn supports these categories:
 - info — questions about what's available, installed, capabilities, help
 - off-topic — not related to building AI agent systems (poems, jokes, general knowledge, etc.)
 
-Respond with EXACTLY one category name from the list above. When in doubt, pick the closest match — only use "off-topic" if the message clearly has nothing to do with building or configuring AI systems.`;
+IMPORTANT: Generic web/mobile application requests are "off-topic" even if AI could theoretically be added to them. Examples that MUST be classified as "off-topic":
+- "Build a todo app" → off-topic (generic web app, not an AI agent system)
+- "Build a React app" → off-topic
+- "Build a landing page" → off-topic
+- "Write a poem" → off-topic
+- "Explain quantum physics" → off-topic
+
+Respond with EXACTLY one category name from the list above.`;
 
 export type GuardCategory =
   | "agent" | "tool" | "skill" | "storage" | "cron" | "voice"

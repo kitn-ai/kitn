@@ -1,0 +1,13 @@
+{
+  "name": "brainstorm-agent",
+  "type": "kitn:agent",
+  "description": "Brainstorming agent — facilitates structured ideation with research capabilities to ground ideas in reality",
+  "dependencies": ["ai"],
+  "registryDependencies": ["core", "web-search-tool", "web-fetch-tool"],
+  "files": ["brainstorm-agent.ts"],
+  "docs": "Interactive brainstorming agent that uses SCAMPER, mind mapping, and other ideation techniques. Can search the web to research and validate ideas during the session. Requires web-search-tool (BRAVE_API_KEY) and web-fetch-tool.",
+  "categories": ["brainstorming", "ideation", "creativity", "research"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

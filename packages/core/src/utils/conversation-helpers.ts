@@ -7,7 +7,7 @@ import type { PluginContext } from "../types.js";
  * Load conversation history with optional auto-compaction.
  *
  * - Loads the conversation from storage
- * - If auto-compaction is enabled and threshold exceeded, compacts then reloads
+ * - If auto-compaction is enabled and token limit exceeded, compacts then reloads
  * - Appends the new user message to the store
  * - Returns the history messages array, or undefined if conversation not found
  */
@@ -28,9 +28,9 @@ export async function loadConversationWithCompaction(
     return undefined;
   }
 
-  // Auto-compact if enabled and threshold exceeded
+  // Auto-compact if enabled and token limit exceeded
   const compactionConfig = ctx.config.compaction;
-  if (compactionConfig?.enabled !== false && compactionConfig && needsCompaction(conv, compactionConfig.threshold)) {
+  if (compactionConfig?.enabled !== false && compactionConfig && needsCompaction(conv, compactionConfig.tokenLimit)) {
     await compactConversation(ctx, conversationId);
     conv = await ctx.storage.conversations.get(conversationId);
     if (!conv) return undefined;

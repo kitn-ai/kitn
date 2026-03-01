@@ -1,0 +1,13 @@
+{
+  "name": "json-formatter",
+  "type": "kitn:skill",
+  "description": "Outputs structured JSON matching a specified schema — for API responses, configs, and data exchange",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when the output must be valid JSON. Phase: response.",
+  "categories": ["structured-output", "json", "data"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

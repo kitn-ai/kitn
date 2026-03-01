@@ -1,0 +1,13 @@
+{
+  "name": "grammar-coach",
+  "type": "kitn:skill",
+  "description": "Explains grammar rules and provides corrections with clear reasoning to help users learn",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when the user wants to improve their grammar or writing mechanics. Phase: response.",
+  "categories": ["language", "grammar", "education"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

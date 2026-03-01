@@ -1,0 +1,13 @@
+{
+  "name": "onboarding-guide",
+  "type": "kitn:skill",
+  "description": "Creates step-by-step onboarding flows for products, tools, or processes",
+  "dependencies": [],
+  "registryDependencies": [],
+  "files": ["README.md"],
+  "docs": "Inject this skill when creating onboarding content or walkthroughs. Phase: both.",
+  "categories": ["customer", "onboarding", "tutorial", "getting-started"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

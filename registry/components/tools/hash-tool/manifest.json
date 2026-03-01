@@ -1,0 +1,13 @@
+{
+  "name": "hash-tool",
+  "type": "kitn:tool",
+  "description": "Compute cryptographic hashes — SHA-256, SHA-512, MD5, and HMAC",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "files": ["hash-tool.ts"],
+  "docs": "Hashes text using standard algorithms. No API keys needed. Uses Web Crypto API.",
+  "categories": ["utility", "crypto", "hash"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

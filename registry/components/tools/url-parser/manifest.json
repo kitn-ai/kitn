@@ -1,0 +1,13 @@
+{
+  "name": "url-parser",
+  "type": "kitn:tool",
+  "description": "Parse URLs into components, build URLs from parts, encode/decode URL strings",
+  "dependencies": ["ai", "zod"],
+  "registryDependencies": ["core"],
+  "files": ["url-parser.ts"],
+  "docs": "Parse, build, and encode/decode URLs. No API keys needed.",
+  "categories": ["utility", "url", "web"],
+  "changelog": [
+    { "version": "1.0.0", "date": "2026-03-01", "type": "initial", "note": "Initial release" }
+  ]
+}

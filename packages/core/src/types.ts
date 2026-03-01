@@ -56,6 +56,23 @@ export interface CompactionConfig {
   enabled?: boolean;
 }
 
+export interface RedactionPattern {
+  name: string;
+  regex: RegExp;
+  replacement?: string;
+}
+
+export type BuiltinRedactionPattern = "apiKeys" | "tokens" | "passwords" | "creditCards" | "ssn" | "emails";
+
+export interface RedactionConfig {
+  /** Built-in patterns to enable (default: all) */
+  builtins?: BuiltinRedactionPattern[];
+  /** Custom regex patterns to redact */
+  patterns?: RedactionPattern[];
+  /** Fields to skip redaction on (e.g. "agentName", "timestamp") */
+  skipFields?: string[];
+}
+
 /** Core configuration — framework-agnostic. */
 export interface CoreConfig {
   /** Returns a LanguageModel for the given model ID (or default). Optional — only needed for agent chat. */
@@ -72,6 +89,8 @@ export interface CoreConfig {
   compaction?: CompactionConfig;
   /** Lifecycle hooks configuration. When set, enables execution event emission. */
   hooks?: LifecycleHookConfig;
+  /** Secret redaction for lifecycle hook events */
+  redaction?: RedactionConfig;
   /** Platform-specific waitUntil for serverless background execution. */
   waitUntil?: (promise: Promise<unknown>) => void;
   /** Plugins to mount. Each plugin provides routes that adapters will register. */

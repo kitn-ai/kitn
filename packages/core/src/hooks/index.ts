@@ -1,4 +1,5 @@
 export { createLifecycleHooks } from "./lifecycle-hooks.js";
+export { createRedactedHooks, BUILTIN_PATTERNS, redactValue, redactObject } from "./redaction.js";
 export type {
   LifecycleHookEmitter,
   LifecycleHookConfig,

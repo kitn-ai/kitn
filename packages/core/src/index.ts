@@ -1,5 +1,5 @@
 // ── Core types ──
-export type { AgentRequest, CoreConfig, PluginContext, ResilienceConfig, FallbackContext, CompactionConfig } from "./types.js";
+export type { AgentRequest, CoreConfig, PluginContext, ResilienceConfig, FallbackContext, CompactionConfig, RedactionConfig, RedactionPattern, BuiltinRedactionPattern } from "./types.js";
 
 // ── Registry ──
 export { AgentRegistry } from "./registry/agent-registry.js";
@@ -119,7 +119,7 @@ export { executeJobInBackground, type JobExecutionContext } from "./jobs/index.j
 export { createEventBuffer, type EventBuffer, type BufferedEvent } from "./jobs/index.js";
 
 // ── Lifecycle hooks ──
-export { createLifecycleHooks } from "./hooks/index.js";
+export { createLifecycleHooks, createRedactedHooks, BUILTIN_PATTERNS, redactValue, redactObject } from "./hooks/index.js";
 export type {
   LifecycleHookEmitter,
   LifecycleHookConfig,

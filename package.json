@@ -9,16 +9,33 @@
   ],
   "scripts": {
     "install:all": "bun install",
+
     "dev": "bun run --cwd examples/api dev & bun run --cwd examples/app dev & bun run --cwd examples/voice dev & wait",
     "dev:api": "bun run --cwd examples/api dev",
     "dev:app": "bun run --cwd examples/app dev",
     "dev:voice": "bun run --cwd examples/voice dev",
     "dev:chat": "bun run --cwd packages/chat-service dev",
+    "dev:mcp": "bun --watch packages/mcp-server/src/index.ts",
+    "dev:cli": "bun run --cwd packages/cli-core build && bun run --cwd packages/cli build && bun run packages/cli/dist/index.js",
+
+    "mcp": "bun run packages/mcp-server/dist/index.js",
+    "mcp:http": "bun run packages/mcp-server/dist/http.js",
+    "mcp:inspect": "npx @modelcontextprotocol/inspector bun run mcp",
+    "cli": "bun run packages/cli/dist/index.js",
+
     "build": "bun run --filter '*' build",
-    "test": "bun run --filter '*' test",
-    "typecheck": "bun run --filter '*' typecheck",
+    "build:core": "bun run --cwd packages/cli-core build",
+    "build:cli": "bun run --cwd packages/cli-core build && bun run --cwd packages/cli build",
+    "build:mcp": "bun run --cwd packages/cli-core build && bun run --cwd packages/mcp-server build",
     "build:registry": "bun run --cwd registry scripts/build-registry.ts",
-    "bump:registry": "bun run --cwd registry scripts/bump-version.ts"
+    "bump:registry": "bun run --cwd registry scripts/bump-version.ts",
+
+    "test": "bun run --filter '*' test",
+    "test:core": "bun run --cwd packages/core test",
+    "test:cli": "bun run --cwd packages/cli test",
+    "test:cli-core": "bun run --cwd packages/cli-core test",
+
+    "typecheck": "bun run --filter '*' typecheck"
   },
   "devDependencies": {
     "@clack/prompts": "^0.10.0",

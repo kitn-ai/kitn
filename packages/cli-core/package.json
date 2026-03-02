@@ -5,6 +5,7 @@
   "description": "Pure logic for kitn project management — shared by CLI and MCP server",
   "exports": {
     ".": {
+      "bun": "./src/index.ts",
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }

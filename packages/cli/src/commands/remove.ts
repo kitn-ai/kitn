@@ -1,103 +1,14 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { join, relative, dirname } from "path";
-import { unlink, readFile, writeFile } from "fs/promises";
-import { existsSync } from "fs";
-import { readConfig, writeConfig, resolveRoutesAlias, readLock, writeLock } from "../utils/config.js";
-import type { LockFile } from "../utils/config.js";
-import { parseComponentRef } from "../utils/parse-ref.js";
-import { removeImportFromBarrel } from "../installers/barrel-manager.js";
-
-async function removeSingleComponent(installedKey: string, lock: LockFile, config: any, cwd: string) {
-  const entry = lock[installedKey];
-  if (!entry) return;
-
-  const deleted: string[] = [];
-  for (const filePath of entry.files) {
-    try {
-      await unlink(join(cwd, filePath));
-      deleted.push(filePath);
-    } catch {
-      p.log.warn(`Could not delete ${filePath} (may have been moved or renamed)`);
-    }
-  }
-
-  // Remove barrel imports for deleted files
-  const baseDir = config.aliases.base ?? "src/ai";
-  const barrelPath = join(cwd, baseDir, "index.ts");
-  const barrelDir = join(cwd, baseDir);
-  const barrelEligibleDirs = new Set([
-    config.aliases.agents,
-    config.aliases.tools,
-    config.aliases.skills,
-  ]);
-
-  if (existsSync(barrelPath) && deleted.length > 0) {
-    let barrelContent = await readFile(barrelPath, "utf-8");
-    let barrelChanged = false;
-
-    for (const filePath of deleted) {
-      const fileDir = dirname(filePath);
-      if (!barrelEligibleDirs.has(fileDir)) continue;
-
-      const importPath = "./" + relative(barrelDir, join(cwd, filePath)).replace(/\\/g, "/");
-      const updated = removeImportFromBarrel(barrelContent, importPath);
-      if (updated !== barrelContent) {
-        barrelContent = updated;
-        barrelChanged = true;
-      }
-    }
-
-    if (barrelChanged) {
-      await writeFile(barrelPath, barrelContent);
-      p.log.info(`Updated barrel file: ${join(baseDir, "index.ts")}`);
-    }
-  }
-
-  delete lock[installedKey];
-
-  if (deleted.length > 0) {
-    p.log.success(`Removed ${installedKey}:\n` + deleted.map((f) => `  ${pc.red("-")} ${f}`).join("\n"));
-  }
-}
-
-async function offerOrphanRemoval(removedDeps: Set<string>, lock: LockFile, config: any, cwd: string) {
-  if (removedDeps.size === 0) return;
-
-  // Find orphaned dependencies — deps not needed by any remaining installed component
-  const remaining = Object.entries(lock);
-  const neededDeps = new Set<string>();
-  for (const [, entry] of remaining) {
-    if (entry.registryDependencies) {
-      for (const dep of entry.registryDependencies) {
-        neededDeps.add(dep);
-      }
-    }
-  }
-
-  // Also exclude "core" — never offer to remove it
-  const orphans = [...removedDeps].filter(
-    (dep) => dep !== "core" && !neededDeps.has(dep) && lock[dep]
-  );
-
-  if (orphans.length === 0) return;
-
-  const selected = await p.multiselect({
-    message: "The following dependencies are no longer used. Remove them?",
-    options: orphans.map((dep) => ({
-      value: dep,
-      label: dep,
-      hint: `${lock[dep].files.length} file(s)`,
-    })),
-    initialValues: orphans, // all checked by default
-  });
-
-  if (p.isCancel(selected)) return;
-
-  for (const key of selected as string[]) {
-    await removeSingleComponent(key, lock, config, cwd);
-  }
-}
+import {
+  removeComponent,
+  removeMultipleComponents,
+  removeOrphans,
+  readConfig,
+  readLock,
+  resolveRoutesAlias,
+  parseComponentRef,
+} from "@kitnai/cli-core";
 
 export async function removeCommand(componentName?: string) {
   const cwd = process.cwd();
@@ -110,6 +21,7 @@ export async function removeCommand(componentName?: string) {
   const lock = await readLock(cwd);
 
   if (!componentName) {
+    // Interactive multi-select mode
     const installedKeys = Object.keys(lock);
 
     if (installedKeys.length === 0) {
@@ -137,36 +49,45 @@ export async function removeCommand(componentName?: string) {
       process.exit(0);
     }
 
-    // Snapshot deps before removal (entries get deleted during removeSingleComponent)
-    const allRemovedDeps = new Set<string>();
-    for (const key of selectedKeys) {
-      const entry = lock[key];
-      if (entry?.registryDependencies) {
-        for (const dep of entry.registryDependencies) {
-          allRemovedDeps.add(dep);
-        }
+    let result;
+    try {
+      result = await removeMultipleComponents({ components: selectedKeys, cwd });
+    } catch (err: any) {
+      p.log.error(err.message);
+      process.exit(1);
+    }
+
+    // Display results
+    for (const item of result.removed) {
+      if (item.files.length > 0) {
+        p.log.success(`Removed ${item.name}:\n` + item.files.map((f) => `  ${pc.red("-")} ${f}`).join("\n"));
       }
     }
 
-    // Remove each selected component
-    for (const key of selectedKeys) {
-      await removeSingleComponent(key, lock, config, cwd);
+    for (const f of result.failedDeletes) {
+      p.log.warn(`Could not delete ${f} (may have been moved or renamed)`);
     }
 
-    await offerOrphanRemoval(allRemovedDeps, lock, config, cwd);
+    if (result.barrelUpdated) {
+      const baseDir = config.aliases.base ?? "src/ai";
+      p.log.info(`Updated barrel file: ${baseDir}/index.ts`);
+    }
 
-    await writeLock(cwd, lock);
+    // Offer orphan removal
+    if (result.orphans.length > 0) {
+      await offerOrphanRemoval(result.orphans, cwd);
+    }
+
     p.outro(pc.green("Done!"));
     return;
   }
 
-  // Resolve "routes" alias to framework-specific adapter name
+  // Single component removal
   const input = componentName === "routes" ? resolveRoutesAlias(config) : componentName;
   const ref = parseComponentRef(input);
-
-  // Look up in lock — @kitn uses plain name, third-party uses @namespace/name
   const installedKey = ref.namespace === "@kitn" ? ref.name : `${ref.namespace}/${ref.name}`;
   const entry = lock[installedKey];
+
   if (!entry) {
     p.log.error(`Component '${ref.name}' is not installed.`);
     process.exit(1);
@@ -181,13 +102,59 @@ export async function removeCommand(componentName?: string) {
     process.exit(0);
   }
 
-  // Snapshot deps before removal
-  const removedDeps = new Set(entry.registryDependencies ?? []);
+  let result;
+  try {
+    result = await removeComponent({ component: componentName, cwd });
+  } catch (err: any) {
+    p.log.error(err.message);
+    process.exit(1);
+  }
 
-  await removeSingleComponent(installedKey, lock, config, cwd);
+  if (result.removed.files.length > 0) {
+    p.log.success(`Removed ${result.removed.name}:\n` + result.removed.files.map((f) => `  ${pc.red("-")} ${f}`).join("\n"));
+  }
+
+  for (const f of result.failedDeletes) {
+    p.log.warn(`Could not delete ${f} (may have been moved or renamed)`);
+  }
+
+  if (result.barrelUpdated) {
+    const baseDir = config.aliases.base ?? "src/ai";
+    p.log.info(`Updated barrel file: ${baseDir}/index.ts`);
+  }
 
   // Check for orphaned dependencies
-  await offerOrphanRemoval(removedDeps, lock, config, cwd);
+  if (result.orphans.length > 0) {
+    await offerOrphanRemoval(result.orphans, cwd);
+  }
+}
 
-  await writeLock(cwd, lock);
+async function offerOrphanRemoval(orphans: string[], cwd: string) {
+  const lock = await readLock(cwd);
+
+  const selected = await p.multiselect({
+    message: "The following dependencies are no longer used. Remove them?",
+    options: orphans.map((dep) => ({
+      value: dep,
+      label: dep,
+      hint: lock[dep] ? `${lock[dep].files.length} file(s)` : undefined,
+    })),
+    initialValues: orphans,
+  });
+
+  if (p.isCancel(selected)) return;
+
+  const selectedKeys = selected as string[];
+  if (selectedKeys.length === 0) return;
+
+  try {
+    const removed = await removeOrphans(selectedKeys, cwd);
+    for (const item of removed) {
+      if (item.files.length > 0) {
+        p.log.success(`Removed ${item.name}:\n` + item.files.map((f) => `  ${pc.red("-")} ${f}`).join("\n"));
+      }
+    }
+  } catch (err: any) {
+    p.log.warn(`Failed to remove some orphans: ${err.message}`);
+  }
 }

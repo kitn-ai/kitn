@@ -20,6 +20,7 @@ export * from "./installers/barrel-manager.js";
 export * from "./installers/import-rewriter.js";
 export * from "./installers/agent-linker.js";
 export * from "./installers/diff.js";
+export * from "./installers/file-writer.js";
 export * from "./installers/tsconfig-patcher.js";
 
 // Registry
@@ -39,3 +40,6 @@ export * from "./commands/unlink.js";
 export * from "./commands/list.js";
 export * from "./commands/info.js";
 export * from "./commands/diff.js";
+export * from "./commands/add.js";
+export * from "./commands/remove.js";
+export * from "./commands/init.js";

@@ -32,6 +32,7 @@ export * from "./utils/component-resolver.js";
 
 // Rules
 export * from "./rules/template.js";
+export * from "./rules/sections.js";
 
 // Commands
 export * from "./commands/create.js";
@@ -46,3 +47,4 @@ export * from "./commands/init.js";
 export * from "./commands/rules.js";
 export * from "./commands/registry.js";
 export * from "./commands/update.js";
+export * from "./commands/project.js";

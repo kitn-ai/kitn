@@ -43,3 +43,6 @@ export * from "./commands/diff.js";
 export * from "./commands/add.js";
 export * from "./commands/remove.js";
 export * from "./commands/init.js";
+export * from "./commands/rules.js";
+export * from "./commands/registry.js";
+export * from "./commands/update.js";

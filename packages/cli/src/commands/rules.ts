@@ -1,23 +1,14 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { readConfig, DEFAULT_REGISTRIES, DEFAULT_ALIASES } from "../utils/config.js";
-import {
-  fetchRulesConfig,
-  generateRulesFiles,
-} from "../installers/rules-generator.js";
-import type { KitnConfig } from "../utils/config.js";
+import { getRulesConfig } from "@kitnai/cli-core";
+import { regenerateRules } from "../installers/rules-generator.js";
 
 export async function rulesCommand() {
   p.intro(pc.bgCyan(pc.black(" kitn rules ")));
 
   const cwd = process.cwd();
-  const config = await readConfig(cwd);
 
-  // Use project aliases if kitn.json exists, otherwise defaults
-  const registries = config?.registries ?? DEFAULT_REGISTRIES;
-  const aliases = config?.aliases ?? DEFAULT_ALIASES;
-
-  const rulesConfig = await fetchRulesConfig(registries);
+  const rulesConfig = await getRulesConfig(cwd);
 
   const selected = await p.multiselect({
     message: "Which AI coding tools do you use?",
@@ -45,10 +36,10 @@ export async function rulesCommand() {
   const s = p.spinner();
   s.start("Generating rules files");
 
-  // Build a minimal config-like object for generateRulesFiles
-  const effectiveConfig = { registries, aliases } as KitnConfig;
-
-  const written = await generateRulesFiles(cwd, effectiveConfig, selectedIds);
+  const written = await regenerateRules({
+    cwd,
+    toolIds: selectedIds,
+  });
 
   s.stop("Rules files generated");
 

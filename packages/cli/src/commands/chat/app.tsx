@@ -53,11 +53,14 @@ export function ChatApp(props: ChatAppProps) {
     messagesRef,
   } = useChat({ ...props, metadata, availableComponents, installedComponents });
 
-  // Ctrl+C shows stats then exits
+  // Ctrl+C shows stats then exits, Escape cancels resume picker
   useInput((input, key) => {
     if (key.ctrl && input === "c") {
       setExiting(true);
       setTimeout(() => exit(), 150);
+    }
+    if (key.escape && resumePicker) {
+      setResumePicker(null);
     }
   });
 
@@ -242,7 +245,7 @@ export function ChatApp(props: ChatAppProps) {
       {isIdle && !exiting && !resumePicker && !runningCommand && (
         <>
           <Box width="100%">
-            <Text dimColor wrap="truncate">{"─".repeat(300)}</Text>
+            <Text dimColor wrap="truncate">{"─".repeat(stdout.columns || 80)}</Text>
           </Box>
           <InputArea onSubmit={handleInput} commands={SLASH_COMMAND_DEFS} />
         </>

@@ -19,5 +19,12 @@ export * from "./installers/agent-linker.js";
 export * from "./installers/diff.js";
 export * from "./installers/tsconfig-patcher.js";
 
+// Registry
+export * from "./registry/fetcher.js";
+export * from "./registry/resolver.js";
+
+// Component resolver
+export * from "./utils/component-resolver.js";
+
 // Rules
 export * from "./rules/template.js";

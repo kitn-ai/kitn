@@ -10,3 +10,14 @@ export * from "./utils/type-aliases.js";
 export * from "./utils/parse-ref.js";
 export * from "./utils/hash.js";
 export * from "./utils/naming.js";
+export * from "./utils/env.js";
+
+// Installers
+export * from "./installers/barrel-manager.js";
+export * from "./installers/import-rewriter.js";
+export * from "./installers/agent-linker.js";
+export * from "./installers/diff.js";
+export * from "./installers/tsconfig-patcher.js";
+
+// Rules
+export * from "./rules/template.js";

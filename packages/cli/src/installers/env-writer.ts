@@ -38,21 +38,7 @@ async function readEnvFile(path: string): Promise<string> {
   }
 }
 
-/**
- * Collect all envVars from resolved items, deduplicating by key name.
- * Later items override earlier ones if same key.
- */
-export function collectEnvVars(
-  items: Array<{ envVars?: Record<string, EnvVarConfig> }>
-): Record<string, EnvVarConfig> {
-  const merged: Record<string, EnvVarConfig> = {};
-  for (const item of items) {
-    if (item.envVars) {
-      Object.assign(merged, item.envVars);
-    }
-  }
-  return merged;
-}
+export { collectEnvVars } from "@kitnai/cli-core";
 
 /**
  * Handle env var setup after component installation:

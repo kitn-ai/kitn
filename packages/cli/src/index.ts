@@ -136,14 +136,18 @@ program
   });
 
 program
-  .command("chat")
+  .command("code")
+  .alias("chat")
   .description("AI-powered scaffolding assistant")
   .argument("[message]", "What you want to do")
-  .option("-u, --url <url>", "Chat service URL")
+  .option("-u, --url <url>", "Service URL")
   .option("-m, --model <model>", "Model to use (e.g. openai/gpt-4o-mini)")
-  .action(async (message: string | undefined, opts: { url?: string; model?: string }) => {
-    const { chatCommand } = await import("./commands/chat.js");
-    await chatCommand(message, opts);
+  .option("-r, --resume <id>", "Resume a conversation by ID")
+  .option("-l, --list", "List conversations")
+  .option("--clear", "Clear all conversations")
+  .action(async (message: string | undefined, opts: { url?: string; model?: string; resume?: string; list?: boolean; clear?: boolean }) => {
+    const { codeCommand } = await import("./commands/chat.js");
+    await codeCommand(message, opts);
   });
 
 const registry = program
@@ -188,7 +192,7 @@ const config = program
 config
   .command("set")
   .description("Set a config value")
-  .argument("<key>", "config key (chat-url, api-key)")
+  .argument("<key>", "config key (service-url, api-key)")
   .argument("<value>", "config value")
   .action(async (key: string, value: string) => {
     const { configSetCommand } = await import("./commands/config.js");

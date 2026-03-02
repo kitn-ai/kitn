@@ -48,6 +48,58 @@ app.use("/*", cors());
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
+// Conversation compaction endpoint
+app.post("/api/chat/compact", async (c) => {
+  const body = await c.req.json();
+  const { messages, model: requestModel } = body;
+
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    return c.json({ error: "No messages provided." }, 400);
+  }
+
+  // Format messages into readable text for the compaction prompt
+  const formattedLines: string[] = [];
+  for (const m of messages) {
+    if (m.role === "user") {
+      formattedLines.push(`User: ${m.content ?? ""}`);
+    } else if (m.role === "assistant") {
+      formattedLines.push(`Assistant: ${m.content ?? ""}`);
+      if (m.toolCalls?.length) {
+        for (const tc of m.toolCalls) {
+          formattedLines.push(`  [Tool call: ${tc.name}]`);
+        }
+      }
+    } else if (m.role === "tool") {
+      if (m.toolResults?.length) {
+        for (const tr of m.toolResults) {
+          const resultPreview = typeof tr.result === "string" ? tr.result.slice(0, 500) : JSON.stringify(tr.result).slice(0, 500);
+          formattedLines.push(`  [Tool result (${tr.toolName}): ${resultPreview}]`);
+        }
+      }
+    }
+  }
+
+  try {
+    const modelId = requestModel ?? DEFAULT_MODEL;
+    const result = await generateText({
+      model: getModel(modelId),
+      system: buildCompactionPrompt(),
+      messages: [{ role: "user", content: formattedLines.join("\n") }],
+    });
+
+    return c.json({
+      summary: result.text ?? "",
+      usage: {
+        inputTokens: result.usage?.inputTokens ?? 0,
+        outputTokens: result.usage?.outputTokens ?? 0,
+      },
+    });
+  } catch (err: any) {
+    console.error("[/api/chat/compact] Error:", err);
+    return c.json({ error: err.message ?? "Compaction failed" }, 500);
+  }
+});
+
 // Custom /api/chat endpoint — registered BEFORE plugin router so it takes priority
 app.post("/api/chat", async (c) => {
   const body = await c.req.json();
@@ -63,8 +115,9 @@ app.post("/api/chat", async (c) => {
     return c.json({ rejected: true, text: "No user message found." }, 400);
   }
 
-  // Guard check
-  const guardResult = await assistantGuard(lastUserMsg.content);
+  // Guard check — skip guard on follow-up messages
+  const hasHistory = messages.length > 1;
+  const guardResult = await assistantGuard(lastUserMsg.content, "assistant", { hasHistory });
   if (!guardResult.allowed) {
     return c.json({
       rejected: true,
@@ -154,39 +207,6 @@ app.post("/api/chat", async (c) => {
   } catch (err: any) {
     console.error("[/api/chat] Error:", err);
     return c.json({ error: err.message ?? "LLM call failed" }, 500);
-  }
-});
-
-// Conversation compaction endpoint — summarises long conversations
-app.post("/api/chat/compact", async (c) => {
-  const { messages } = await c.req.json();
-
-  if (!messages || !Array.isArray(messages) || messages.length === 0) {
-    return c.json({ error: "No messages to compact" }, 400);
-  }
-
-  const compactionPrompt = buildCompactionPrompt();
-
-  const conversationText = messages
-    .map((m: any) => `${m.role}: ${m.content ?? "[tool call/result]"}`)
-    .join("\n");
-
-  try {
-    const result = await generateText({
-      model: getModel(DEFAULT_MODEL),
-      system: compactionPrompt,
-      messages: [{ role: "user" as const, content: `Compact this conversation:\n\n${conversationText}` }],
-    });
-
-    return c.json({
-      summary: result.text,
-      usage: {
-        inputTokens: result.usage?.inputTokens ?? 0,
-        outputTokens: result.usage?.outputTokens ?? 0,
-      },
-    });
-  } catch (err: any) {
-    return c.json({ error: err.message ?? "Compaction failed" }, 500);
   }
 });
 

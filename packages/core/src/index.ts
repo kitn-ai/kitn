@@ -12,7 +12,7 @@ export {
 export type {
   AgentSelfRegConfig, ToolSelfRegConfig, CommandSelfRegConfig, SkillSelfRegConfig,
 } from "./registry/self-register.js";
-export type { AgentRegistration, AgentHandler, ActionRegistration, GuardResult } from "./registry/agent-registry.js";
+export type { AgentRegistration, AgentHandler, ActionRegistration, GuardResult, GuardContext } from "./registry/agent-registry.js";
 export type { ToolRegistration } from "./registry/tool-registry.js";
 
 // ── Agent utilities ──

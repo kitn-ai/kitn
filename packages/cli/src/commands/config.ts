@@ -9,7 +9,8 @@ const CONFIG_DIR = join(homedir(), ".kitn");
 const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
 // Valid config keys - this is a whitelist
-const VALID_KEYS = ["chat-url", "api-key"] as const;
+// "service-url" is the primary key; "chat-url" is accepted for backward compatibility
+const VALID_KEYS = ["service-url", "chat-url", "api-key"] as const;
 type ConfigKey = (typeof VALID_KEYS)[number];
 
 export async function readUserConfig(): Promise<Record<string, string>> {

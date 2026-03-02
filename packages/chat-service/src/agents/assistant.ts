@@ -1,4 +1,5 @@
 import type { AIPluginInstance } from "@kitnai/hono-adapter";
+import type { GuardContext } from "@kitnai/core";
 import { generateText, type LanguageModel } from "ai";
 import { createPlanTool } from "../tools/create-plan.js";
 import { buildSystemPrompt, type PromptContext } from "../prompts/system.js";
@@ -138,7 +139,14 @@ export function setGuardModel(model: LanguageModel): void {
   guardModel = model;
 }
 
-export async function assistantGuard(query: string): Promise<GuardResult> {
+export async function assistantGuard(
+  query: string,
+  _agentName?: string,
+  context?: GuardContext,
+): Promise<GuardResult> {
+  // Follow-ups in an established conversation are always allowed
+  if (context?.hasHistory) return { allowed: true };
+
   // Fast path: keywords match → allow immediately (no LLM cost)
   if (keywordCheck(query)) {
     return { allowed: true };
@@ -181,6 +189,7 @@ export function registerAssistantAgent(plugin: AIPluginInstance, promptContext: 
     tools,
     sseHandler,
     jsonHandler,
-    guard: async (query: string) => assistantGuard(query),
+    guard: async (query: string, agent: string, context?: { hasHistory: boolean }) =>
+      assistantGuard(query, agent, context),
   });
 }

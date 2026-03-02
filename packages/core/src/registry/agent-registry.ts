@@ -12,6 +12,33 @@ export interface GuardResult {
   reason?: string;
 }
 
+/**
+ * Context passed to agent guards by the framework.
+ *
+ * Adapters auto-populate this from the request body — if the client sends
+ * `conversationId`, `hasHistory` is set to `true` automatically. Guards
+ * that don't need context can ignore the third parameter (backward-compatible).
+ *
+ * @example
+ * ```ts
+ * guard: async (query, agent, context) => {
+ *   // Skip guard on follow-up messages in an established conversation
+ *   if (context?.hasHistory) return { allowed: true };
+ *   // Run normal guard logic on first message
+ *   if (isOffTopic(query)) return { allowed: false, reason: "Off-topic" };
+ *   return { allowed: true };
+ * }
+ * ```
+ */
+export interface GuardContext {
+  /** True when the request includes a conversationId (i.e. this is a follow-up, not the first message). */
+  hasHistory: boolean;
+  /** The conversation ID from the request body, if provided. */
+  conversationId?: string;
+  /** Number of messages in the conversation so far, if known. */
+  messageCount?: number;
+}
+
 export interface ActionRegistration {
   name: string;
   method: "get" | "post" | "put" | "patch" | "delete";
@@ -38,9 +65,20 @@ export interface AgentRegistration {
   isOrchestrator?: boolean;
   /** Disable the built-in _memory tool for this agent (default: false) */
   disableMemoryTool?: boolean;
-  /** Pre-execution guard. Called with the query before the agent runs.
-   *  Return { allowed: false, reason } to block execution. */
-  guard?: (query: string, agent: string) => GuardResult | Promise<GuardResult>;
+  /**
+   * Pre-execution guard. Called with the user's query before the agent runs.
+   * Return `{ allowed: false, reason }` to block execution (HTTP 403).
+   *
+   * The optional `context` parameter is populated automatically by the framework's
+   * HTTP adapters. When the client sends a `conversationId` in the request body,
+   * `context.hasHistory` is `true` — use this to skip the guard on follow-up
+   * messages in an established conversation.
+   *
+   * @param query - The user's message
+   * @param agent - The agent name being invoked
+   * @param context - Conversation context (auto-populated by adapters)
+   */
+  guard?: (query: string, agent: string, context?: GuardContext) => GuardResult | Promise<GuardResult>;
 }
 
 export class AgentRegistry {

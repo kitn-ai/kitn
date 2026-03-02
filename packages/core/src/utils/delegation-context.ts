@@ -13,6 +13,8 @@ export interface DelegationContext {
   abortSignal?: AbortSignal;
   /** Name of the orchestrator that initiated this request tree */
   orchestrator?: string;
+  /** Conversation ID from the originating HTTP request (threaded to child guards) */
+  conversationId?: string;
 }
 
 /** Returns the set of orchestrator agent names (derived from registry at call time) */

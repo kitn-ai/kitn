@@ -89,3 +89,46 @@ export interface ListFilesInput {
   pattern: string;
   directory?: string;
 }
+
+// --- Conversation storage types ---
+
+export interface ConversationMetaEvent {
+  type: "meta";
+  id: string;
+  createdAt: string;
+  title: string;
+}
+
+export interface ConversationMessageEvent {
+  type: "msg";
+  role: "user" | "assistant" | "tool";
+  content?: string;
+  toolCalls?: ToolCall[];
+  toolResults?: ToolResult[];
+  ts: string;
+}
+
+export interface ConversationCompactionEvent {
+  type: "compaction";
+  summary: string;
+  summarizedCount: number;
+  ts: string;
+}
+
+export type ConversationEvent =
+  | ConversationMetaEvent
+  | ConversationMessageEvent
+  | ConversationCompactionEvent;
+
+export interface ConversationMeta {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+  tokenEstimate: number;
+}
+
+export interface ConversationIndex {
+  conversations: ConversationMeta[];
+}

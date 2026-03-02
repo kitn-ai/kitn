@@ -145,13 +145,21 @@ describe("buildSystemPrompt", () => {
   test("includes code generation patterns", () => {
     const prompt = buildSystemPrompt({ registryIndex: [], installed: [] });
     expect(prompt).toContain("@kitn/core");
-    expect(prompt).toContain(".js");
     expect(prompt).toContain("registerAgent");
+    expect(prompt).toContain("inputSchema");
   });
 
   test("includes update action in constraints", () => {
     const prompt = buildSystemPrompt({ registryIndex: [], installed: [] });
     expect(prompt).toContain("update");
+  });
+
+  test("system prompt includes strong createPlan enforcement", () => {
+    const prompt = buildSystemPrompt({ registryIndex: [], installed: [] });
+    expect(prompt).toContain("NEVER describe a plan in text");
+    expect(prompt).toContain("WRONG");
+    expect(prompt).toContain("RIGHT");
+    expect(prompt).toContain("plain text plans are useless");
   });
 
   test("includes secret handling instructions", () => {

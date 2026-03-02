@@ -257,6 +257,22 @@
         "zod": "^4.0.0",
       },
     },
+    "packages/mcp-server": {
+      "name": "@kitnai/mcp-server",
+      "version": "0.1.0",
+      "bin": {
+        "kitn-mcp": "./dist/index.js",
+      },
+      "dependencies": {
+        "@kitnai/cli-core": "workspace:*",
+        "@modelcontextprotocol/sdk": "^1.12.1",
+        "zod": "^3.24.2",
+      },
+      "devDependencies": {
+        "tsup": "^8.4.0",
+        "typescript": "^5.8.2",
+      },
+    },
     "packages/voice": {
       "name": "@kitnai/voice",
       "version": "0.1.0",
@@ -425,6 +441,8 @@
     "@kitnai/hono-openapi-adapter": ["@kitnai/hono-openapi-adapter@workspace:packages/adapters/hono-openapi"],
 
     "@kitnai/mcp-client": ["@kitnai/mcp-client@workspace:packages/mcp-client"],
+
+    "@kitnai/mcp-server": ["@kitnai/mcp-server@workspace:packages/mcp-server"],
 
     "@kitnai/mcp-server-adapter": ["@kitnai/mcp-server-adapter@workspace:packages/adapters/mcp-server"],
 

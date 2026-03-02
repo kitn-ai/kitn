@@ -1,62 +1,32 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { readConfig, readLock } from "../utils/config.js";
-import { parseComponentRef } from "../utils/parse-ref.js";
-import { RegistryFetcher } from "../registry/fetcher.js";
-import { typeToDir } from "../registry/schema.js";
+import { getComponentInfo } from "@kitnai/cli-core";
 
 export async function infoCommand(component: string) {
   const cwd = process.cwd();
-  const config = await readConfig(cwd);
-  if (!config) {
-    p.log.error("No kitn.json found. Run `kitn init` first.");
-    process.exit(1);
-  }
-
-  const ref = parseComponentRef(component);
-  const fetcher = new RegistryFetcher(config.registries);
 
   const s = p.spinner();
   s.start("Fetching component info...");
 
-  // Fetch registry index to find the component and get available versions
-  let index;
+  let result;
   try {
-    index = await fetcher.fetchIndex(ref.namespace);
+    result = await getComponentInfo({ component, cwd });
   } catch (err: any) {
-    s.stop(pc.red("Failed to fetch registry"));
-    p.log.error(err.message);
-    process.exit(1);
-  }
-
-  const indexItem = index.items.find((i) => i.name === ref.name);
-  if (!indexItem) {
-    s.stop(pc.red("Component not found"));
-    p.log.error(`Component '${ref.name}' not found in registry.`);
-    process.exit(1);
-  }
-
-  // Fetch the full component JSON (specific version or latest)
-  const dir = typeToDir[indexItem.type] as any;
-  let item;
-  try {
-    item = await fetcher.fetchItem(ref.name, dir, ref.namespace, ref.version);
-  } catch (err: any) {
-    s.stop(pc.red("Failed to fetch component"));
+    s.stop(pc.red("Failed"));
     p.log.error(err.message);
     process.exit(1);
   }
 
   s.stop("Component found");
 
-  // Display formatted output
+  const { item, indexItem, namespace, installed, installedVersion, updateAvailable } = result;
   const version = item.version ?? indexItem.version ?? "unknown";
   const typeName = indexItem.type.replace("kitn:", "");
 
   // Header: name, version, namespace
   console.log();
   console.log(
-    `  ${pc.bold(item.name)} ${pc.cyan(`v${version}`)}${" ".repeat(Math.max(1, 40 - item.name.length - version.length - 2))}${pc.dim(ref.namespace)}`
+    `  ${pc.bold(item.name)} ${pc.cyan(`v${version}`)}${" ".repeat(Math.max(1, 40 - item.name.length - version.length - 2))}${pc.dim(namespace)}`
   );
   console.log(`  ${pc.dim(item.description)}`);
   console.log();
@@ -124,16 +94,14 @@ export async function infoCommand(component: string) {
   }
 
   // Installed status
-  const lock = await readLock(cwd);
-  const installed = lock[item.name];
   if (installed) {
     console.log();
     console.log(
-      `  ${pc.green("Installed")} ${pc.dim(`v${installed.version}`)}`
+      `  ${pc.green("Installed")} ${pc.dim(`v${installedVersion}`)}`
     );
-    if (version !== installed.version) {
+    if (updateAvailable) {
       console.log(
-        `  ${pc.yellow("Update available:")} ${pc.dim(`v${installed.version}`)} → ${pc.cyan(`v${version}`)}`
+        `  ${pc.yellow("Update available:")} ${pc.dim(`v${installedVersion}`)} \u2192 ${pc.cyan(`v${version}`)}`
       );
     }
   }

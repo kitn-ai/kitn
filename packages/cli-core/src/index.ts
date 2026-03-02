@@ -36,3 +36,6 @@ export * from "./rules/template.js";
 export * from "./commands/create.js";
 export * from "./commands/link.js";
 export * from "./commands/unlink.js";
+export * from "./commands/list.js";
+export * from "./commands/info.js";
+export * from "./commands/diff.js";

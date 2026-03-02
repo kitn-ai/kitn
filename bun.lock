@@ -186,6 +186,7 @@
       "dependencies": {
         "@clack/prompts": "^0.9.1",
         "@inkjs/ui": "^2",
+        "@kitnai/cli-core": "workspace:*",
         "commander": "^13.1.0",
         "diff": "^7.0.0",
         "ink": "^5",

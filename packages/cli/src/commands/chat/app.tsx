@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
-import React, { useState, useCallback } from "react";
-import { Box, Text, Static, useApp, useInput } from "ink";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { Box, Text, Static, useApp, useInput, useStdout } from "ink";
 import { Select } from "@inkjs/ui";
 import { useChat } from "./hooks/use-chat.js";
 import { Message, type DisplayMessage } from "./components/message.js";
@@ -10,9 +10,11 @@ import { PlanView } from "./components/plan-view.js";
 import { AskUser } from "./components/ask-user.js";
 import { EnvPrompt } from "./components/env-prompt.js";
 import { Stats } from "./components/stats.js";
-import { isSlashCommand, handleSlashCommand, runCliCommand } from "./slash-commands.js";
+import { isSlashCommand, handleSlashCommand, runCliCommand, SLASH_COMMAND_DEFS } from "./slash-commands.js";
+import { StatusBar } from "./components/status-bar.js";
 import { listConversations, readConversationEvents, rebuildMessages } from "./storage.js";
 import { gatherProjectContext } from "../chat-engine.js";
+import { basename } from "path";
 import type { ChatMessage, ChatPlan, AskUserItem, UpdateEnvInput, ConversationMeta } from "../chat-types.js";
 
 export interface ChatAppProps {
@@ -59,6 +61,22 @@ export function ChatApp(props: ChatAppProps) {
     }
   });
 
+  // Clear screen on terminal shrink to prevent ghost lines (Ink v5 log-update bug)
+  const { stdout } = useStdout();
+  const prevColumnsRef = useRef(stdout.columns || 80);
+  useEffect(() => {
+    const onResize = () => {
+      const newCols = stdout.columns || 80;
+      if (newCols < prevColumnsRef.current) {
+        stdout.write("\x1b[2J\x1b[H");
+      }
+      prevColumnsRef.current = newCols;
+    };
+    // Prepend so we clear BEFORE Ink's own resize re-render
+    stdout.prependListener("resize", onResize);
+    return () => { stdout.off("resize", onResize); };
+  }, [stdout]);
+
   const refreshContext = useCallback(async () => {
     const ctx = await gatherProjectContext(props.cwd);
     if (ctx) {
@@ -82,6 +100,10 @@ export function ChatApp(props: ChatAppProps) {
     });
 
     switch (result.type) {
+      case "exit":
+        setExiting(true);
+        setTimeout(() => exit(), 150);
+        return;
       case "message":
         if (result.content) {
           sendSystemMessage(result.content);
@@ -156,16 +178,11 @@ export function ChatApp(props: ChatAppProps) {
     }
   }, [props.cwd, messagesRef, clearMessages]);
 
+  const projectName = basename(props.cwd);
   const isLoading = state === "loading";
   const isIdle = state === "idle";
   const hasPending = state === "pending-tool" && pendingToolCall;
 
-  const allDisplayMessages = [...displayMessages, ...systemMessages].sort((a, b) => {
-    // Keep original order — displayMessages first, then systemMessages
-    return 0;
-  });
-
-  // Merge display messages and system messages by ID order
   const mergedMessages = [...displayMessages, ...systemMessages];
 
   return (
@@ -223,7 +240,12 @@ export function ChatApp(props: ChatAppProps) {
       )}
 
       {isIdle && !exiting && !resumePicker && !runningCommand && (
-        <InputArea onSubmit={handleInput} />
+        <>
+          <Box width="100%">
+            <Text dimColor wrap="truncate">{"─".repeat(300)}</Text>
+          </Box>
+          <InputArea onSubmit={handleInput} commands={SLASH_COMMAND_DEFS} />
+        </>
       )}
 
       {exiting && (
@@ -232,6 +254,12 @@ export function ChatApp(props: ChatAppProps) {
           totalTokens={totalTokens}
         />
       )}
+
+      <StatusBar
+        projectName={projectName}
+        model={props.model}
+        totalTokens={totalTokens}
+      />
     </Box>
   );
 }

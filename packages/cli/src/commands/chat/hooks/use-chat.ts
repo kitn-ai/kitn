@@ -9,6 +9,7 @@ import {
   handleUpdateEnvDirect,
   hasToolCalls,
   looksLikePlan,
+  looksLikeToolCall,
   type ToolCallContext,
 } from "../../chat-engine.js";
 import { appendMessage, appendCompaction } from "../storage.js";
@@ -126,6 +127,20 @@ export function useChat(options: UseChatOptions) {
           const retryMsg: ChatMessage = {
             role: "user",
             content: "You described a plan in text instead of calling createPlan. Please call the createPlan tool with the steps you just described.",
+          };
+          messagesRef.current.push(retryMsg);
+          await persistMessage(retryMsg);
+          await sendToService();
+          return;
+        }
+
+        // Retry once if the model wrote tool call JSON as text instead of calling the tool
+        if (response.message.content && looksLikeToolCall(response.message.content) && !retriedRef.current) {
+          retriedRef.current = true;
+          addDisplayMessage("system", "Requesting proper tool call...");
+          const retryMsg: ChatMessage = {
+            role: "user",
+            content: "You wrote a tool call as JSON text instead of actually calling the tool. Please use the tool directly — call askUser, createPlan, updateEnv, or writeFile as appropriate using the tool calling API, not as text.",
           };
           messagesRef.current.push(retryMsg);
           await persistMessage(retryMsg);

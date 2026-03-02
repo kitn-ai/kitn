@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { mkdtemp, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import { isSlashCommand, handleSlashCommand } from "../src/commands/chat/slash-commands.js";
+import { isSlashCommand, handleSlashCommand, SLASH_COMMAND_DEFS } from "../src/commands/chat/slash-commands.js";
 import { createConversation, appendMessage } from "../src/commands/chat/storage.js";
 
 let tmpDir: string;
@@ -430,5 +430,30 @@ describe("handleSlashCommand", () => {
         }
       });
     });
+  });
+});
+
+describe("SLASH_COMMAND_DEFS", () => {
+  test("exports all session and CLI commands", () => {
+    const names = SLASH_COMMAND_DEFS.map((d) => d.name);
+    expect(names).toContain("/resume");
+    expect(names).toContain("/init");
+    expect(names).toContain("/add");
+    expect(names).toContain("/diff");
+  });
+
+  test("session commands come before CLI commands", () => {
+    const sections = SLASH_COMMAND_DEFS.map((d) => d.section);
+    const lastSession = sections.lastIndexOf("session");
+    const firstCli = sections.indexOf("cli");
+    expect(lastSession).toBeLessThan(firstCli);
+  });
+
+  test("each entry has name, description, and section", () => {
+    for (const def of SLASH_COMMAND_DEFS) {
+      expect(def.name).toMatch(/^\//);
+      expect(def.description.length).toBeGreaterThan(0);
+      expect(["session", "cli"]).toContain(def.section);
+    }
   });
 });

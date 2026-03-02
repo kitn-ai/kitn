@@ -19,6 +19,7 @@ export {
   gatherProjectContext,
   callChatService,
   looksLikePlan,
+  looksLikeToolCall,
   estimateChatMessageTokens,
   checkCompaction,
   callCompactService,

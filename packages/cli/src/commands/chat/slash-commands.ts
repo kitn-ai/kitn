@@ -1,10 +1,17 @@
 import pc from "picocolors";
 import { listConversations, exportConversation } from "./storage.js";
 
+export interface SlashCommandDef {
+  name: string;
+  description: string;
+  section: "session" | "cli";
+}
+
 export type SlashCommandResult =
   | { type: "message"; content: string }
   | { type: "interactive"; command: "resume" }
   | { type: "cli"; args: string[]; mutating: boolean }
+  | { type: "exit" }
   | { type: "noop" };
 
 export function isSlashCommand(text: string): boolean {
@@ -17,6 +24,7 @@ const SESSION_COMMANDS: Record<string, string> = {
   "/export": "Export conversation to markdown",
   "/history": "Show recent conversations",
   "/clear": "Clear current conversation",
+  "/exit": "Exit the REPL",
 };
 
 const CLI_COMMANDS: Record<string, string> = {
@@ -30,6 +38,19 @@ const CLI_COMMANDS: Record<string, string> = {
   "/unlink": "Unlink tool from agent",
   "/diff": "Show local vs registry diff",
 };
+
+export const SLASH_COMMAND_DEFS: SlashCommandDef[] = [
+  ...Object.entries(SESSION_COMMANDS).map(([name, description]) => ({
+    name,
+    description,
+    section: "session" as const,
+  })),
+  ...Object.entries(CLI_COMMANDS).map(([name, description]) => ({
+    name,
+    description,
+    section: "cli" as const,
+  })),
+];
 
 export async function runCliCommand(
   args: string[],
@@ -66,11 +87,13 @@ export async function handleSlashCommand(
 
   switch (cmd) {
     case "/help": {
-      const sessionLines = Object.entries(SESSION_COMMANDS).map(
-        ([name, desc]) => `  ${pc.cyan(name.padEnd(12))} ${desc}`,
+      const sessionDefs = SLASH_COMMAND_DEFS.filter((d) => d.section === "session");
+      const cliDefs = SLASH_COMMAND_DEFS.filter((d) => d.section === "cli");
+      const sessionLines = sessionDefs.map(
+        (d) => `  ${pc.cyan(d.name.padEnd(12))} ${d.description}`,
       );
-      const cliLines = Object.entries(CLI_COMMANDS).map(
-        ([name, desc]) => `  ${pc.cyan(name.padEnd(12))} ${desc}`,
+      const cliLines = cliDefs.map(
+        (d) => `  ${pc.cyan(d.name.padEnd(12))} ${d.description}`,
       );
       const content = [
         `${pc.bold("Session commands:")}`,
@@ -116,6 +139,11 @@ export async function handleSlashCommand(
       ctx.clearMessages();
       return { type: "message", content: "Conversation cleared." };
     }
+
+    case "/exit":
+    case "/quit":
+    case "/q":
+      return { type: "exit" };
 
     // CLI commands — return args for subprocess execution
     case "/init":

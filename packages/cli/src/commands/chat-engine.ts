@@ -503,6 +503,17 @@ export function looksLikePlan(text: string): boolean {
   return hasNumberedSteps && hasActionVerbs && hasComponentRefs;
 }
 
+export function looksLikeToolCall(text: string): boolean {
+  // Detect when model outputs raw tool call JSON instead of using the tool API
+  return (
+    (text.includes('"type":"function"') || text.includes('"type": "function"')) &&
+    (text.includes('"name":"askUser"') || text.includes('"name": "askUser"') ||
+     text.includes('"name":"createPlan"') || text.includes('"name": "createPlan"') ||
+     text.includes('"name":"updateEnv"') || text.includes('"name": "updateEnv"') ||
+     text.includes('"name":"writeFile"') || text.includes('"name": "writeFile"'))
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Token estimation & compaction
 // ---------------------------------------------------------------------------

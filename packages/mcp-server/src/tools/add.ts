@@ -26,8 +26,26 @@ export function registerAddTool(server: McpServer) {
           cwd,
           overwrite: true,
         });
+        const summary = {
+          installed: result.resolved.map((item) => ({
+            name: item.name,
+            type: item.type,
+            description: item.description,
+            version: item.version,
+            updatedAt: item.updatedAt,
+          })),
+          filesCreated: result.created.length,
+          filesUpdated: result.updated.length,
+          filesSkipped: result.skipped.length,
+          npmDeps: result.npmDeps,
+          npmDevDeps: result.npmDevDeps,
+          envVars: result.envVars,
+          errors: result.errors,
+          barrelUpdated: result.barrelUpdated,
+          docs: result.resolved.flatMap((item) => item.docs ? [item.docs] : []),
+        };
         return {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          content: [{ type: "text", text: JSON.stringify(summary, null, 2) }],
         };
       } catch (error: any) {
         return {

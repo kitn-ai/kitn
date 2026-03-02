@@ -1,6 +1,9 @@
 // @kitnai/cli-core — pure logic for kitn project management
 // Shared by @kitnai/cli and @kitnai/mcp-server
 
+// Errors
+export * from "./errors.js";
+
 // Types & schemas
 export * from "./types/registry.js";
 export * from "./types/config.js";

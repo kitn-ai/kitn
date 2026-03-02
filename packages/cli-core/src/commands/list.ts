@@ -1,4 +1,5 @@
 import { readConfig, readLock } from "../config/io.js";
+import { NotInitializedError } from "../errors.js";
 import { resolveTypeAlias } from "../utils/type-aliases.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
 import type { RegistryIndex } from "../types/registry.js";
@@ -40,7 +41,7 @@ export async function listComponents(opts: ListComponentsOpts): Promise<ListComp
 
   const config = await readConfig(cwd);
   if (!config) {
-    throw new Error(`No kitn.json found in ${cwd}. Run "kitn init" first.`);
+    throw new NotInitializedError(cwd);
   }
 
   const rawType = type;

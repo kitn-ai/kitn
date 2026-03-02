@@ -1,4 +1,5 @@
 import { readConfig, writeConfig, readLock } from "../config/io.js";
+import { NotInitializedError } from "../errors.js";
 import { getRegistryUrl } from "../types/config.js";
 import type { RegistryEntry } from "../types/config.js";
 
@@ -66,7 +67,7 @@ export async function addRegistry(opts: AddRegistryOpts): Promise<void> {
 
   const config = await readConfig(cwd);
   if (!config) {
-    throw new Error("No kitn.json found. Run `kitn init` first.");
+    throw new NotInitializedError(cwd);
   }
 
   validateRegistryInput(namespace, url);
@@ -100,7 +101,7 @@ export async function removeRegistry(opts: RemoveRegistryOpts): Promise<RemoveRe
 
   const config = await readConfig(cwd);
   if (!config) {
-    throw new Error("No kitn.json found. Run `kitn init` first.");
+    throw new NotInitializedError(cwd);
   }
 
   if (!config.registries[namespace]) {
@@ -137,7 +138,7 @@ export async function listRegistries(opts: {
 
   const config = await readConfig(cwd);
   if (!config) {
-    throw new Error("No kitn.json found. Run `kitn init` first.");
+    throw new NotInitializedError(cwd);
   }
 
   return Object.entries(config.registries).map(([namespace, value]) => {

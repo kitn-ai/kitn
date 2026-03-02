@@ -30,7 +30,12 @@ export function registerUnlinkTool(server: McpServer) {
           cwd,
         });
         return {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          content: [{ type: "text", text: JSON.stringify({
+            changed: result.changed,
+            toolExportName: result.toolExportName,
+            agentFile: result.agentFile,
+            ...(result.error ? { error: result.error } : {}),
+          }, null, 2) }],
         };
       } catch (error: any) {
         return {

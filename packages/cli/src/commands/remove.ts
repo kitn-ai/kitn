@@ -4,19 +4,16 @@ import {
   removeComponent,
   removeMultipleComponents,
   removeOrphans,
-  readConfig,
   readLock,
   resolveRoutesAlias,
   parseComponentRef,
 } from "@kitnai/cli-core";
+import { requireConfig } from "../utils/auto-init.js";
 
 export async function removeCommand(componentName?: string) {
-  const cwd = process.cwd();
-  const config = await readConfig(cwd);
-  if (!config) {
-    p.log.error("No kitn.json found. Run `kitn init` first.");
-    process.exit(1);
-  }
+  let cwd = process.cwd();
+  let config;
+  ({ config, cwd } = await requireConfig(cwd));
 
   const lock = await readLock(cwd);
 

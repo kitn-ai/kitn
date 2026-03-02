@@ -2,6 +2,7 @@ import { join, relative, dirname } from "path";
 import { unlink, readFile, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import { readConfig, readLock, writeLock } from "../config/io.js";
+import { NotInitializedError } from "../errors.js";
 import { resolveRoutesAlias } from "../types/config.js";
 import type { KitnConfig, LockFile } from "../types/config.js";
 import { parseComponentRef } from "../utils/parse-ref.js";
@@ -145,7 +146,7 @@ export async function removeComponent(opts: RemoveComponentOpts): Promise<Remove
 
   const config = await readConfig(cwd);
   if (!config) {
-    throw new Error(`No kitn.json found in ${cwd}. Run "kitn init" first.`);
+    throw new NotInitializedError(cwd);
   }
 
   const lock = await readLock(cwd);
@@ -195,7 +196,7 @@ export async function removeMultipleComponents(opts: RemoveMultipleOpts): Promis
 
   const config = await readConfig(cwd);
   if (!config) {
-    throw new Error(`No kitn.json found in ${cwd}. Run "kitn init" first.`);
+    throw new NotInitializedError(cwd);
   }
 
   const lock = await readLock(cwd);
@@ -251,7 +252,7 @@ export async function removeOrphans(
 ): Promise<Array<{ name: string; files: string[] }>> {
   const config = await readConfig(cwd);
   if (!config) {
-    throw new Error(`No kitn.json found in ${cwd}. Run "kitn init" first.`);
+    throw new NotInitializedError(cwd);
   }
 
   const lock = await readLock(cwd);

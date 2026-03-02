@@ -1,6 +1,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { listComponents } from "@kitnai/cli-core";
+import { requireConfig } from "../utils/auto-init.js";
 
 interface ListOptions {
   installed?: boolean;
@@ -10,7 +11,8 @@ interface ListOptions {
 }
 
 export async function listCommand(typeFilter: string | undefined, opts: ListOptions) {
-  const cwd = process.cwd();
+  let cwd = process.cwd();
+  ({ cwd } = await requireConfig(cwd));
 
   // Resolve type filter from positional arg or --type flag
   const rawType = typeFilter ?? opts.type;

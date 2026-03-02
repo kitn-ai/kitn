@@ -23,8 +23,22 @@ export function registerUpdateTool(server: McpServer) {
     async ({ cwd, components }) => {
       try {
         const result = await updateComponents({ cwd, components });
+        const summary = {
+          updated: result.resolved.map((item) => ({
+            name: item.name,
+            type: item.type,
+            description: item.description,
+            version: item.version,
+          })),
+          filesUpdated: result.updated.length,
+          filesCreated: result.created.length,
+          filesSkipped: result.skipped.length,
+          npmDeps: result.npmDeps,
+          npmDevDeps: result.npmDevDeps,
+          errors: result.errors,
+        };
         return {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          content: [{ type: "text", text: JSON.stringify(summary, null, 2) }],
         };
       } catch (error: any) {
         return {

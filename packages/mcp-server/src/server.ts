@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 // Tools
 import { registerProjectTool } from "./tools/project.js";
-import { registerListTool } from "./tools/list.js";
+import { registerListTool, registerListTypesTool } from "./tools/list.js";
 import { registerInfoTool } from "./tools/info.js";
 import { registerAddTool } from "./tools/add.js";
 import { registerRemoveTool } from "./tools/remove.js";
@@ -32,6 +32,7 @@ export function createServer() {
 
   // Core project tools
   registerProjectTool(server);
+  registerListTypesTool(server);
   registerListTool(server);
   registerInfoTool(server);
   registerAddTool(server);

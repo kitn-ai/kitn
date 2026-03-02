@@ -52,11 +52,15 @@ export function registerRegistrySearchTool(server: McpServer) {
           content: [
             {
               type: "text",
-              text: JSON.stringify(
-                { query, type: type ?? "all", results: matches },
-                null,
-                2,
-              ),
+              text: JSON.stringify({
+                query,
+                type: type ?? "all",
+                results: matches.map((item) => ({
+                  name: item.name,
+                  type: item.type,
+                  description: item.description,
+                })),
+              }, null, 2),
             },
           ],
         };

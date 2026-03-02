@@ -5,6 +5,7 @@ import {
   componentFileExists,
   type CreateComponentResult,
 } from "@kitnai/cli-core";
+import { requireConfig } from "../utils/auto-init.js";
 
 // Re-export for backward compatibility (used by chat-engine.ts, plan-view.tsx)
 export { componentFileExists } from "@kitnai/cli-core";
@@ -35,11 +36,14 @@ export async function createComponentInProject(
 export async function createCommand(type: string, name: string) {
   p.intro(pc.bgCyan(pc.black(" kitn create ")));
 
+  let cwd = process.cwd();
+  ({ cwd } = await requireConfig(cwd));
+
   try {
     const result = await createComponent({
       type,
       name,
-      cwd: process.cwd(),
+      cwd,
     });
 
     if (result.alreadyExists) {
@@ -54,7 +58,7 @@ export async function createCommand(type: string, name: string) {
       const overwriteResult = await createComponent({
         type,
         name,
-        cwd: process.cwd(),
+        cwd,
         overwrite: true,
       });
       logSuccess(type, name, overwriteResult);

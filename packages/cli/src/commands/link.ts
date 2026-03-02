@@ -1,7 +1,8 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { basename } from "path";
-import { readConfig, listTools, listAgents, linkToolInProject } from "@kitnai/cli-core";
+import { listTools, listAgents, linkToolInProject } from "@kitnai/cli-core";
+import { requireConfig } from "../utils/auto-init.js";
 
 export async function linkCommand(
   type?: string,
@@ -10,12 +11,9 @@ export async function linkCommand(
 ) {
   p.intro(pc.bgCyan(pc.black(" kitn link ")));
 
-  const cwd = process.cwd();
-  const config = await readConfig(cwd);
-  if (!config) {
-    p.log.error("No kitn.json found. Run `kitn init` first.");
-    process.exit(1);
-  }
+  let cwd = process.cwd();
+  let config;
+  ({ config, cwd } = await requireConfig(cwd));
 
   // --- Resolve type ---
   if (type && type !== "tool") {

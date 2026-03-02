@@ -1,4 +1,5 @@
 import { readConfig, readLock } from "../config/io.js";
+import { NotInitializedError } from "../errors.js";
 import { addComponents } from "./add.js";
 import type { AddResult } from "./add.js";
 
@@ -31,7 +32,7 @@ export async function updateComponents(opts: UpdateComponentsOpts): Promise<AddR
   if (components.length === 0) {
     const config = await readConfig(cwd);
     if (!config) {
-      throw new Error("No kitn.json found. Run `kitn init` first.");
+      throw new NotInitializedError(cwd);
     }
 
     const lock = await readLock(cwd);

@@ -5,6 +5,7 @@ import {
   removeRegistry,
   listRegistries,
 } from "@kitnai/cli-core";
+import { requireConfig } from "../utils/auto-init.js";
 
 interface RegistryAddOptions {
   cwd?: string;
@@ -27,7 +28,8 @@ export async function registryAddCommand(
   url: string,
   opts: RegistryAddOptions = {},
 ) {
-  const cwd = opts.cwd ?? process.cwd();
+  let cwd = opts.cwd ?? process.cwd();
+  ({ cwd } = await requireConfig(cwd));
 
   try {
     await addRegistry({
@@ -52,7 +54,8 @@ export async function registryRemoveCommand(
   namespace: string,
   opts: RegistryRemoveOptions = {},
 ): Promise<{ affectedComponents: string[] }> {
-  const cwd = opts.cwd ?? process.cwd();
+  let cwd = opts.cwd ?? process.cwd();
+  ({ cwd } = await requireConfig(cwd));
 
   const result = await removeRegistry({
     namespace,
@@ -83,7 +86,8 @@ export async function registryListCommand(
     description?: string;
   }>
 > {
-  const cwd = opts.cwd ?? process.cwd();
+  let cwd = opts.cwd ?? process.cwd();
+  ({ cwd } = await requireConfig(cwd));
 
   const entries = await listRegistries({ cwd });
 

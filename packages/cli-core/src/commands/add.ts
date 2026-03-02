@@ -2,6 +2,7 @@ import { join, dirname, relative } from "path";
 import { existsSync } from "fs";
 import { readFile, writeFile, mkdir, unlink } from "fs/promises";
 import { readConfig, readLock, writeLock, writeConfig } from "../config/io.js";
+import { NotInitializedError } from "../errors.js";
 import { getInstallPath, resolveRoutesAlias } from "../types/config.js";
 import type { KitnConfig, LockFile } from "../types/config.js";
 import { typeToDir } from "../types/registry.js";
@@ -351,7 +352,7 @@ export async function addComponents(opts: AddComponentsOpts): Promise<AddResult>
 
   const config = await readConfig(cwd);
   if (!config) {
-    throw new Error(`No kitn.json found in ${cwd}. Run "kitn init" first.`);
+    throw new NotInitializedError(cwd);
   }
 
   const lock = await readLock(cwd);

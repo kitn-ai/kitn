@@ -18,6 +18,7 @@ import {
 import { detectPackageManager } from "../utils/detect.js";
 import { installDependencies, installDevDependencies } from "../installers/dep-installer.js";
 import { collectEnvVars, handleEnvVars } from "../installers/env-writer.js";
+import { requireConfig } from "../utils/auto-init.js";
 
 interface AddOptions {
   overwrite?: boolean;
@@ -28,12 +29,9 @@ interface AddOptions {
 export async function addCommand(components: string[], opts: AddOptions) {
   p.intro(pc.bgCyan(pc.black(" kitn add ")));
 
-  const cwd = process.cwd();
-  const config = await readConfig(cwd);
-  if (!config) {
-    p.log.error("No kitn.json found. Run `kitn init` first.");
-    process.exit(1);
-  }
+  let cwd = process.cwd();
+  let config;
+  ({ config, cwd } = await requireConfig(cwd));
 
   const lock = await readLock(cwd);
 

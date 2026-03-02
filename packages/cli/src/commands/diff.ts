@@ -1,9 +1,11 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { diffComponent } from "@kitnai/cli-core";
+import { requireConfig } from "../utils/auto-init.js";
 
 export async function diffCommand(componentName: string) {
-  const cwd = process.cwd();
+  let cwd = process.cwd();
+  ({ cwd } = await requireConfig(cwd));
 
   let result;
   try {

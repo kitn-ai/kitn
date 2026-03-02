@@ -20,7 +20,12 @@ export function registerRemoveTool(server: McpServer) {
       try {
         const result = await removeComponent({ component, cwd });
         return {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          content: [{ type: "text", text: JSON.stringify({
+            removed: result.removed.name,
+            filesDeleted: result.removed.files.length,
+            orphans: result.orphans,
+            barrelUpdated: result.barrelUpdated,
+          }, null, 2) }],
         };
       } catch (error: any) {
         return {

@@ -33,7 +33,13 @@ export function registerInitTool(server: McpServer) {
       try {
         const result = await initProject({ cwd, runtime, framework, baseDir });
         return {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          content: [{ type: "text", text: JSON.stringify({
+            configPath: result.configPath,
+            runtime: result.config.runtime,
+            framework: result.config.framework ?? framework,
+            baseDir: result.config.aliases.base ?? baseDir ?? "src/ai",
+            filesCreated: result.filesCreated.length,
+          }, null, 2) }],
         };
       } catch (error: any) {
         return {

@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "fs/promises";
 import { readConfig } from "../config/io.js";
+import { NotInitializedError } from "../errors.js";
 import { resolveToolByName, resolveAgentByName } from "../utils/component-resolver.js";
 import { unlinkToolFromAgent } from "../installers/agent-linker.js";
 import type { ToolRef } from "../installers/agent-linker.js";
@@ -30,7 +31,7 @@ export async function unlinkToolInProject(opts: UnlinkToolOpts): Promise<UnlinkT
 
   const config = await readConfig(cwd);
   if (!config) {
-    throw new Error(`No kitn.json found in ${cwd}. Run "kitn init" first.`);
+    throw new NotInitializedError(cwd);
   }
 
   const tool = await resolveToolByName(toolName, config, cwd);

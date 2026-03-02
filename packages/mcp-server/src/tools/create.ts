@@ -29,7 +29,11 @@ export function registerCreateTool(server: McpServer) {
           overwrite: true,
         });
         return {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          content: [{ type: "text", text: JSON.stringify({
+            filePath: result.filePath,
+            barrelUpdated: result.barrelUpdated,
+            alreadyExists: result.alreadyExists,
+          }, null, 2) }],
         };
       } catch (error: any) {
         return {

@@ -1,6 +1,7 @@
 import { join } from "path";
 import { readFile } from "fs/promises";
 import { readConfig, readLock } from "../config/io.js";
+import { NotInitializedError } from "../errors.js";
 import { parseComponentRef } from "../utils/parse-ref.js";
 import { resolveRoutesAlias } from "../types/config.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
@@ -37,7 +38,7 @@ export async function diffComponent(opts: DiffComponentOpts): Promise<DiffCompon
 
   const config = await readConfig(cwd);
   if (!config) {
-    throw new Error(`No kitn.json found in ${cwd}. Run "kitn init" first.`);
+    throw new NotInitializedError(cwd);
   }
 
   const input = component === "routes" ? resolveRoutesAlias(config) : component;

@@ -20,8 +20,21 @@ export function registerInfoTool(server: McpServer) {
     async ({ component, cwd }) => {
       try {
         const result = await getComponentInfo({ component, cwd });
+        const { item, indexItem, namespace, installed, installedVersion, updateAvailable } = result;
+        const summary = {
+          name: item.name,
+          type: indexItem.type,
+          description: item.description,
+          version: item.version ?? indexItem.version,
+          namespace,
+          dependencies: item.dependencies ?? [],
+          registryDependencies: item.registryDependencies ?? [],
+          docs: item.docs,
+          installed,
+          ...(installed ? { installedVersion, updateAvailable } : {}),
+        };
         return {
-          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          content: [{ type: "text", text: JSON.stringify(summary, null, 2) }],
         };
       } catch (error: any) {
         return {

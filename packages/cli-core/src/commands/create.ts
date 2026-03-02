@@ -2,6 +2,7 @@ import { existsSync } from "fs";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import { join, relative, dirname } from "path";
 import { readConfig } from "../config/io.js";
+import { NotInitializedError } from "../errors.js";
 import { getInstallPath } from "../types/config.js";
 import { toCamelCase, toTitleCase } from "../utils/naming.js";
 import { createBarrelFile, addImportToBarrel } from "../installers/barrel-manager.js";
@@ -172,7 +173,7 @@ export async function createComponent(opts: CreateComponentOpts): Promise<Create
 
   const config = await readConfig(cwd);
   if (!config) {
-    throw new Error(`No kitn.json found in ${cwd}. Run "kitn init" first.`);
+    throw new NotInitializedError(cwd);
   }
 
   const validType = type as CreateComponentType;

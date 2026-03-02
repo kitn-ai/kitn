@@ -1,0 +1,42 @@
+{
+  "installed": [
+    {
+      "name": "core",
+      "type": "kitn:package",
+      "description": "Framework-agnostic AI agent engine — agents, tools, storage, streaming, events",
+      "version": "1.1.0",
+      "updatedAt": "2026-03-02T13:34:03.116Z"
+    },
+    {
+      "name": "weather-tool",
+      "type": "kitn:tool",
+      "description": "Get current weather information for any location using Open-Meteo API",
+      "version": "1.0.0",
+      "updatedAt": "2026-03-02T13:34:03.024Z"
+    },
+    {
+      "name": "weather-agent",
+      "type": "kitn:agent",
+      "description": "Weather specialist agent using Open-Meteo API data",
+      "version": "1.0.0",
+      "updatedAt": "2026-03-02T13:34:03.007Z"
+    }
+  ],
+  "filesCreated": 68,
+  "filesUpdated": 0,
+  "filesSkipped": 0,
+  "npmDeps": [
+    "ai",
+    "zod",
+    "@asteasolutions/zod-to-openapi"
+  ],
+  "npmDevDeps": [],
+  "envVars": {},
+  "errors": [],
+  "barrelUpdated": true,
+  "docs": [
+    "Engine installed to your project. Import with: import { ... } from '@kitn/core'",
+    "The weather tool auto-registers on import. Use it directly or assign it to an agent.",
+    "The weather agent uses the weather tool to fetch and present weather data. Assign it to your server's agent registry."
+  ]
+}

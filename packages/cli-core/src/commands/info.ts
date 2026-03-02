@@ -1,4 +1,5 @@
 import { readConfig, readLock } from "../config/io.js";
+import { NotInitializedError } from "../errors.js";
 import { parseComponentRef } from "../utils/parse-ref.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
 import { typeToDir } from "../types/registry.js";
@@ -23,7 +24,7 @@ export async function getComponentInfo(opts: ComponentInfoOpts): Promise<Compone
 
   const config = await readConfig(cwd);
   if (!config) {
-    throw new Error(`No kitn.json found in ${cwd}. Run "kitn init" first.`);
+    throw new NotInitializedError(cwd);
   }
 
   const ref = parseComponentRef(component);

@@ -1,13 +1,15 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { updateComponents } from "@kitnai/cli-core";
+import { requireConfig } from "../utils/auto-init.js";
 import { detectPackageManager } from "../utils/detect.js";
 import { installDependencies, installDevDependencies } from "../installers/dep-installer.js";
 
 export async function updateCommand(components: string[]) {
   p.intro(pc.bgCyan(pc.black(" kitn update ")));
 
-  const cwd = process.cwd();
+  let cwd = process.cwd();
+  ({ cwd } = await requireConfig(cwd));
 
   try {
     const result = await updateComponents({

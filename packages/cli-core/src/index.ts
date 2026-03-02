@@ -5,6 +5,9 @@
 export * from "./types/registry.js";
 export * from "./types/config.js";
 
+// Config I/O
+export * from "./config/io.js";
+
 // Utils
 export * from "./utils/type-aliases.js";
 export * from "./utils/parse-ref.js";
@@ -28,3 +31,8 @@ export * from "./utils/component-resolver.js";
 
 // Rules
 export * from "./rules/template.js";
+
+// Commands
+export * from "./commands/create.js";
+export * from "./commands/link.js";
+export * from "./commands/unlink.js";

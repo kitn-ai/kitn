@@ -1,16 +1,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { readFile, writeFile } from "fs/promises";
 import { basename } from "path";
-import { readConfig } from "../utils/config.js";
-import {
-  resolveToolByName,
-  resolveAgentByName,
-  listTools,
-  listAgents,
-} from "../utils/component-resolver.js";
-import { linkToolToAgent } from "../installers/agent-linker.js";
-import type { ToolRef } from "../installers/agent-linker.js";
+import { readConfig, listTools, listAgents, linkToolInProject } from "@kitnai/cli-core";
 
 export async function linkCommand(
   type?: string,
@@ -60,14 +51,6 @@ export async function linkCommand(
     toolName = selected as string;
   }
 
-  const tool = await resolveToolByName(toolName, config, cwd);
-  if (!tool) {
-    p.log.error(
-      `Tool "${toolName}" not found. Check that the file exists in your tools directory.`,
-    );
-    process.exit(1);
-  }
-
   // --- Resolve agent ---
   let agentName = opts?.to;
 
@@ -94,48 +77,42 @@ export async function linkCommand(
     agentName = selected as string;
   }
 
-  const agent = await resolveAgentByName(agentName, config, cwd);
-  if (!agent) {
-    p.log.error(
-      `Agent "${agentName}" not found. Check that the file exists in your agents directory.`,
-    );
-    process.exit(1);
-  }
-
   // --- Perform the link ---
-  const agentContent = await readFile(agent.filePath, "utf-8");
-  const toolRef: ToolRef = {
-    exportName: tool.exportName,
-    importPath: tool.importPath,
-  };
+  try {
+    const result = await linkToolInProject({
+      toolName,
+      agentName,
+      cwd,
+      alias: opts?.as,
+    });
 
-  const result = linkToolToAgent(agentContent, toolRef, opts?.as);
+    if (result.error) {
+      p.log.warn(result.error);
+      p.outro("Could not auto-link. Follow the manual instructions above.");
+      process.exit(1);
+    }
 
-  if (result.error) {
-    p.log.warn(result.error);
-    p.outro("Could not auto-link. Follow the manual instructions above.");
+    if (!result.changed) {
+      p.log.info(
+        `${pc.cyan(result.toolExportName)} is already linked to ${pc.cyan(basename(result.agentFile))}.`,
+      );
+      p.outro("Nothing to do.");
+      return;
+    }
+
+    p.log.success(
+      `Linked ${pc.cyan(result.toolExportName)} to ${pc.cyan(basename(result.agentFile))}`,
+    );
+    p.log.message(
+      `  ${pc.green("+")} import { ${result.toolExportName} } from "${result.toolImportPath}"`,
+    );
+    p.log.message(
+      `  ${pc.green("+")} tools: { ${opts?.as ? `${opts.as}: ${result.toolExportName}` : result.toolExportName} }`,
+    );
+
+    p.outro("Done!");
+  } catch (err: any) {
+    p.log.error(err.message);
     process.exit(1);
   }
-
-  if (!result.changed) {
-    p.log.info(
-      `${pc.cyan(tool.exportName)} is already linked to ${pc.cyan(basename(agent.filePath))}.`,
-    );
-    p.outro("Nothing to do.");
-    return;
-  }
-
-  await writeFile(agent.filePath, result.content);
-
-  p.log.success(
-    `Linked ${pc.cyan(tool.exportName)} to ${pc.cyan(basename(agent.filePath))}`,
-  );
-  p.log.message(
-    `  ${pc.green("+")} import { ${tool.exportName} } from "${tool.importPath}"`,
-  );
-  p.log.message(
-    `  ${pc.green("+")} tools: { ${opts?.as ? `${opts.as}: ${tool.exportName}` : tool.exportName} }`,
-  );
-
-  p.outro("Done!");
 }

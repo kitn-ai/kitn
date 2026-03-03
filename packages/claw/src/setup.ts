@@ -2,9 +2,11 @@ import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { existsSync } from "fs";
 import { writeFile } from "fs/promises";
+import { homedir } from "os";
 import { join } from "path";
 import { loadConfig, saveConfig, ensureClawHome, CLAW_HOME, CONFIG_PATH } from "./config/io.js";
 import type { ClawConfig } from "./config/schema.js";
+import type { SafetyProfile } from "./permissions/profiles.js";
 
 const PROVIDER_OPTIONS = [
   { value: "openrouter", label: "OpenRouter", hint: "access multiple providers via one API key" },
@@ -139,6 +141,62 @@ export async function setupWizard(): Promise<void> {
 
   const model = modelInput || defaultModel;
 
+  // 5. Safety profile
+  const profile = await p.select({
+    message: "How much should KitnClaw ask before acting?",
+    options: [
+      {
+        value: "balanced",
+        label: "Balanced (recommended)",
+        hint: "Acts on its own for safe things, asks for anything risky",
+      },
+      {
+        value: "cautious",
+        label: "Cautious",
+        hint: "Asks before doing almost anything — best for getting started",
+      },
+      {
+        value: "autonomous",
+        label: "Autonomous",
+        hint: "Acts freely, only asks before deleting or sending messages",
+      },
+    ],
+    initialValue: existing.permissions?.profile ?? "balanced",
+  });
+
+  if (p.isCancel(profile)) {
+    p.cancel("Setup cancelled.");
+    return;
+  }
+
+  // 6. Optional directory access
+  const grantDirs = await p.confirm({
+    message: "Would you like to grant access to specific folders? (you can do this later)",
+    initialValue: false,
+  });
+
+  if (p.isCancel(grantDirs)) {
+    p.cancel("Setup cancelled.");
+    return;
+  }
+
+  let grantedDirs: string[] = existing.permissions?.grantedDirs ?? [];
+  if (grantDirs) {
+    const dirs = await p.text({
+      message: "Enter folder paths, separated by commas:",
+      placeholder: "~/Documents, ~/Projects",
+    });
+
+    if (p.isCancel(dirs)) {
+      p.cancel("Setup cancelled.");
+      return;
+    }
+
+    if (typeof dirs === "string" && dirs.trim()) {
+      grantedDirs = dirs.split(",").map((d) => d.trim().replace(/^~/, homedir()));
+    }
+  }
+
   // Build the updated config
   const config: ClawConfig = {
     ...existing,
@@ -148,6 +206,11 @@ export async function setupWizard(): Promise<void> {
       ...(baseUrl && { baseUrl }),
     },
     model,
+    permissions: {
+      ...existing.permissions,
+      profile: profile as SafetyProfile,
+      grantedDirs,
+    },
   };
 
   await saveConfig(config);
@@ -155,9 +218,11 @@ export async function setupWizard(): Promise<void> {
   p.log.success(`Config saved to ${pc.dim(CONFIG_PATH)}`);
   p.log.info(
     `  Provider: ${pc.bold(providerType)}\n` +
-    `  Model: ${pc.bold(model)}` +
+    `  Model: ${pc.bold(model)}\n` +
+    `  Profile: ${pc.bold(profile as string)}` +
     (apiKey ? `\n  API key: ${pc.dim(`${apiKey.slice(0, 4)}...${apiKey.slice(-4)}`)}` : "") +
-    (baseUrl ? `\n  Base URL: ${pc.dim(baseUrl)}` : ""),
+    (baseUrl ? `\n  Base URL: ${pc.dim(baseUrl)}` : "") +
+    (grantedDirs.length > 0 ? `\n  Granted dirs: ${pc.dim(grantedDirs.join(", "))}` : ""),
   );
 
   // Install provider SDK hint

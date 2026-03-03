@@ -1,5 +1,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
+import { readFile } from "fs/promises";
+import { join } from "path";
 import {
   addComponents,
   writeConflictFile,
@@ -290,11 +292,11 @@ export async function addCommand(components: string[], opts: AddOptions) {
         slotDecisions,
       });
 
-      await handleAddResult(result2, opts, cwd);
+      await handleAddResult(result2, opts, cwd, lock);
       return;
     }
 
-    await handleAddResult(result, opts, cwd);
+    await handleAddResult(result, opts, cwd, lock);
   } catch (err: any) {
     p.log.error(err.message);
     process.exit(1);
@@ -305,31 +307,59 @@ async function handleAddResult(
   result: Awaited<ReturnType<typeof addComponents>>,
   opts: AddOptions,
   cwd: string,
+  preAddLock: Awaited<ReturnType<typeof readLock>>,
 ) {
   const s = p.spinner();
 
-  // Display resolved components
+  // Use the lock from BEFORE addComponents ran to identify what was already installed
+  const installedComponents = new Set(Object.keys(preAddLock));
+
+  let pkgDeps: Record<string, string> = {};
+  try {
+    const pkg = JSON.parse(await readFile(join(cwd, "package.json"), "utf-8"));
+    pkgDeps = { ...pkg.dependencies, ...pkg.devDependencies };
+  } catch {
+    // No package.json — treat all deps as new
+  }
+
+  // Display resolved components with installed status
   const expandedNames = new Set(result.installed.map((i) => i.name));
+  let newComponentCount = 0;
   p.log.info("Components to install:\n" + result.resolved.map((item) => {
+    const alreadyInstalled = installedComponents.has(item.name);
+    if (alreadyInstalled) {
+      return `  ${pc.dim(`${item.name} (already installed)`)}`;
+    }
+    newComponentCount++;
     const isExplicit = expandedNames.has(item.name);
     const label = isExplicit ? item.name : `${item.name} ${pc.dim("(dependency)")}`;
     return `  ${pc.cyan(label)}`;
   }).join("\n"));
 
-  // Display npm dependencies
-  const totalDeps = result.npmDeps.length + result.npmDevDeps.length;
-  if (totalDeps > 0) {
-    const depLines = result.npmDeps.map((d) => `  ${pc.cyan(d)}`);
-    const devDepLines = result.npmDevDeps.map((d) => `  ${pc.dim(d)}`);
-    p.log.info("Dependencies:\n" + [...depLines, ...devDepLines].join("\n"));
+  // Split npm dependencies into new vs already installed
+  const newDeps = result.npmDeps.filter((d) => !pkgDeps[d]);
+  const existingDeps = result.npmDeps.filter((d) => pkgDeps[d]);
+  const newDevDeps = result.npmDevDeps.filter((d) => !pkgDeps[d]);
+  const existingDevDeps = result.npmDevDeps.filter((d) => pkgDeps[d]);
+  const totalNewDeps = newDeps.length + newDevDeps.length;
+
+  if (result.npmDeps.length + result.npmDevDeps.length > 0) {
+    const lines: string[] = [];
+    for (const d of newDeps) lines.push(`  ${pc.cyan(d)}`);
+    for (const d of newDevDeps) lines.push(`  ${pc.cyan(d)} ${pc.dim("(dev)")}`);
+    for (const d of [...existingDeps, ...existingDevDeps]) lines.push(`  ${pc.dim(`${d} (already installed)`)}`);
+    p.log.info("Dependencies:\n" + lines.join("\n"));
   }
 
   // Confirmation prompt
   if (!opts.yes && process.stdin.isTTY) {
-    const totalComponents = result.resolved.length;
-    const summary = totalDeps > 0
-      ? `Install ${totalComponents} component(s) and ${totalDeps} npm package(s)?`
-      : `Install ${totalComponents} component(s)?`;
+    const parts: string[] = [];
+    if (newComponentCount > 0) parts.push(`${newComponentCount} component(s)`);
+    if (totalNewDeps > 0) parts.push(`${totalNewDeps} npm package(s)`);
+
+    const summary = parts.length > 0
+      ? `Install ${parts.join(" and ")}?`
+      : "All components are already installed. Update them?";
     const confirm = await p.confirm({ message: summary });
     if (p.isCancel(confirm) || !confirm) {
       p.cancel("Cancelled.");
@@ -356,14 +386,14 @@ async function handleAddResult(
     }
   }
 
-  // Install npm dependencies
-  if (totalDeps > 0) {
+  // Install only new npm dependencies
+  if (totalNewDeps > 0) {
     const pm = await detectPackageManager(cwd);
     if (pm) {
-      s.start(`Installing ${totalDeps} npm dependenc${totalDeps === 1 ? "y" : "ies"}...`);
+      s.start(`Installing ${totalNewDeps} npm dependenc${totalNewDeps === 1 ? "y" : "ies"}...`);
       try {
-        if (result.npmDeps.length > 0) installDependencies(pm, result.npmDeps, cwd);
-        if (result.npmDevDeps.length > 0) installDevDependencies(pm, result.npmDevDeps, cwd);
+        if (newDeps.length > 0) installDependencies(pm, newDeps, cwd);
+        if (newDevDeps.length > 0) installDevDependencies(pm, newDevDeps, cwd);
         s.stop("Dependencies installed");
       } catch {
         s.stop(pc.yellow("Some dependencies failed to install"));

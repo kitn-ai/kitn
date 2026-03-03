@@ -19,18 +19,19 @@ import { join } from "path";
  * This is the central context that holds all registries, storage,
  * and the model factory. Everything in KitnClaw flows through this.
  */
-export function createClawPlugin(config: ClawConfig): PluginContext {
+export function createClawPlugin(config: ClawConfig, homeDir?: string): PluginContext {
   const model = createModelFactory(config);
+  const home = homeDir ?? CLAW_HOME;
 
   // Start with in-memory storage for sub-stores we haven't replaced yet
   const baseStorage = createMemoryStorage();
 
   // Replace conversations with JSONL session store
-  const sessionsDir = join(CLAW_HOME, "sessions");
+  const sessionsDir = join(home, "sessions");
   const conversations = new JsonlSessionStore(sessionsDir);
 
   // Replace memory with libSQL-backed store
-  const dbPath = join(CLAW_HOME, "memory.db");
+  const dbPath = join(home, "memory.db");
   const memory = new LibsqlMemoryStore(dbPath);
 
   const storage = {

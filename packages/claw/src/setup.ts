@@ -1,7 +1,9 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { existsSync } from "fs";
-import { loadConfig, saveConfig, ensureClawHome, CONFIG_PATH } from "./config/io.js";
+import { writeFile } from "fs/promises";
+import { join } from "path";
+import { loadConfig, saveConfig, ensureClawHome, CLAW_HOME, CONFIG_PATH } from "./config/io.js";
 import type { ClawConfig } from "./config/schema.js";
 
 const PROVIDER_OPTIONS = [
@@ -172,5 +174,27 @@ export async function setupWizard(): Promise<void> {
     p.log.info(`Make sure to install the provider SDK: ${pc.cyan(`bun add ${sdk}`)}`);
   }
 
+  // Create default SOUL.md if it doesn't exist
+  const soulPath = join(CLAW_HOME, "workspace", "SOUL.md");
+  if (!existsSync(soulPath)) {
+    await writeFile(soulPath, DEFAULT_SOUL, "utf-8");
+    p.log.info(`Created ${pc.dim(soulPath)} — edit to customize your assistant's personality`);
+  }
+
   p.outro(pc.green("Setup complete! Run") + " " + pc.cyan("kitnclaw start") + " " + pc.green("to launch."));
 }
+
+const DEFAULT_SOUL = `# KitnClaw Personality
+
+Edit this file to customize how your assistant behaves.
+
+## Style
+- Respond concisely and directly
+- Use markdown formatting when helpful
+- Be proactive — suggest next steps when appropriate
+
+## Knowledge
+- You are a local AI assistant with access to the filesystem, web, and memory
+- You can create new tools and agents to extend your own capabilities
+- You persist across sessions — remember what the user has told you
+`;

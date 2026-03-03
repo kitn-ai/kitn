@@ -1,6 +1,10 @@
 # kitn MCP Server
 
-The kitn MCP server exposes 16 tools to any AI coding assistant that supports the [Model Context Protocol](https://modelcontextprotocol.io/) — Claude Code, Cursor, VS Code Copilot, Windsurf, and others.
+The kitn MCP server exposes 25 tools and 2 resources to any AI coding assistant that supports the [Model Context Protocol](https://modelcontextprotocol.io/) — Claude Code, Cursor, VS Code Copilot, Windsurf, Zed, and others.
+
+> **Using kitn in your own project?** Install via npm — see the [MCP server README](packages/mcp-server/README.md) for setup instructions for all editors.
+>
+> This page covers **local development** — running the MCP server from source for monorepo contributors.
 
 ## Connect to the hosted server
 
@@ -129,71 +133,6 @@ bun run mcp:inspect
 
 ## Usage
 
-Once connected, the 16 `kitn_*` tools are available automatically. You don't need to be explicit — your AI assistant will use them when your request relates to kitn.
+Once connected, all `kitn_*` tools are available automatically. You don't need to be explicit — your AI assistant will use them when your request relates to kitn.
 
-### Scaffolding a new project
-
-> "Initialize kitn in this project"
-
-### Adding components
-
-> "Add the weather-agent component"
->
-> "Install the calculator tool and its dependencies"
-
-### Exploring the registry
-
-> "What kitn components are available?"
->
-> "Show me details about the web-search tool"
->
-> "Search for agents related to scheduling"
-
-### Managing components
-
-> "Remove the weather-agent"
->
-> "Update all installed components to the latest version"
->
-> "Show me what's different between my local weather-agent and the registry version"
-
-### Scaffolding custom code
-
-> "Create a new agent called support-bot"
->
-> "Create a tool called sentiment-analysis"
-
-### Wiring things together
-
-> "Link the web-search tool to my general agent"
->
-> "Unlink calculator from the support-bot agent"
-
-### Project context
-
-> "What kitn components do I have installed?"
->
-> "Regenerate my AI rules files"
-
-You can also be explicit if you want — "use kitn_add to install weather-agent" — but it's not required.
-
-## Available Tools
-
-| Tool | Description |
-|------|-------------|
-| `kitn_init` | Initialize kitn in a project |
-| `kitn_add` | Install component(s) with dependency resolution |
-| `kitn_remove` | Remove an installed component |
-| `kitn_update` | Update to latest registry version |
-| `kitn_create` | Scaffold a new agent, tool, skill, storage, or cron |
-| `kitn_link` | Wire a tool into an agent |
-| `kitn_unlink` | Remove a tool from an agent |
-| `kitn_list` | List available and installed components |
-| `kitn_info` | Full component details and docs |
-| `kitn_diff` | Local vs registry diff |
-| `kitn_project` | Get project context (config, installed components) |
-| `kitn_rules` | Regenerate AI coding rules files |
-| `kitn_registry_search` | Search configured registries |
-| `kitn_registry_list` | Show configured registries |
-| `kitn_registry_add` | Add a custom registry |
-| `kitn_help` | Get kitn coding guidance on a topic |
+For usage examples and the full tool reference, see the [MCP server README](packages/mcp-server/README.md#usage).

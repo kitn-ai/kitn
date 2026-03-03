@@ -183,54 +183,16 @@ kitn/
 
 ## MCP Server
 
-The kitn MCP server lets any AI coding assistant that supports the [Model Context Protocol](https://modelcontextprotocol.io/) manage kitn projects — install components, create agents, link tools, and more. Works with Claude Code, Cursor, VS Code Copilot, Windsurf, Zed, and others.
+The kitn MCP server lets any AI coding assistant that supports the [Model Context Protocol](https://modelcontextprotocol.io/) manage kitn projects — install components, create agents, link tools, and more. 25 tools, 2 resources. Works with Claude Code, Cursor, VS Code Copilot, Windsurf, Zed, and others.
 
-### Connect your editor
-
-The hosted server is at `https://mcp.kitn.dev/mcp`:
-
-**Claude Code:**
+**Quick start (Claude Code):**
 ```bash
-claude mcp add --transport http kitn https://mcp.kitn.dev/mcp
+claude mcp add kitn -- npx -y @kitnai/mcp-server
 ```
 
-**Cursor** — add to `.cursor/mcp.json`:
-```json
-{ "mcpServers": { "kitn": { "url": "https://mcp.kitn.dev/mcp" } } }
-```
+For setup instructions for other editors, the full tool reference, and local development, see the [MCP server README](packages/mcp-server/README.md).
 
-**VS Code Copilot** — add to `.vscode/mcp.json`:
-```json
-{ "servers": { "kitn": { "type": "http", "url": "https://mcp.kitn.dev/mcp" } } }
-```
-
-**Windsurf** — add to `~/.codeium/windsurf/mcp_config.json`:
-```json
-{ "mcpServers": { "kitn": { "serverUrl": "https://mcp.kitn.dev/mcp" } } }
-```
-
-> For local development (running from source with auto-reload), see [MCP.md](MCP.md).
-
-### Available Tools
-
-| Tool | Description |
-|------|-------------|
-| `kitn_init` | Initialize kitn in a project |
-| `kitn_add` | Install component(s) with dependency resolution |
-| `kitn_remove` | Remove an installed component |
-| `kitn_update` | Update to latest registry version |
-| `kitn_create` | Scaffold a new agent, tool, skill, storage, or cron |
-| `kitn_link` | Wire a tool into an agent |
-| `kitn_unlink` | Remove a tool from an agent |
-| `kitn_list` | List available and installed components |
-| `kitn_info` | Full component details and docs |
-| `kitn_diff` | Local vs registry diff |
-| `kitn_project` | Get project context (config, installed components) |
-| `kitn_rules` | Regenerate AI coding rules files |
-| `kitn_registry_search` | Search configured registries |
-| `kitn_registry_list` | Show configured registries |
-| `kitn_registry_add` | Add a custom registry |
-| `kitn_help` | Get kitn coding guidance on a topic |
+> For running from source with auto-reload during monorepo development, see [MCP.md](MCP.md).
 
 ## Development
 

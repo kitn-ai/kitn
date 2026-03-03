@@ -18,15 +18,18 @@
     }
   },
   "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && cp -r ../../templates dist/templates",
     "dev": "tsup --watch",
     "test": "echo 'No tests yet'",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
-    "diff": "^7.0.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -34,6 +37,13 @@
     "tsup": "^8.4.0",
     "typescript": "^5.8.2"
   },
+  "keywords": [
+    "ai",
+    "agents",
+    "mcp",
+    "model-context-protocol",
+    "kitn"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

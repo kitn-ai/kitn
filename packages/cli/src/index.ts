@@ -150,6 +150,15 @@ program
   });
 
 program
+  .command("why")
+  .description("Explain why a component is installed")
+  .argument("<component>", "component name")
+  .action(async (component: string) => {
+    const { whyCommand } = await import("./commands/why.js");
+    await whyCommand(component);
+  });
+
+program
   .command("info")
   .description("Show details about a component")
   .argument("<component>", "component name (e.g. weather-agent, @acme/tool@1.0.0)")

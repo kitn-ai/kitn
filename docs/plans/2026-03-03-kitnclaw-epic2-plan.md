@@ -2,9 +2,9 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Harden KitnClaw with a user-friendly permission system (safety profiles, plain-language prompts, directory sandboxing), audit logging, credential encryption, remote access via WebSocket, a web chat UI, multi-user access control, and proactive scheduled actions.
+**Goal:** Harden KitnClaw with a user-friendly permission system (safety profiles, plain-language prompts, directory sandboxing), per-action governance (budgets, draft mode, posting limits), audit logging, credential encryption, remote access via WebSocket, a web chat UI, multi-user access control, and proactive scheduled actions.
 
-**Architecture:** Build on Epic 1's foundation. The permission system is redesigned around two layers: (1) safety profiles with plain-language prompts for end users, and (2) config-level firewall rules for advanced users. A directory sandbox model gives the assistant free access to its workspace and user-granted directories, requiring permission for everything else. Remote access uses a Hono HTTP server embedded in the gateway. Web UI is a new channel backed by SSE. Multi-user adds user/role system with pairing. Proactive actions wire @kitnai/core's existing cron infrastructure.
+**Architecture:** Build on Epic 1's foundation. The permission system is redesigned around three layers: (1) safety profiles with plain-language prompts for end users, (2) per-action governance policies (draft/auto/blocked + budgets) for sensitive actions, and (3) config-level firewall rules for advanced users. A directory sandbox model gives the assistant free access to its workspace and user-granted directories. Budget enforcement happens at the tool level — the AI cannot override spending limits because the tool's execute function checks the ledger before acting. Actions in "draft" mode execute but produce a draft that the user must approve before it takes effect. Remote access uses a Hono HTTP server. Web UI is a channel backed by SSE. Multi-user adds roles with pairing. Proactive actions wire @kitnai/core's cron infrastructure.
 
 **Tech Stack:** Bun, TypeScript, Hono (HTTP server), @kitnai/core (crons, lifecycle hooks), @libsql/client, keytar (OS keychain), Vercel AI SDK v6
 
@@ -61,6 +61,67 @@ file-write({ path: "/Users/joe/Desktop/meeting-notes.txt" }) requires confirmati
 ```
 
 The "Always allow" option grants the parent directory, which is remembered as a granted directory.
+
+### Per-Action Governance
+
+Sensitive actions have three modes (configurable per action):
+
+| Mode | Behavior |
+|------|----------|
+| **Blocked** | Action cannot be performed at all |
+| **Draft** | Action executes but produces a draft/preview. User must approve before it takes effect (e.g., message drafted but not sent, post composed but not published, purchase prepared but not confirmed). |
+| **Auto** | Action executes immediately with no human in the loop |
+
+Default governance (can be changed per-action in config):
+
+| Action | Default Mode |
+|--------|-------------|
+| Send messages (email, Slack, etc.) | Draft |
+| Post publicly (social media, forums) | Draft |
+| Schedule future actions | Draft |
+| Spend money | Budget-capped (see below) |
+| Delete files | Blocked (requires per-instance approval) |
+
+### Budget Enforcement
+
+Spending is enforced at the **tool level** — the AI cannot override it because the tool's `execute()` function checks a budget ledger before acting.
+
+```json
+{
+  "governance": {
+    "budgets": {
+      "amazon.com": { "limit": 100, "period": "monthly" },
+      "default": { "limit": 0, "period": "monthly" }
+    }
+  }
+}
+```
+
+- Each domain/service has a spending cap and reset period
+- A `BudgetLedger` (libSQL) tracks all spending with timestamps
+- When a tool attempts to spend money, it checks: `current_spend + amount <= limit`
+- If over budget → tool returns an error to the AI (not a permission prompt — a hard block)
+- The AI literally cannot spend more than allocated
+- `default: 0` means spending is blocked on unlisted services
+
+### Draft Queue
+
+Actions in "draft" mode produce a `DraftEntry` stored in the libSQL database (`~/.kitnclaw/claw.db`):
+
+```ts
+interface DraftEntry {
+  id: string;
+  action: string;         // "send-email", "post-tweet", "schedule-job"
+  toolName: string;
+  input: Record<string, unknown>;
+  preview: string;         // Human-readable preview of what will happen
+  createdAt: string;
+  sessionId: string;
+  status: "pending" | "approved" | "rejected";
+}
+```
+
+Users review drafts in the TUI (`/drafts` command) or web UI. Approving a draft executes the original tool call. Rejecting discards it.
 
 ---
 
@@ -963,7 +1024,766 @@ git commit -m "feat(claw): add safety profile selection to setup wizard"
 
 ---
 
-## Task 4: Rate limiting
+## Task 4: Per-action governance policies
+
+Add draft/auto/blocked modes for sensitive actions (sending messages, posting publicly, scheduling).
+
+**Files:**
+- Create: `packages/claw/src/governance/policies.ts`
+- Modify: `packages/claw/src/permissions/manager.ts`
+- Modify: `packages/claw/src/config/schema.ts`
+- Test: `packages/claw/test/governance.test.ts`
+
+**Step 1: Write failing tests**
+
+```ts
+// packages/claw/test/governance.test.ts
+import { describe, test, expect } from "bun:test";
+import { GovernanceManager, type GovernanceConfig } from "../src/governance/policies.js";
+
+describe("GovernanceManager", () => {
+  const config: GovernanceConfig = {
+    actions: {
+      "send-message": "draft",
+      "post-public": "draft",
+      "schedule": "draft",
+      "delete": "blocked",
+    },
+  };
+
+  test("draft actions return 'draft' decision", () => {
+    const gm = new GovernanceManager(config);
+    expect(gm.evaluate("send-message")).toBe("draft");
+    expect(gm.evaluate("post-public")).toBe("draft");
+  });
+
+  test("blocked actions return 'deny'", () => {
+    const gm = new GovernanceManager(config);
+    expect(gm.evaluate("delete")).toBe("deny");
+  });
+
+  test("unlisted actions return 'pass' (defer to permission system)", () => {
+    const gm = new GovernanceManager(config);
+    expect(gm.evaluate("file-read")).toBe("pass");
+    expect(gm.evaluate("bash")).toBe("pass");
+  });
+
+  test("auto actions return 'allow'", () => {
+    const gm = new GovernanceManager({
+      actions: { "send-message": "auto" },
+    });
+    expect(gm.evaluate("send-message")).toBe("allow");
+  });
+
+  test("user can override defaults", () => {
+    const gm = new GovernanceManager({
+      actions: {
+        "post-public": "auto", // user trusts posting
+        "send-message": "blocked", // user blocks messaging
+      },
+    });
+    expect(gm.evaluate("post-public")).toBe("allow");
+    expect(gm.evaluate("send-message")).toBe("deny");
+  });
+});
+```
+
+**Step 2: Run tests to verify failure**
+
+Run: `bun test packages/claw/test/governance.test.ts`
+Expected: FAIL — module not found
+
+**Step 3: Implement GovernanceManager**
+
+Create `packages/claw/src/governance/policies.ts`:
+
+```ts
+export type ActionMode = "auto" | "draft" | "blocked";
+export type GovernanceDecision = "allow" | "draft" | "deny" | "pass";
+
+export interface GovernanceConfig {
+  actions: Record<string, ActionMode>;
+}
+
+/** Maps tool names to governance action categories. */
+const TOOL_TO_ACTION: Record<string, string> = {
+  "send-message": "send-message",
+  "send-email": "send-message",
+  "post-tweet": "post-public",
+  "post-social": "post-public",
+  // scheduling is identified by the cron/schedule tools
+  "schedule-job": "schedule",
+  "create-cron": "schedule",
+};
+
+/** Default governance for action types not specified by user. */
+const DEFAULT_GOVERNANCE: Record<string, ActionMode> = {
+  "send-message": "draft",
+  "post-public": "draft",
+  "schedule": "draft",
+};
+
+export class GovernanceManager {
+  private config: GovernanceConfig;
+
+  constructor(config: GovernanceConfig) {
+    this.config = config;
+  }
+
+  /**
+   * Evaluate governance for a tool call.
+   * Returns "pass" if this tool isn't governed — caller should
+   * fall through to the regular permission system.
+   */
+  evaluate(toolName: string): GovernanceDecision {
+    // Map tool name to action category
+    const action = TOOL_TO_ACTION[toolName] ?? toolName;
+
+    // Check user config first, then defaults
+    const mode = this.config.actions[action]
+      ?? this.config.actions[toolName]
+      ?? DEFAULT_GOVERNANCE[action];
+
+    if (!mode) return "pass"; // Not a governed action
+
+    switch (mode) {
+      case "auto": return "allow";
+      case "draft": return "draft";
+      case "blocked": return "deny";
+    }
+  }
+}
+```
+
+**Step 4: Add governance config to schema**
+
+Add to `packages/claw/src/config/schema.ts`:
+
+```ts
+const governanceSchema = z.object({
+  actions: z.record(z.string(), z.enum(["auto", "draft", "blocked"])).default({
+    "send-message": "draft",
+    "post-public": "draft",
+    "schedule": "draft",
+  }),
+  budgets: z.record(z.string(), z.object({
+    limit: z.number(),
+    period: z.enum(["daily", "weekly", "monthly"]).default("monthly"),
+  })).default({}),
+}).default({
+  actions: { "send-message": "draft", "post-public": "draft", "schedule": "draft" },
+  budgets: {},
+});
+
+// Add to configSchema:
+governance: governanceSchema,
+```
+
+**Step 5: Wire governance into PermissionManager.evaluate()**
+
+In `packages/claw/src/permissions/manager.ts`, check governance BEFORE the profile check:
+
+```ts
+import { GovernanceManager, type GovernanceDecision } from "../governance/policies.js";
+
+// In constructor:
+private governance?: GovernanceManager;
+
+constructor(config: PermissionManagerConfig) {
+  // ...existing...
+  if (config.governance) {
+    this.governance = new GovernanceManager(config.governance);
+  }
+}
+
+// In evaluate(), after deny list check but before profile:
+if (this.governance) {
+  const govDecision = this.governance.evaluate(toolName);
+  if (govDecision !== "pass") return govDecision;
+}
+```
+
+The `evaluate()` return type expands to `"allow" | "confirm" | "deny" | "draft"`.
+
+**Step 6: Run tests, verify pass**
+
+Run: `bun run --cwd packages/claw test`
+
+**Step 7: Commit**
+
+```bash
+git add packages/claw/src/governance/ packages/claw/src/permissions/ packages/claw/src/config/schema.ts packages/claw/test/governance.test.ts
+git commit -m "feat(claw): add per-action governance policies (draft/auto/blocked)"
+```
+
+---
+
+## Task 5: Budget enforcement
+
+Add spending caps per domain/service, enforced at the tool level. This task also introduces `packages/claw/src/governance/db.ts` — a shared governance database factory that creates the libSQL client for `~/.kitnclaw/claw.db`. Tasks 6 (drafts) and 8 (audit) reuse this same db connection.
+
+**Files:**
+- Create: `packages/claw/src/governance/db.ts` (shared governance db factory)
+- Create: `packages/claw/src/governance/budget.ts`
+- Modify: `packages/claw/src/agent/wrapped-tools.ts`
+- Test: `packages/claw/test/budget.test.ts`
+
+**Step 1: Write failing tests**
+
+```ts
+// packages/claw/test/budget.test.ts
+import { describe, test, expect, beforeEach, afterEach } from "bun:test";
+import { mkdtemp, rm } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
+import { BudgetLedger } from "../src/governance/budget.js";
+
+let tmpDir: string;
+
+beforeEach(async () => {
+  tmpDir = await mkdtemp(join(tmpdir(), "claw-budget-"));
+});
+afterEach(async () => {
+  await rm(tmpDir, { recursive: true, force: true });
+});
+
+describe("BudgetLedger", () => {
+  test("allows spending within budget", async () => {
+    const ledger = new BudgetLedger({
+      dbPath: join(tmpDir, "claw.db"),
+      budgets: {
+        "amazon.com": { limit: 100, period: "monthly" },
+      },
+    });
+    const result = await ledger.trySpend("amazon.com", 50);
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(50);
+  });
+
+  test("blocks spending over budget", async () => {
+    const ledger = new BudgetLedger({
+      dbPath: join(tmpDir, "claw.db"),
+      budgets: {
+        "amazon.com": { limit: 100, period: "monthly" },
+      },
+    });
+    await ledger.trySpend("amazon.com", 80);
+    const result = await ledger.trySpend("amazon.com", 30);
+    expect(result.allowed).toBe(false);
+    expect(result.remaining).toBe(20);
+  });
+
+  test("blocks spending on unlisted domains (default: 0)", async () => {
+    const ledger = new BudgetLedger({
+      dbPath: join(tmpDir, "claw.db"),
+      budgets: {
+        "amazon.com": { limit: 100, period: "monthly" },
+      },
+    });
+    const result = await ledger.trySpend("ebay.com", 10);
+    expect(result.allowed).toBe(false);
+    expect(result.remaining).toBe(0);
+  });
+
+  test("allows if default budget is set", async () => {
+    const ledger = new BudgetLedger({
+      dbPath: join(tmpDir, "claw.db"),
+      budgets: {
+        default: { limit: 50, period: "monthly" },
+      },
+    });
+    const result = await ledger.trySpend("some-site.com", 25);
+    expect(result.allowed).toBe(true);
+  });
+
+  test("tracks cumulative spending", async () => {
+    const ledger = new BudgetLedger({
+      dbPath: join(tmpDir, "claw.db"),
+      budgets: {
+        "amazon.com": { limit: 100, period: "monthly" },
+      },
+    });
+    await ledger.trySpend("amazon.com", 30);
+    await ledger.trySpend("amazon.com", 40);
+    const result = await ledger.trySpend("amazon.com", 20);
+    expect(result.allowed).toBe(true);
+    expect(result.remaining).toBe(10);
+  });
+
+  test("returns current spending summary", async () => {
+    const ledger = new BudgetLedger({
+      dbPath: join(tmpDir, "claw.db"),
+      budgets: {
+        "amazon.com": { limit: 100, period: "monthly" },
+        "ebay.com": { limit: 50, period: "monthly" },
+      },
+    });
+    await ledger.trySpend("amazon.com", 30);
+    const summary = await ledger.getSummary();
+    expect(summary["amazon.com"].spent).toBe(30);
+    expect(summary["amazon.com"].limit).toBe(100);
+    expect(summary["amazon.com"].remaining).toBe(70);
+  });
+});
+```
+
+**Step 2: Run tests to verify failure**
+
+**Step 3: Create governance database factory**
+
+Create `packages/claw/src/governance/db.ts`:
+
+```ts
+import { createClient, type Client } from "@libsql/client";
+import { join } from "path";
+import { CLAW_HOME } from "../config/io.js";
+
+let _client: Client | null = null;
+
+export interface GovernanceDbOptions {
+  dbPath?: string;
+  syncUrl?: string;
+  authToken?: string;
+}
+
+/**
+ * Get or create the shared governance database client.
+ * All governance tables (budgets, drafts, audit) live in claw.db.
+ * Optionally syncs to Turso cloud for multi-computer sharing.
+ */
+export function getGovernanceDb(options?: GovernanceDbOptions): Client {
+  if (_client) return _client;
+  const dbPath = options?.dbPath ?? join(CLAW_HOME, "claw.db");
+  _client = createClient({
+    url: `file:${dbPath}`,
+    ...(options?.syncUrl ? { syncUrl: options.syncUrl, authToken: options.authToken } : {}),
+  });
+  return _client;
+}
+
+/** For testing: reset the singleton. */
+export function resetGovernanceDb(): void {
+  _client = null;
+}
+```
+
+**Step 4: Implement BudgetLedger (libSQL-backed)**
+
+Create `packages/claw/src/governance/budget.ts`:
+
+Uses the same `@libsql/client` already used by the memory store. All governance data lives in `~/.kitnclaw/claw.db` — a single libSQL database that can optionally sync to Turso cloud for multi-computer sharing.
+
+```ts
+import { createClient, type Client } from "@libsql/client";
+
+export interface BudgetConfig {
+  limit: number;
+  period: "daily" | "weekly" | "monthly";
+}
+
+interface SpendResult {
+  allowed: boolean;
+  remaining: number;
+  limit: number;
+  currentSpend: number;
+}
+
+export class BudgetLedger {
+  private db: Client;
+  private budgets: Record<string, BudgetConfig>;
+  private initialized = false;
+
+  constructor(options: {
+    dbPath: string;
+    budgets: Record<string, BudgetConfig>;
+    syncUrl?: string;
+    authToken?: string;
+  }) {
+    this.db = createClient({
+      url: `file:${options.dbPath}`,
+      ...(options.syncUrl ? { syncUrl: options.syncUrl, authToken: options.authToken } : {}),
+    });
+    this.budgets = options.budgets;
+  }
+
+  private async ensureTable(): Promise<void> {
+    if (this.initialized) return;
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS budget_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        domain TEXT NOT NULL,
+        amount REAL NOT NULL,
+        description TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+    await this.db.execute(`
+      CREATE INDEX IF NOT EXISTS idx_budget_domain_date ON budget_entries(domain, created_at)
+    `);
+    this.initialized = true;
+  }
+
+  private getPeriodStart(period: "daily" | "weekly" | "monthly"): string {
+    const now = new Date();
+    switch (period) {
+      case "daily":
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      case "weekly": {
+        const day = now.getDay();
+        const diff = now.getDate() - day;
+        return new Date(now.getFullYear(), now.getMonth(), diff).toISOString();
+      }
+      case "monthly":
+        return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    }
+  }
+
+  private async getCurrentSpend(domain: string, period: "daily" | "weekly" | "monthly"): Promise<number> {
+    await this.ensureTable();
+    const start = this.getPeriodStart(period);
+    const result = await this.db.execute({
+      sql: "SELECT COALESCE(SUM(amount), 0) as total FROM budget_entries WHERE domain = ? AND created_at >= ?",
+      args: [domain, start],
+    });
+    return Number(result.rows[0]?.total ?? 0);
+  }
+
+  async trySpend(domain: string, amount: number, description?: string): Promise<SpendResult> {
+    await this.ensureTable();
+
+    // Look up budget: specific domain first, then "default"
+    const budget = this.budgets[domain] ?? this.budgets["default"];
+    if (!budget) {
+      return { allowed: false, remaining: 0, limit: 0, currentSpend: 0 };
+    }
+
+    const currentSpend = await this.getCurrentSpend(domain, budget.period);
+    const remaining = budget.limit - currentSpend;
+
+    if (currentSpend + amount > budget.limit) {
+      return { allowed: false, remaining, limit: budget.limit, currentSpend };
+    }
+
+    // Record the spend
+    await this.db.execute({
+      sql: "INSERT INTO budget_entries (domain, amount, description) VALUES (?, ?, ?)",
+      args: [domain, amount, description ?? null],
+    });
+
+    return {
+      allowed: true,
+      remaining: remaining - amount,
+      limit: budget.limit,
+      currentSpend: currentSpend + amount,
+    };
+  }
+
+  async getSummary(): Promise<Record<string, { spent: number; limit: number; remaining: number }>> {
+    const summary: Record<string, { spent: number; limit: number; remaining: number }> = {};
+
+    for (const [domain, budget] of Object.entries(this.budgets)) {
+      if (domain === "default") continue;
+      const spent = await this.getCurrentSpend(domain, budget.period);
+      summary[domain] = {
+        spent,
+        limit: budget.limit,
+        remaining: budget.limit - spent,
+      };
+    }
+
+    return summary;
+  }
+}
+```
+
+**Step 5: Run tests, verify pass**
+
+**Step 6: Wire budget checking into wrapped-tools**
+
+Modify `packages/claw/src/agent/wrapped-tools.ts` — when a tool's execute function detects a spending action (e.g., `web-fetch` to a commerce site with a `purchase` flag, or a future `purchase` tool), check the budget ledger before executing:
+
+```ts
+// Budget check is optional — only applies to tools that declare spending
+if (budgetLedger && input._spending) {
+  const { domain, amount } = input._spending;
+  const result = await budgetLedger.trySpend(domain, amount);
+  if (!result.allowed) {
+    return {
+      error: `Budget exceeded for ${domain}. Remaining: $${result.remaining} of $${result.limit} ${budget.period} limit.`,
+    };
+  }
+}
+```
+
+**Step 7: Run all claw tests, commit**
+
+```bash
+git commit -m "feat(claw): add budget enforcement with spending ledger"
+```
+
+---
+
+## Task 6: Draft queue
+
+Actions in "draft" mode produce a draft that the user must approve.
+
+**Files:**
+- Create: `packages/claw/src/governance/drafts.ts`
+- Modify: `packages/claw/src/agent/wrapped-tools.ts`
+- Test: `packages/claw/test/drafts.test.ts`
+
+**Step 1: Write failing tests**
+
+```ts
+// packages/claw/test/drafts.test.ts
+import { describe, test, expect, beforeEach, afterEach } from "bun:test";
+import { mkdtemp, rm } from "fs/promises";
+import { join } from "path";
+import { tmpdir } from "os";
+import { createClient } from "@libsql/client";
+import { DraftQueue } from "../src/governance/drafts.js";
+
+let tmpDir: string;
+let queue: DraftQueue;
+
+beforeEach(async () => {
+  tmpDir = await mkdtemp(join(tmpdir(), "claw-drafts-"));
+  const db = createClient({ url: `file:${join(tmpDir, "claw.db")}` });
+  queue = new DraftQueue(db);
+});
+afterEach(async () => {
+  await rm(tmpDir, { recursive: true, force: true });
+});
+
+describe("DraftQueue", () => {
+  test("creates a draft entry", async () => {
+    const draft = await queue.create({
+      action: "send-email",
+      toolName: "send-message",
+      input: { to: "alice@example.com", body: "Hello Alice" },
+      preview: "Send email to alice@example.com: Hello Alice",
+      sessionId: "sess-1",
+    });
+    expect(draft.id).toBeDefined();
+    expect(draft.status).toBe("pending");
+  });
+
+  test("lists pending drafts", async () => {
+    await queue.create({
+      action: "send-email",
+      toolName: "send-message",
+      input: {},
+      preview: "Send email",
+      sessionId: "s1",
+    });
+    await queue.create({
+      action: "post-tweet",
+      toolName: "post-social",
+      input: {},
+      preview: "Post tweet",
+      sessionId: "s1",
+    });
+    const pending = await queue.listPending();
+    expect(pending).toHaveLength(2);
+  });
+
+  test("approves a draft", async () => {
+    const draft = await queue.create({
+      action: "send-email",
+      toolName: "send-message",
+      input: { body: "Hello" },
+      preview: "Send email",
+      sessionId: "s1",
+    });
+    const approved = await queue.approve(draft.id);
+    expect(approved).not.toBeNull();
+    expect(approved!.status).toBe("approved");
+    expect(approved!.input).toEqual({ body: "Hello" });
+  });
+
+  test("rejects a draft", async () => {
+    const draft = await queue.create({
+      action: "send-email",
+      toolName: "send-message",
+      input: {},
+      preview: "Send email",
+      sessionId: "s1",
+    });
+    await queue.reject(draft.id);
+    const pending = await queue.listPending();
+    expect(pending).toHaveLength(0);
+  });
+
+  test("approved drafts no longer appear in pending", async () => {
+    const draft = await queue.create({
+      action: "send-email",
+      toolName: "send-message",
+      input: {},
+      preview: "Send email",
+      sessionId: "s1",
+    });
+    await queue.approve(draft.id);
+    const pending = await queue.listPending();
+    expect(pending).toHaveLength(0);
+  });
+});
+```
+
+**Step 2: Run tests to verify failure**
+
+**Step 3: Implement DraftQueue (libSQL-backed)**
+
+Create `packages/claw/src/governance/drafts.ts`:
+
+Uses the same `claw.db` libSQL database as BudgetLedger. Shares the db connection via the governance database factory (see Task 5).
+
+```ts
+import { createClient, type Client } from "@libsql/client";
+import { randomUUID } from "crypto";
+
+export interface DraftEntry {
+  id: string;
+  action: string;
+  toolName: string;
+  input: Record<string, unknown>;
+  preview: string;
+  sessionId: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+}
+
+export class DraftQueue {
+  private db: Client;
+  private initialized = false;
+
+  constructor(db: Client) {
+    this.db = db;
+  }
+
+  private async ensureTable(): Promise<void> {
+    if (this.initialized) return;
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS drafts (
+        id TEXT PRIMARY KEY,
+        action TEXT NOT NULL,
+        tool_name TEXT NOT NULL,
+        input TEXT NOT NULL,
+        preview TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+    await this.db.execute(`
+      CREATE INDEX IF NOT EXISTS idx_drafts_status ON drafts(status)
+    `);
+    this.initialized = true;
+  }
+
+  async create(params: {
+    action: string;
+    toolName: string;
+    input: Record<string, unknown>;
+    preview: string;
+    sessionId: string;
+  }): Promise<DraftEntry> {
+    await this.ensureTable();
+    const id = randomUUID();
+    const createdAt = new Date().toISOString();
+    await this.db.execute({
+      sql: "INSERT INTO drafts (id, action, tool_name, input, preview, session_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)",
+      args: [id, params.action, params.toolName, JSON.stringify(params.input), params.preview, params.sessionId, createdAt],
+    });
+    return {
+      id,
+      ...params,
+      status: "pending",
+      createdAt,
+    };
+  }
+
+  async get(id: string): Promise<DraftEntry | null> {
+    await this.ensureTable();
+    const result = await this.db.execute({ sql: "SELECT * FROM drafts WHERE id = ?", args: [id] });
+    const row = result.rows[0];
+    if (!row) return null;
+    return {
+      id: String(row.id),
+      action: String(row.action),
+      toolName: String(row.tool_name),
+      input: JSON.parse(String(row.input)),
+      preview: String(row.preview),
+      sessionId: String(row.session_id),
+      status: String(row.status) as DraftEntry["status"],
+      createdAt: String(row.created_at),
+    };
+  }
+
+  async listPending(): Promise<DraftEntry[]> {
+    await this.ensureTable();
+    const result = await this.db.execute("SELECT * FROM drafts WHERE status = 'pending' ORDER BY created_at ASC");
+    return result.rows.map((row) => ({
+      id: String(row.id),
+      action: String(row.action),
+      toolName: String(row.tool_name),
+      input: JSON.parse(String(row.input)),
+      preview: String(row.preview),
+      sessionId: String(row.session_id),
+      status: "pending" as const,
+      createdAt: String(row.created_at),
+    }));
+  }
+
+  async approve(id: string): Promise<DraftEntry | null> {
+    await this.ensureTable();
+    await this.db.execute({ sql: "UPDATE drafts SET status = 'approved' WHERE id = ?", args: [id] });
+    return this.get(id);
+  }
+
+  async reject(id: string): Promise<void> {
+    await this.ensureTable();
+    await this.db.execute({ sql: "UPDATE drafts SET status = 'rejected' WHERE id = ?", args: [id] });
+  }
+}
+```
+
+**Step 4: Wire drafts into wrapped-tools**
+
+When `evaluate()` returns `"draft"`, the wrapped tool creates a draft instead of executing:
+
+```ts
+if (decision === "draft") {
+  const preview = describeAction(reg.name, input);
+  await draftQueue.create({
+    action: preview.summary,
+    toolName: reg.name,
+    input,
+    preview: `${preview.icon} ${preview.summary}${preview.detail ? ` — ${preview.detail}` : ""}`,
+    sessionId, // passed through from agent loop
+  });
+  return {
+    draft: true,
+    message: `This action has been saved as a draft for your review: ${preview.summary}`,
+  };
+}
+```
+
+**Step 5: Add `/drafts` TUI command**
+
+Add to the TUI slash commands:
+- `/drafts` — list pending drafts
+- `/drafts approve <id>` — approve and execute
+- `/drafts reject <id>` — discard
+
+**Step 6: Run all tests, commit**
+
+```bash
+git commit -m "feat(claw): add draft queue for governed actions"
+```
+
+---
+
+## Task 7: Rate limiting
 
 Prevent runaway tool execution — max N calls per minute per tool for non-safe actions.
 
@@ -1103,9 +1923,9 @@ git commit -m "feat(claw): add rate limiting for tool execution"
 
 ---
 
-## Task 5: Audit logging
+## Task 8: Audit logging
 
-Log all tool executions and permission decisions to `~/.kitnclaw/logs/audit.jsonl`.
+Log all tool executions and permission decisions to the libSQL governance database.
 
 **Files:**
 - Create: `packages/claw/src/audit/logger.ts`
@@ -1117,15 +1937,19 @@ Log all tool executions and permission decisions to `~/.kitnclaw/logs/audit.json
 ```ts
 // packages/claw/test/audit.test.ts
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
-import { mkdtemp, rm, readFile } from "fs/promises";
+import { mkdtemp, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
+import { createClient } from "@libsql/client";
 import { AuditLogger } from "../src/audit/logger.js";
 
 let tmpDir: string;
+let logger: AuditLogger;
 
 beforeEach(async () => {
   tmpDir = await mkdtemp(join(tmpdir(), "claw-audit-"));
+  const db = createClient({ url: `file:${join(tmpDir, "claw.db")}` });
+  logger = new AuditLogger(db);
 });
 afterEach(async () => {
   await rm(tmpDir, { recursive: true, force: true });
@@ -1133,7 +1957,6 @@ afterEach(async () => {
 
 describe("AuditLogger", () => {
   test("logs tool execution", async () => {
-    const logger = new AuditLogger(join(tmpDir, "audit.jsonl"));
     await logger.log({
       event: "tool:execute",
       toolName: "bash",
@@ -1141,17 +1964,14 @@ describe("AuditLogger", () => {
       decision: "allow",
       sessionId: "s1",
       channelType: "terminal",
-      timestamp: Date.now(),
     });
 
-    const content = await readFile(join(tmpDir, "audit.jsonl"), "utf-8");
-    const entry = JSON.parse(content.trim());
-    expect(entry.event).toBe("tool:execute");
-    expect(entry.toolName).toBe("bash");
+    const entries = await logger.query({ event: "tool:execute" });
+    expect(entries).toHaveLength(1);
+    expect(entries[0].toolName).toBe("bash");
   });
 
   test("logs permission denial", async () => {
-    const logger = new AuditLogger(join(tmpDir, "audit.jsonl"));
     await logger.log({
       event: "permission:denied",
       toolName: "bash",
@@ -1159,51 +1979,115 @@ describe("AuditLogger", () => {
       reason: "user_denied",
       sessionId: "s1",
       channelType: "discord",
-      timestamp: Date.now(),
     });
 
-    const content = await readFile(join(tmpDir, "audit.jsonl"), "utf-8");
-    const entry = JSON.parse(content.trim());
-    expect(entry.event).toBe("permission:denied");
-    expect(entry.reason).toBe("user_denied");
+    const entries = await logger.query({ event: "permission:denied" });
+    expect(entries).toHaveLength(1);
+    expect(entries[0].reason).toBe("user_denied");
   });
 
   test("appends multiple entries", async () => {
-    const logger = new AuditLogger(join(tmpDir, "audit.jsonl"));
-    await logger.log({ event: "tool:execute", toolName: "a", timestamp: 1 });
-    await logger.log({ event: "tool:execute", toolName: "b", timestamp: 2 });
+    await logger.log({ event: "tool:execute", toolName: "a" });
+    await logger.log({ event: "tool:execute", toolName: "b" });
 
-    const lines = (await readFile(join(tmpDir, "audit.jsonl"), "utf-8")).trim().split("\n");
-    expect(lines).toHaveLength(2);
+    const entries = await logger.query({});
+    expect(entries).toHaveLength(2);
   });
 });
 ```
 
-**Step 2: Implement AuditLogger**
+**Step 2: Implement AuditLogger (libSQL-backed)**
 
 Create `packages/claw/src/audit/logger.ts`:
 
+Uses the shared `claw.db` database. Audit entries are structured rows, queryable by event type, tool name, session, and time range.
+
 ```ts
-import { appendFile, mkdir } from "fs/promises";
-import { dirname } from "path";
+import type { Client } from "@libsql/client";
+
+export interface AuditEntry {
+  event: string;
+  toolName?: string;
+  input?: Record<string, unknown>;
+  decision?: string;
+  reason?: string;
+  sessionId?: string;
+  channelType?: string;
+  duration?: number;
+  [key: string]: unknown;
+}
 
 export class AuditLogger {
-  private path: string;
+  private db: Client;
   private initialized = false;
 
-  constructor(path: string) {
-    this.path = path;
+  constructor(db: Client) {
+    this.db = db;
   }
 
-  private async ensureDir(): Promise<void> {
+  private async ensureTable(): Promise<void> {
     if (this.initialized) return;
-    await mkdir(dirname(this.path), { recursive: true });
+    await this.db.execute(`
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event TEXT NOT NULL,
+        tool_name TEXT,
+        input TEXT,
+        decision TEXT,
+        reason TEXT,
+        session_id TEXT,
+        channel_type TEXT,
+        duration REAL,
+        metadata TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+    await this.db.execute(`
+      CREATE INDEX IF NOT EXISTS idx_audit_event ON audit_log(event, created_at)
+    `);
     this.initialized = true;
   }
 
-  async log(entry: Record<string, unknown>): Promise<void> {
-    await this.ensureDir();
-    await appendFile(this.path, JSON.stringify(entry) + "\n");
+  async log(entry: AuditEntry): Promise<void> {
+    await this.ensureTable();
+    const { event, toolName, input, decision, reason, sessionId, channelType, duration, ...rest } = entry;
+    await this.db.execute({
+      sql: `INSERT INTO audit_log (event, tool_name, input, decision, reason, session_id, channel_type, duration, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        event,
+        toolName ?? null,
+        input ? JSON.stringify(input) : null,
+        decision ?? null,
+        reason ?? null,
+        sessionId ?? null,
+        channelType ?? null,
+        duration ?? null,
+        Object.keys(rest).length > 0 ? JSON.stringify(rest) : null,
+      ],
+    });
+  }
+
+  async query(filters: { event?: string; toolName?: string; sessionId?: string; limit?: number }): Promise<AuditEntry[]> {
+    await this.ensureTable();
+    const conditions: string[] = [];
+    const args: unknown[] = [];
+    if (filters.event) { conditions.push("event = ?"); args.push(filters.event); }
+    if (filters.toolName) { conditions.push("tool_name = ?"); args.push(filters.toolName); }
+    if (filters.sessionId) { conditions.push("session_id = ?"); args.push(filters.sessionId); }
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const limit = filters.limit ?? 100;
+    const result = await this.db.execute({ sql: `SELECT * FROM audit_log ${where} ORDER BY created_at DESC LIMIT ?`, args: [...args, limit] });
+    return result.rows.map((row) => ({
+      event: String(row.event),
+      toolName: row.tool_name ? String(row.tool_name) : undefined,
+      input: row.input ? JSON.parse(String(row.input)) : undefined,
+      decision: row.decision ? String(row.decision) : undefined,
+      reason: row.reason ? String(row.reason) : undefined,
+      sessionId: row.session_id ? String(row.session_id) : undefined,
+      channelType: row.channel_type ? String(row.channel_type) : undefined,
+      duration: row.duration ? Number(row.duration) : undefined,
+    }));
   }
 }
 ```
@@ -1215,7 +2099,9 @@ Subscribe to lifecycle hooks in `packages/claw/src/gateway/start.ts`:
 ```ts
 import { AuditLogger } from "../audit/logger.js";
 
-const auditLogger = new AuditLogger(join(CLAW_HOME, "logs", "audit.jsonl"));
+// Use the shared governance db
+const govDb = createClient({ url: `file:${join(CLAW_HOME, "claw.db")}` });
+const auditLogger = new AuditLogger(govDb);
 
 if (plugin.hooks) {
   plugin.hooks.on("tool:execute", (event) => {
@@ -1224,7 +2110,6 @@ if (plugin.hooks) {
       toolName: event.toolName,
       input: event.input,
       duration: event.duration,
-      timestamp: event.timestamp,
     });
   });
 }
@@ -1233,12 +2118,12 @@ if (plugin.hooks) {
 **Step 4: Run tests, verify pass. Commit.**
 
 ```bash
-git commit -m "feat(claw): add JSONL audit logging for tool executions"
+git commit -m "feat(claw): add libSQL-backed audit logging for tool executions"
 ```
 
 ---
 
-## Task 6: Credential encryption (OS keychain with file fallback)
+## Task 9: Credential encryption (OS keychain with file fallback)
 
 Store API keys in the OS keychain instead of plaintext config.
 
@@ -1389,7 +2274,7 @@ Add an HTTP server to the gateway and support remote connections.
 
 ---
 
-## Task 7: Embedded HTTP server
+## Task 10: Embedded HTTP server
 
 **Files:**
 - Create: `packages/claw/src/gateway/http.ts`
@@ -1476,7 +2361,7 @@ git commit -m "feat(claw): add embedded HTTP server with auth, message API, and 
 
 ---
 
-## Task 8: WebSocket remote TUI + connect command
+## Task 11: WebSocket remote TUI + connect command
 
 **Files:**
 - Modify: `packages/claw/src/gateway/http.ts` (WebSocket handler)
@@ -1504,7 +2389,7 @@ git commit -m "feat(claw): add WebSocket remote access and connect command"
 
 ---
 
-## Task 9: Static web chat UI
+## Task 12: Static web chat UI
 
 **Files:**
 - Create: `packages/claw/src/web/index.html`
@@ -1542,7 +2427,7 @@ git commit -m "feat(claw): add web chat UI channel"
 
 ---
 
-## Task 10: User/role system
+## Task 13: User/role system
 
 **Files:**
 - Create: `packages/claw/src/users/manager.ts`
@@ -1565,7 +2450,7 @@ git commit -m "feat(claw): add user/role system for multi-user access"
 
 ---
 
-## Task 11: Channel-level pairing
+## Task 14: Channel-level pairing
 
 **Files:**
 - Create: `packages/claw/src/users/pairing.ts`
@@ -1587,7 +2472,7 @@ git commit -m "feat(claw): add pairing system for messaging channel users"
 
 ---
 
-## Task 12: Wire cron scheduler into gateway
+## Task 15: Wire cron scheduler into gateway
 
 **Files:**
 - Create: `packages/claw/src/crons/setup.ts`
@@ -1608,7 +2493,7 @@ git commit -m "feat(claw): wire cron scheduler into gateway"
 
 ---
 
-## Task 13: HEARTBEAT.md parser
+## Task 16: HEARTBEAT.md parser
 
 **Files:**
 - Create: `packages/claw/src/crons/heartbeat.ts`
@@ -1629,7 +2514,52 @@ git commit -m "feat(claw): add HEARTBEAT.md parser and cron scheduling"
 
 ---
 
-## Task 14: Final build, typecheck, and verification
+## Task 17: README and security documentation
+
+**Files:**
+- Create: `packages/claw/README.md`
+- Create: `packages/claw/docs/security.md`
+
+**Step 1: Write README.md**
+
+`packages/claw/README.md` — covers installation, quick start, setup wizard, configuration, safety profiles, and links to security docs.
+
+Key sections:
+- **What is KitnClaw?** — Personal AI assistant for daily life and work
+- **Installation** — `bun install`, `kitnclaw setup`
+- **Quick Start** — `kitnclaw` to launch
+- **Configuration** — `~/.kitnclaw/config.toml` reference
+- **Safety Profiles** — Cautious / Balanced / Autonomous explanation
+- **Channels** — Terminal, Web UI, Discord, Slack, etc.
+- **Remote Access** — HTTP server, WebSocket, connect command
+- **Development** — building from source, running tests
+
+**Step 2: Write security.md**
+
+`packages/claw/docs/security.md` — comprehensive security documentation:
+- **Philosophy** — designed for non-technical users, layered defense
+- **Safety Profiles** — full matrix table with explanations
+- **Directory Sandbox** — workspace, granted dirs, everything else
+- **Per-Action Governance** — draft/auto/blocked modes, defaults, configuration
+- **Budget Enforcement** — how spending caps work, tool-level enforcement, the AI cannot override
+- **Draft Queue** — how drafts work, approval flow, TUI and web UI review
+- **Rate Limiting** — per-tool limits, window-based
+- **Audit Logging** — what's logged, where, format
+- **Credential Storage** — OS keychain with file fallback
+- **Multi-User Access** — roles (operator/user/guest), channel pairing
+- **Progressive Trust** — session trust, directory grants, how trust builds over time
+- **Advanced Firewall Rules** — for power users, per-tool argument patterns
+
+**Step 3: Commit**
+
+```bash
+git add packages/claw/README.md packages/claw/docs/security.md
+git commit -m "docs(claw): add README and security documentation"
+```
+
+---
+
+## Task 18: Final build, typecheck, and verification
 
 **Step 1:** `bun run typecheck` — all packages clean
 
@@ -1653,6 +2583,29 @@ git commit -m "chore(claw): Epic 2 final verification and cleanup"
 
 ---
 
+# Storage Architecture
+
+All governance data (budgets, drafts, audit logs) is stored in a single **libSQL** database at `~/.kitnclaw/claw.db`. This choice provides:
+
+- **Local-first** — works entirely offline, no cloud dependency
+- **Turso sync** — optional cloud sync via Turso for multi-computer sharing. If configured, the same KitnClaw state (budgets, drafts, audit, memory) can be shared across machines.
+- **Vector support** — libSQL supports vector embeddings, useful for future memory/RAG enhancements
+- **Single file** — easy backup, migration, and debugging
+- **SQL queryable** — audit logs, budget history, and drafts are all queryable with standard SQL
+
+The memory store (`LibsqlMemoryStore`) already uses libSQL at `~/.kitnclaw/memory.db`. In this epic, we consolidate governance into `claw.db` and can optionally migrate memory into it as well (or keep separate for modularity).
+
+**Turso cloud sync configuration** (optional):
+```toml
+[storage]
+syncUrl = "libsql://your-db.turso.io"
+authToken = "your-turso-token"
+```
+
+When `syncUrl` is set, all libSQL clients pass it through, enabling automatic local-remote sync.
+
+---
+
 # Implementation Order Summary
 
 | Task | Phase | Description | Key Files |
@@ -1660,14 +2613,18 @@ git commit -m "chore(claw): Epic 2 final verification and cleanup"
 | 1 | Security | Safety profiles + directory sandbox | permissions/profiles.ts, manager.ts (REWRITE) |
 | 2 | Security | Plain-language permission prompts | permissions/describe.ts (CREATE) |
 | 3 | Security | Profile selection in setup wizard | setup.ts |
-| 4 | Security | Rate limiting | permissions/rate-limiter.ts (CREATE) |
-| 5 | Security | Audit logging | audit/logger.ts (CREATE) |
-| 6 | Security | Credential encryption | config/credentials.ts (CREATE) |
-| 7 | Remote | HTTP server + message API + SSE | gateway/http.ts (CREATE) |
-| 8 | Remote | WebSocket + connect command | gateway/connect.ts (CREATE) |
-| 9 | Web UI | Static web chat interface | web/index.html (CREATE) |
-| 10 | Multi-User | User/role system | users/manager.ts (CREATE) |
-| 11 | Multi-User | Channel pairing | users/pairing.ts (CREATE) |
-| 12 | Proactive | Cron scheduler wiring | crons/setup.ts (CREATE) |
-| 13 | Proactive | HEARTBEAT.md parser | crons/heartbeat.ts (CREATE) |
-| 14 | Final | Build + typecheck + smoke test | — |
+| 4 | Security | Per-action governance policies | governance/policies.ts (CREATE) |
+| 5 | Security | Budget enforcement (libSQL) | governance/budget.ts (CREATE) |
+| 6 | Security | Draft queue (libSQL) | governance/drafts.ts (CREATE) |
+| 7 | Security | Rate limiting | permissions/rate-limiter.ts (CREATE) |
+| 8 | Security | Audit logging (libSQL) | audit/logger.ts (CREATE) |
+| 9 | Security | Credential encryption | config/credentials.ts (CREATE) |
+| 10 | Remote | HTTP server + message API + SSE | gateway/http.ts (CREATE) |
+| 11 | Remote | WebSocket + connect command | gateway/connect.ts (CREATE) |
+| 12 | Web UI | Static web chat interface | web/index.html (CREATE) |
+| 13 | Multi-User | User/role system | users/manager.ts (CREATE) |
+| 14 | Multi-User | Channel pairing | users/pairing.ts (CREATE) |
+| 15 | Proactive | Cron scheduler wiring | crons/setup.ts (CREATE) |
+| 16 | Proactive | HEARTBEAT.md parser | crons/heartbeat.ts (CREATE) |
+| 17 | Docs | README + security documentation | README.md, docs/security.md (CREATE) |
+| 18 | Final | Build + typecheck + smoke test | — |

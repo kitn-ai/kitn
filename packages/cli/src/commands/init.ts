@@ -1,52 +1,17 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { mkdir, readFile, writeFile } from "fs/promises";
-import { join } from "path";
-import { readConfig, writeConfig, DEFAULT_REGISTRY_URL } from "../utils/config.js";
-import { patchProjectTsconfig } from "../installers/tsconfig-patcher.js";
-import { createBarrelFile } from "../installers/barrel-manager.js";
+import {
+  initProject,
+  detectFramework,
+  readConfig,
+  VALID_FRAMEWORKS,
+  type Framework,
+} from "@kitnai/cli-core";
 import { addCommand } from "./add.js";
 import {
   fetchRulesConfig,
   generateRulesFiles,
 } from "../installers/rules-generator.js";
-
-/** Detect the HTTP framework from the project's package.json dependencies. */
-async function detectFramework(cwd: string): Promise<"hono" | "hono-openapi" | "elysia" | null> {
-  try {
-    const pkg = JSON.parse(await readFile(join(cwd, "package.json"), "utf-8"));
-    const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-    if (deps["elysia"]) return "elysia";
-    if (deps["@hono/zod-openapi"]) return "hono-openapi";
-    if (deps["hono"]) return "hono";
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function getPluginTemplate(framework: string): string {
-  const adapterName = framework === "hono-openapi" ? "hono-openapi" : framework;
-  return `import { createAIPlugin } from "@kitn/adapters/${adapterName}";
-import { registerWithPlugin } from "./index.js";
-
-export const ai = createAIPlugin({
-  // To enable agent chat, add an AI provider:
-  // https://sdk.vercel.ai/providers/ai-sdk-providers
-  //
-  // Example with OpenRouter (access to many models):
-  //   import { openrouter } from "@openrouter/ai-sdk-provider";
-  //   model: (id) => openrouter(id ?? "openai/gpt-4o-mini"),
-  //
-  // Example with OpenAI directly:
-  //   import { openai } from "@ai-sdk/openai";
-  //   model: (id) => openai(id ?? "gpt-4o-mini"),
-});
-
-// Flush all auto-registered components into the plugin
-registerWithPlugin(ai);
-`;
-}
 
 interface InitOptions {
   runtime?: string;
@@ -77,6 +42,7 @@ export async function initCommand(opts: InitOptions = {}) {
     }
   }
 
+  // --- Resolve runtime ---
   let runtime: string;
   if (opts.runtime) {
     if (!["bun", "node", "deno"].includes(opts.runtime)) {
@@ -102,13 +68,12 @@ export async function initCommand(opts: InitOptions = {}) {
     runtime = selected as string;
   }
 
-  const validFrameworks = ["hono", "hono-openapi", "elysia"] as const;
-  type Framework = (typeof validFrameworks)[number];
+  // --- Resolve framework ---
   let framework: Framework;
   const detected = await detectFramework(cwd);
   if (opts.framework) {
-    if (!validFrameworks.includes(opts.framework as Framework)) {
-      p.log.error(`Invalid framework: ${opts.framework}. Must be one of: ${validFrameworks.join(", ")}`);
+    if (!VALID_FRAMEWORKS.includes(opts.framework as Framework)) {
+      p.log.error(`Invalid framework: ${opts.framework}. Must be one of: ${VALID_FRAMEWORKS.join(", ")}`);
       process.exit(1);
     }
     framework = opts.framework as Framework;
@@ -158,6 +123,7 @@ export async function initCommand(opts: InitOptions = {}) {
     framework = selected as Framework;
   }
 
+  // --- Resolve base dir ---
   let baseDir: string;
   if (opts.base) {
     baseDir = opts.base;
@@ -175,63 +141,37 @@ export async function initCommand(opts: InitOptions = {}) {
     }
     baseDir = base as string;
   }
-  const config = {
-    runtime: runtime as "bun" | "node" | "deno",
-    framework,
-    aliases: {
-      base: baseDir,
-      agents: `${baseDir}/agents`,
-      tools: `${baseDir}/tools`,
-      skills: `${baseDir}/skills`,
-      storage: `${baseDir}/storage`,
-    },
-    registries: {
-      "@kitn": {
-        url: DEFAULT_REGISTRY_URL,
-        homepage: "https://kitn.ai",
-        description: "Official kitn AI agent components",
-      },
-    },
-  };
 
+  // --- Call cli-core initProject ---
   const s = p.spinner();
   s.start("Writing kitn.json");
-  await writeConfig(cwd, config);
-  s.stop("Created kitn.json");
 
-  // Set up wildcard tsconfig path so @kitn/core, @kitn/adapters/*, etc. all resolve.
-  // Remove any old per-package entries (e.g. @kitnai/core, @kitn/core) left from earlier versions.
-  await patchProjectTsconfig(
-    cwd,
-    { "@kitn/*": [`./${baseDir}/*`] },
-    ["@kitn", "@kitnai"],
-  );
+  let result;
+  try {
+    result = await initProject({ cwd, runtime, framework, baseDir });
+  } catch (err: any) {
+    s.stop(pc.red("Failed"));
+    p.log.error(err.message);
+    process.exit(1);
+  }
+
+  s.stop("Created kitn.json");
   p.log.info(`Patched tsconfig.json with path: ${pc.bold("@kitn/*")}`);
 
   // Auto-install core engine + framework adapter
   p.log.info("Installing core engine and adapter...");
   await addCommand(["core", "routes"], { overwrite: true });
 
-  // Generate plugin.ts and barrel index.ts
-  const aiDir = join(cwd, baseDir);
-  await mkdir(aiDir, { recursive: true });
-
-  const barrelPath = join(aiDir, "index.ts");
-  await writeFile(barrelPath, createBarrelFile());
-
-  const pluginPath = join(aiDir, "plugin.ts");
-  await writeFile(pluginPath, getPluginTemplate(framework));
-
   p.log.success(`Created ${pc.bold(baseDir + "/plugin.ts")} — configure your AI provider there`);
 
   // --- Generate AI coding tool rules files ---
   try {
+    const config = result.config;
     const rulesConfig = await fetchRulesConfig(config.registries);
 
     let selectedToolIds: string[];
 
     if (opts.yes) {
-      // Auto mode: generate all rules files
       selectedToolIds = rulesConfig.tools.map((t) => t.id);
     } else {
       const selected = await p.multiselect({
@@ -258,7 +198,6 @@ export async function initCommand(opts: InitOptions = {}) {
       }
     }
   } catch {
-    // Don't fail init if rules generation fails
     p.log.warn("Could not generate AI coding tool rules (non-fatal).");
   }
 

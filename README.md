@@ -25,6 +25,8 @@ A TypeScript framework for building multi-agent AI systems. Kitn gives you agent
 | `@kitnai/elysia-adapter` | Elysia adapter |
 | `@kitnai/client` | Browser utilities — SSE parsing, audio recording, chunked TTS playback |
 | `@kitnai/cli` | CLI for the component registry — add, list, diff, update components |
+| `@kitnai/cli-core` | Pure logic shared by CLI and MCP server — no UI, no protocol |
+| `@kitnai/mcp-server` | MCP server — exposes kitn tools to Claude Code, Cursor, Copilot, etc. |
 
 ## Getting Started
 
@@ -169,13 +171,66 @@ kitn/
       hono-openapi/ # @kitnai/hono-openapi-adapter — OpenAPI Hono adapter
       elysia/       # @kitnai/elysia-adapter — Elysia adapter
     client/         # @kitnai/client — browser utilities
+    cli-core/       # @kitnai/cli-core — pure logic (shared by CLI + MCP server)
     cli/            # @kitnai/cli — component registry CLI
+    mcp-server/     # @kitnai/mcp-server — MCP server for AI coding assistants
   examples/
     api/            # Example REST API server
     app/            # Example Solid.js frontend
     voice/          # Example voice client
     getting-started/ # Minimal getting-started example
 ```
+
+## MCP Server
+
+The kitn MCP server lets any AI coding assistant that supports the [Model Context Protocol](https://modelcontextprotocol.io/) manage kitn projects — install components, create agents, link tools, and more. Works with Claude Code, Cursor, VS Code Copilot, Windsurf, Zed, and others.
+
+### Connect your editor
+
+The hosted server is at `https://mcp.kitn.dev/mcp`:
+
+**Claude Code:**
+```bash
+claude mcp add --transport http kitn https://mcp.kitn.dev/mcp
+```
+
+**Cursor** — add to `.cursor/mcp.json`:
+```json
+{ "mcpServers": { "kitn": { "url": "https://mcp.kitn.dev/mcp" } } }
+```
+
+**VS Code Copilot** — add to `.vscode/mcp.json`:
+```json
+{ "servers": { "kitn": { "type": "http", "url": "https://mcp.kitn.dev/mcp" } } }
+```
+
+**Windsurf** — add to `~/.codeium/windsurf/mcp_config.json`:
+```json
+{ "mcpServers": { "kitn": { "serverUrl": "https://mcp.kitn.dev/mcp" } } }
+```
+
+> For local development (running from source with auto-reload), see [MCP.md](MCP.md).
+
+### Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `kitn_init` | Initialize kitn in a project |
+| `kitn_add` | Install component(s) with dependency resolution |
+| `kitn_remove` | Remove an installed component |
+| `kitn_update` | Update to latest registry version |
+| `kitn_create` | Scaffold a new agent, tool, skill, storage, or cron |
+| `kitn_link` | Wire a tool into an agent |
+| `kitn_unlink` | Remove a tool from an agent |
+| `kitn_list` | List available and installed components |
+| `kitn_info` | Full component details and docs |
+| `kitn_diff` | Local vs registry diff |
+| `kitn_project` | Get project context (config, installed components) |
+| `kitn_rules` | Regenerate AI coding rules files |
+| `kitn_registry_search` | Search configured registries |
+| `kitn_registry_list` | Show configured registries |
+| `kitn_registry_add` | Add a custom registry |
+| `kitn_help` | Get kitn coding guidance on a topic |
 
 ## Development
 
@@ -186,20 +241,35 @@ bun install
 # Run all three examples concurrently (api + app + voice)
 bun run dev
 
-# Or run them individually
-bun run dev:api     # API server on :4000
-bun run dev:app     # Frontend on :5173
-bun run dev:voice   # Voice client on :5174
+# Examples
+bun run dev:api       # API server on :4000
+bun run dev:app       # Frontend on :5173
+bun run dev:voice     # Voice client on :5174
+
+# MCP server and CLI
+bun run dev:mcp       # MCP server with --watch (auto-restarts on changes)
+bun run dev:cli       # Build and run CLI locally
+
+# Quick run (assumes already built)
+bun run mcp           # MCP server from dist (stdio)
+bun run mcp:http      # MCP server from dist (HTTP on :8080)
+bun run mcp:inspect   # MCP Inspector web UI
+bun run cli           # CLI from dist
+
+# Build
+bun run build         # All packages
+bun run build:mcp     # cli-core + mcp-server
+bun run build:cli     # cli-core + cli
+bun run build:core    # cli-core only
+
+# Test
+bun run test          # All packages
+bun run test:core     # @kitnai/core
+bun run test:cli      # @kitnai/cli
+bun run test:cli-core # @kitnai/cli-core
 
 # Typecheck everything
 bun run typecheck
-
-# Run tests
-bun run test
-
-# Build all packages
-bun run build
-
 ```
 
 ## License

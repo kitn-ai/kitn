@@ -1,5 +1,1 @@
-import { createHash } from "crypto";
-
-export function contentHash(content: string): string {
-  return createHash("sha256").update(content).digest("hex").slice(0, 8);
-}
+export { contentHash } from "@kitnai/cli-core";

@@ -1,0 +1,23 @@
+{
+  "name": "{{name}}",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "^1.2.2",
+    "{{provider_package}}": "{{provider_package_version}}",
+    "@scalar/hono-api-reference": "^0.9.46",
+    "@t3-oss/env-core": "^0.13.8",
+    "ai": "^6.0.104",
+    "hono": "^4.12.3",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.2"
+  }
+}

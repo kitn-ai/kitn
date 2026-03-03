@@ -24,6 +24,19 @@ program
   });
 
 program
+  .command("new")
+  .description("Create a new kitn project from a starter template")
+  .argument("[name]", "project name")
+  .option("-f, --framework <framework>", "template to use (hono)")
+  .option("-r, --runtime <runtime>", "runtime (bun, node, deno)")
+  .option("-p, --provider <provider>", "AI provider (openrouter, openai, anthropic, google)")
+  .option("-y, --yes", "accept all defaults without prompting")
+  .action(async (name: string | undefined, opts) => {
+    const { newCommand } = await import("./commands/new.js");
+    await newCommand(name, opts);
+  });
+
+program
   .command("add")
   .alias("install")
   .description("Add components from the registry (supports type-first: kitn add agent <name>)")
@@ -183,6 +196,15 @@ registry
   .action(async () => {
     const { registryListCommand } = await import("./commands/registry.js");
     await registryListCommand();
+  });
+
+program
+  .command("try")
+  .description("Interactively test a tool or agent")
+  .argument("[name]", "tool or agent name")
+  .action(async (name?: string) => {
+    const { tryCommand } = await import("./commands/try.js");
+    await tryCommand(name);
   });
 
 const config = program

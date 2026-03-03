@@ -4,6 +4,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { writeConfig, readConfig, writeLock, type KitnConfig } from "../src/utils/config.js";
 import { registryAddCommand, registryRemoveCommand, registryListCommand } from "../src/commands/registry.js";
+import { addRegistry } from "@kitnai/cli-core";
 import { RegistryFetcher } from "../src/registry/fetcher.js";
 
 function makeConfig(overrides: Partial<KitnConfig> = {}): KitnConfig {
@@ -91,8 +92,9 @@ describe("registryAddCommand", () => {
   });
 
   test("errors when no kitn.json exists", async () => {
+    // Test cli-core directly — CLI wrapper now handles this with auto-init
     await expect(
-      registryAddCommand("@myteam", "https://myteam.dev/r/{type}/{name}.json", { cwd: dir })
+      addRegistry({ namespace: "@myteam", url: "https://myteam.dev/r/{type}/{name}.json", cwd: dir })
     ).rejects.toThrow("kitn.json");
   });
 });

@@ -1,0 +1,627 @@
+{
+  "items": [
+    {
+      "name": "human-in-loop-agent",
+      "type": "agent",
+      "description": "Agent that proposes actions for human approval before executing them",
+      "installed": false
+    },
+    {
+      "name": "kitn-doctor-agent",
+      "type": "agent",
+      "description": "Troubleshooting agent for kitn projects — diagnoses configuration, import, and dependency issues with guided fixes",
+      "installed": false
+    },
+    {
+      "name": "cron-manager-agent",
+      "type": "agent",
+      "description": "Natural language cron manager -- interprets scheduling requests, discovers agents, and creates cron jobs",
+      "installed": false
+    },
+    {
+      "name": "taskboard-agent",
+      "type": "agent",
+      "description": "Task board agent that manages a Kanban board through natural language",
+      "installed": false
+    },
+    {
+      "name": "rag-agent",
+      "type": "agent",
+      "description": "Retrieval-augmented generation agent — answers questions using a vector store for document retrieval",
+      "installed": false
+    },
+    {
+      "name": "weather-agent",
+      "type": "agent",
+      "description": "Weather specialist agent using Open-Meteo API data",
+      "installed": false
+    },
+    {
+      "name": "memory-agent",
+      "type": "agent",
+      "description": "Memory-enabled agent that saves and recalls information across conversations",
+      "installed": false
+    },
+    {
+      "name": "supervisor-agent",
+      "type": "agent",
+      "description": "Supervisor agent that routes queries to specialist agents and orchestrates parallel task execution",
+      "installed": false
+    },
+    {
+      "name": "guardrails-agent",
+      "type": "agent",
+      "description": "Guardrails finance advisor that classifies input before generating advice, blocking off-topic queries",
+      "installed": false
+    },
+    {
+      "name": "data-analyst-agent",
+      "type": "agent",
+      "description": "Data analysis agent — interprets data, identifies patterns, and produces insights with structured output",
+      "installed": false
+    },
+    {
+      "name": "task-planner-agent",
+      "type": "agent",
+      "description": "Task decomposition agent — breaks down goals, requests, or problems into structured, actionable task lists",
+      "installed": false
+    },
+    {
+      "name": "compact-agent",
+      "type": "agent",
+      "description": "Conversation compaction agent that summarizes verbose conversations into concise context blocks",
+      "installed": false
+    },
+    {
+      "name": "brainstorm-agent",
+      "type": "agent",
+      "description": "Brainstorming agent — facilitates structured ideation with research capabilities to ground ideas in reality",
+      "installed": false
+    },
+    {
+      "name": "web-search-agent",
+      "type": "agent",
+      "description": "Web search specialist agent using Brave Search with page fetching and OpenGraph extraction",
+      "installed": false
+    },
+    {
+      "name": "model-advisor-agent",
+      "type": "agent",
+      "description": "Model recommendation agent — helps choose the best LLM for a task based on requirements, budget, and capabilities",
+      "installed": false
+    },
+    {
+      "name": "github-agent",
+      "type": "agent",
+      "description": "GitHub management agent — search repos, triage issues, read files, and automate workflows",
+      "installed": false
+    },
+    {
+      "name": "research-agent",
+      "type": "agent",
+      "description": "Deep research agent — searches the web, fetches pages, and synthesizes findings with citations",
+      "installed": false
+    },
+    {
+      "name": "notification-agent",
+      "type": "agent",
+      "description": "Multi-channel notification agent — routes alerts to email, Slack, SMS, or webhooks based on rules",
+      "installed": false
+    },
+    {
+      "name": "email-agent",
+      "type": "agent",
+      "description": "Email communication agent — compose, format, and send emails using the email tool",
+      "installed": false
+    },
+    {
+      "name": "web-fetch-tool",
+      "type": "tool",
+      "description": "Fetch web pages and extract readable text content or OpenGraph metadata",
+      "installed": false
+    },
+    {
+      "name": "webhook-tool",
+      "type": "tool",
+      "description": "Send HTTP webhook callbacks with signature verification",
+      "installed": false
+    },
+    {
+      "name": "weather-tool",
+      "type": "tool",
+      "description": "Get current weather information for any location using Open-Meteo API",
+      "installed": false
+    },
+    {
+      "name": "cloudflare-ai-tool",
+      "type": "tool",
+      "description": "Run AI inference on Cloudflare Workers AI — text generation, embeddings, image classification",
+      "installed": false
+    },
+    {
+      "name": "cron-parser",
+      "type": "tool",
+      "description": "Parse cron expressions — show next run times and human-readable descriptions",
+      "installed": false
+    },
+    {
+      "name": "web-search-tool",
+      "type": "tool",
+      "description": "Search the web using Brave Search API and return structured results",
+      "installed": false
+    },
+    {
+      "name": "qr-code-generator",
+      "type": "tool",
+      "description": "Generate QR codes as SVG strings from text or URLs",
+      "installed": false
+    },
+    {
+      "name": "kitn-diagnose-tool",
+      "type": "tool",
+      "description": "Diagnoses kitn project issues — validates config, checks installed components, detects broken imports and missing files",
+      "installed": false
+    },
+    {
+      "name": "json-validator",
+      "type": "tool",
+      "description": "Validate, format, and minify JSON — check syntax, pretty-print, or compact",
+      "installed": false
+    },
+    {
+      "name": "slack-tool",
+      "type": "tool",
+      "description": "Send messages and interact with Slack workspaces",
+      "installed": false
+    },
+    {
+      "name": "cloudflare-r2-tool",
+      "type": "tool",
+      "description": "Cloudflare R2 object storage — list, presign, and manage objects (S3-compatible wrapper with Cloudflare defaults)",
+      "installed": false
+    },
+    {
+      "name": "translate-tool",
+      "type": "tool",
+      "description": "Translate text between languages using DeepL API",
+      "installed": false
+    },
+    {
+      "name": "cloudflare-kv-tool",
+      "type": "tool",
+      "description": "Read and write Cloudflare Workers KV namespaces",
+      "installed": false
+    },
+    {
+      "name": "base64-tool",
+      "type": "tool",
+      "description": "Encode and decode base64 and base64url strings",
+      "installed": false
+    },
+    {
+      "name": "sms-tool",
+      "type": "tool",
+      "description": "Send SMS messages via Twilio API",
+      "installed": false
+    },
+    {
+      "name": "screenshot-tool",
+      "type": "tool",
+      "description": "Capture screenshots of web pages using ScreenshotOne API",
+      "installed": false
+    },
+    {
+      "name": "cloudflare-vectorize-tool",
+      "type": "tool",
+      "description": "Vector search using Cloudflare Vectorize — insert, query, and manage vector indexes",
+      "installed": false
+    },
+    {
+      "name": "cloudflare-browser-tool",
+      "type": "tool",
+      "description": "Headless browser via Cloudflare Browser Rendering API — screenshots, scraping, PDF generation",
+      "installed": false
+    },
+    {
+      "name": "cron-tools",
+      "type": "tool",
+      "description": "CRUD tools for managing cron jobs — create, list, update, delete scheduled tasks",
+      "installed": false
+    },
+    {
+      "name": "email-tool",
+      "type": "tool",
+      "description": "Send emails via Resend API — supports HTML, text, and attachments",
+      "installed": false
+    },
+    {
+      "name": "stripe-tool",
+      "type": "tool",
+      "description": "Interact with Stripe — list customers, create charges, manage subscriptions",
+      "installed": false
+    },
+    {
+      "name": "pdf-generator",
+      "type": "tool",
+      "description": "Generate PDFs from HTML content using a headless browser service",
+      "installed": false
+    },
+    {
+      "name": "uuid-generator",
+      "type": "tool",
+      "description": "Generate unique identifiers — UUID v4, UUID v7, and nanoid",
+      "installed": false
+    },
+    {
+      "name": "markdown-converter",
+      "type": "tool",
+      "description": "Convert between Markdown, HTML, and plain text",
+      "installed": false
+    },
+    {
+      "name": "hash-tool",
+      "type": "tool",
+      "description": "Compute cryptographic hashes — SHA-256, SHA-512, MD5, and HMAC",
+      "installed": false
+    },
+    {
+      "name": "model-selector-tool",
+      "type": "tool",
+      "description": "Queries the OpenRouter model catalog — filter by capabilities, cost, modality, context length, and features to find the best model for a task",
+      "installed": false
+    },
+    {
+      "name": "regex-tester",
+      "type": "tool",
+      "description": "Test regex patterns against text — match, extract groups, replace, and explain patterns",
+      "installed": false
+    },
+    {
+      "name": "image-generator",
+      "type": "tool",
+      "description": "Generate images from text prompts using OpenAI DALL-E API",
+      "installed": false
+    },
+    {
+      "name": "github-tool",
+      "type": "tool",
+      "description": "Interact with GitHub — search repos, list issues, create issues, get file contents, list PRs",
+      "installed": false
+    },
+    {
+      "name": "s3-tool",
+      "type": "tool",
+      "description": "S3-compatible object storage — list, get, put, delete, and generate presigned URLs (AWS S3, Cloudflare R2, MinIO, Backblaze B2)",
+      "installed": false
+    },
+    {
+      "name": "url-parser",
+      "type": "tool",
+      "description": "Parse URLs into components, build URLs from parts, encode/decode URL strings",
+      "installed": false
+    },
+    {
+      "name": "diff-tool",
+      "type": "tool",
+      "description": "Compute text diffs between two strings — unified diff format",
+      "installed": false
+    },
+    {
+      "name": "lorem-ipsum",
+      "type": "tool",
+      "description": "Generate placeholder text — paragraphs, sentences, or words of Lorem Ipsum",
+      "installed": false
+    },
+    {
+      "name": "daily-standup",
+      "type": "skill",
+      "description": "Formats standup updates into done, doing, blocked — clear and consistent daily reports",
+      "installed": false
+    },
+    {
+      "name": "fact-check",
+      "type": "skill",
+      "description": "Verifies claims with evidence, flags confidence levels, and separates fact from belief",
+      "installed": false
+    },
+    {
+      "name": "data-interpreter",
+      "type": "skill",
+      "description": "Explains data, trends, and statistics in plain language with actionable insights",
+      "installed": false
+    },
+    {
+      "name": "action-item-extractor",
+      "type": "skill",
+      "description": "Pulls actionable tasks from unstructured text — emails, notes, transcripts, messages",
+      "installed": false
+    },
+    {
+      "name": "debate-partner",
+      "type": "skill",
+      "description": "Takes opposing positions to stress-test ideas and strengthen arguments",
+      "installed": false
+    },
+    {
+      "name": "compare-contrast",
+      "type": "skill",
+      "description": "Structures comparison of two or more options using consistent criteria and a scoring matrix",
+      "installed": false
+    },
+    {
+      "name": "proofreader",
+      "type": "skill",
+      "description": "Catches grammar, spelling, punctuation, and style issues with clear corrections and explanations",
+      "installed": false
+    },
+    {
+      "name": "socratic-tutor",
+      "type": "skill",
+      "description": "Teaches through guided questions rather than direct answers — builds understanding through discovery",
+      "installed": false
+    },
+    {
+      "name": "meeting-summarizer",
+      "type": "skill",
+      "description": "Structures meeting notes into attendees, decisions, action items, and follow-ups",
+      "installed": false
+    },
+    {
+      "name": "role-play",
+      "type": "skill",
+      "description": "Adopts specified personas for practice scenarios — customer, manager, investor, stakeholder",
+      "installed": false
+    },
+    {
+      "name": "support-responder",
+      "type": "skill",
+      "description": "Empathetic, solution-oriented customer support responses that resolve issues efficiently",
+      "installed": false
+    },
+    {
+      "name": "step-by-step-reasoning",
+      "type": "skill",
+      "description": "Structured logical analysis with numbered steps, reasoning shown at each stage",
+      "installed": false
+    },
+    {
+      "name": "markdown-writer",
+      "type": "skill",
+      "description": "Writes well-structured markdown documents with proper headings, formatting, frontmatter, and table of contents",
+      "installed": false
+    },
+    {
+      "name": "sentiment-analyzer",
+      "type": "skill",
+      "description": "Identifies emotional tone, polarity, and intensity in text",
+      "installed": false
+    },
+    {
+      "name": "concise-summarizer",
+      "type": "skill",
+      "description": "Produces concise summaries with bullet points, leading with the direct answer",
+      "installed": false
+    },
+    {
+      "name": "brainstorm-facilitator",
+      "type": "skill",
+      "description": "Facilitates structured ideation using SCAMPER, mind mapping, and creative techniques",
+      "installed": false
+    },
+    {
+      "name": "feedback-synthesizer",
+      "type": "skill",
+      "description": "Aggregates and categorizes user feedback into themes, patterns, and action items",
+      "installed": false
+    },
+    {
+      "name": "summarizer",
+      "type": "skill",
+      "description": "Produces structured summaries in multiple formats — executive summary, key findings, or abstract",
+      "installed": false
+    },
+    {
+      "name": "source-verifier",
+      "type": "skill",
+      "description": "Flags unverified claims, adds confidence levels, and suggests verification steps",
+      "installed": false
+    },
+    {
+      "name": "grammar-coach",
+      "type": "skill",
+      "description": "Explains grammar rules and provides corrections with clear reasoning to help users learn",
+      "installed": false
+    },
+    {
+      "name": "content-rewriter",
+      "type": "skill",
+      "description": "Rewrites content to match a target style, audience, or format while preserving the original meaning",
+      "installed": false
+    },
+    {
+      "name": "faq-generator",
+      "type": "skill",
+      "description": "Generates FAQ documents from product descriptions, support transcripts, or user feedback",
+      "installed": false
+    },
+    {
+      "name": "localization-adapter",
+      "type": "skill",
+      "description": "Adapts content for specific locales — units, date formats, currency, cultural references",
+      "installed": false
+    },
+    {
+      "name": "json-formatter",
+      "type": "skill",
+      "description": "Outputs structured JSON matching a specified schema — for API responses, configs, and data exchange",
+      "installed": false
+    },
+    {
+      "name": "eli5",
+      "type": "skill",
+      "description": "Explain Like I'm 5 -- simplifies complex topics using everyday analogies and plain language",
+      "installed": false
+    },
+    {
+      "name": "onboarding-guide",
+      "type": "skill",
+      "description": "Creates step-by-step onboarding flows for products, tools, or processes",
+      "installed": false
+    },
+    {
+      "name": "email-drafter",
+      "type": "skill",
+      "description": "Drafts professional emails matching the context, relationship, and purpose",
+      "installed": false
+    },
+    {
+      "name": "report-builder",
+      "type": "skill",
+      "description": "Generates formatted reports with sections, headings, data tables, and executive summaries",
+      "installed": false
+    },
+    {
+      "name": "pros-and-cons",
+      "type": "skill",
+      "description": "Balanced trade-off analysis with structured pros/cons and a clear recommendation",
+      "installed": false
+    },
+    {
+      "name": "tone-adapter",
+      "type": "skill",
+      "description": "Adjusts response tone to match the user's preferred style — formal, casual, friendly, or technical",
+      "installed": false
+    },
+    {
+      "name": "translator",
+      "type": "skill",
+      "description": "Translates text between languages preserving tone, idioms, and cultural context",
+      "installed": false
+    },
+    {
+      "name": "interview-prep",
+      "type": "skill",
+      "description": "Conducts mock interviews with realistic questions and constructive feedback",
+      "installed": false
+    },
+    {
+      "name": "decision-matrix",
+      "type": "skill",
+      "description": "Builds weighted scoring matrices for multi-criteria decisions",
+      "installed": false
+    },
+    {
+      "name": "copywriter",
+      "type": "skill",
+      "description": "Writes marketing copy — headlines, CTAs, product descriptions, and persuasive content",
+      "installed": false
+    },
+    {
+      "name": "root-cause",
+      "type": "skill",
+      "description": "Applies 5-whys and fishbone methodology to trace problems to their root causes",
+      "installed": false
+    },
+    {
+      "name": "csv-transformer",
+      "type": "skill",
+      "description": "Converts between CSV and other formats with column mapping and data cleaning",
+      "installed": false
+    },
+    {
+      "name": "plain-language",
+      "type": "skill",
+      "description": "Rewrites jargon-heavy text into clear, accessible language anyone can understand",
+      "installed": false
+    },
+    {
+      "name": "conversation-store",
+      "type": "storage",
+      "description": "File-based JSON conversation storage with append, list, clear, and delete operations",
+      "installed": false
+    },
+    {
+      "name": "redis-storage",
+      "type": "storage",
+      "description": "Redis storage adapter using hash and sorted set patterns — fast in-memory storage with optional persistence",
+      "installed": false
+    },
+    {
+      "name": "drizzle-storage",
+      "type": "storage",
+      "description": "Drizzle ORM storage adapter — works with PostgreSQL, MySQL, and SQLite via Drizzle",
+      "installed": false
+    },
+    {
+      "name": "mongodb-storage",
+      "type": "storage",
+      "description": "MongoDB storage adapter — document-based storage using the native MongoDB driver",
+      "installed": false
+    },
+    {
+      "name": "libsql-storage",
+      "type": "storage",
+      "description": "LibSQL/Turso storage adapter — SQLite-compatible with remote sync and edge replication",
+      "installed": false
+    },
+    {
+      "name": "postgres-storage",
+      "type": "storage",
+      "description": "PostgreSQL storage adapter — implements all 8 StorageProvider sub-stores. Works with any pg-compatible driver (node-postgres, @neondatabase/serverless, @vercel/postgres, etc.)",
+      "installed": false
+    },
+    {
+      "name": "sqlite-storage",
+      "type": "storage",
+      "description": "SQLite storage adapter using better-sqlite3 — synchronous, file-based, zero-config database",
+      "installed": false
+    },
+    {
+      "name": "d1-storage",
+      "type": "storage",
+      "description": "Cloudflare D1 storage adapter — serverless SQLite at the edge",
+      "installed": false
+    },
+    {
+      "name": "supabase-storage",
+      "type": "storage",
+      "description": "Supabase storage adapter using the Supabase client library — works with Supabase hosted and self-hosted",
+      "installed": false
+    },
+    {
+      "name": "memory-store",
+      "type": "storage",
+      "description": "File-based namespaced key-value memory store for agent memory persistence",
+      "installed": false
+    },
+    {
+      "name": "bullmq-scheduler",
+      "type": "cron",
+      "description": "CronScheduler using BullMQ — Redis-backed job scheduling with concurrency control and retries",
+      "installed": false
+    },
+    {
+      "name": "vercel-scheduler",
+      "type": "cron",
+      "description": "CronScheduler for Vercel Cron — config-based with CRON_SECRET verification",
+      "installed": false
+    },
+    {
+      "name": "cloudflare-scheduler",
+      "type": "cron",
+      "description": "CronScheduler for Cloudflare Workers — config-based cron triggers with catch-all tick endpoint",
+      "installed": false
+    },
+    {
+      "name": "upstash-scheduler",
+      "type": "cron",
+      "description": "CronScheduler implementation using Upstash QStash — dynamic HTTP callbacks for serverless cron execution",
+      "installed": false
+    }
+  ],
+  "stats": {
+    "total": 103,
+    "installed": 0,
+    "updatesAvailable": 0
+  }
+}

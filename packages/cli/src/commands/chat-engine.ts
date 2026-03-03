@@ -296,13 +296,13 @@ export async function executeStep(step: PlanStep): Promise<void> {
       break;
     }
     case "create": {
-      const { createComponentInProject } = await import("./create.js");
-      await createComponentInProject(step.type!, step.name!, { overwrite: true });
+      const { createComponent } = await import("@kitnai/cli-core");
+      await createComponent({ type: step.type!, name: step.name!, cwd: process.cwd(), overwrite: true });
       break;
     }
     case "link": {
-      const { linkCommand } = await import("./link.js");
-      await linkCommand("tool", step.toolName, { to: step.agentName });
+      const { linkToolInProject } = await import("@kitnai/cli-core");
+      await linkToolInProject({ toolName: step.toolName!, agentName: step.agentName!, cwd: process.cwd() });
       break;
     }
     case "remove": {
@@ -311,8 +311,8 @@ export async function executeStep(step: PlanStep): Promise<void> {
       break;
     }
     case "unlink": {
-      const { unlinkCommand } = await import("./unlink.js");
-      await unlinkCommand("tool", step.toolName, { from: step.agentName });
+      const { unlinkToolInProject } = await import("@kitnai/cli-core");
+      await unlinkToolInProject({ toolName: step.toolName!, agentName: step.agentName!, cwd: process.cwd() });
       break;
     }
     case "update": {

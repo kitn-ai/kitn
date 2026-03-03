@@ -1,6 +1,6 @@
 # kitn
 
-TypeScript monorepo for multi-agent AI systems. Bun workspaces, 5 packages, 4 examples.
+TypeScript monorepo for multi-agent AI systems. Bun workspaces, 8 packages, 4 examples.
 
 ## Commands
 
@@ -13,6 +13,18 @@ bun run dev                          # run all examples concurrently
 bun run dev:api                      # API server on :4000
 bun run dev:app                      # Solid.js frontend on :5173
 bun run dev:voice                    # voice client on :5174
+bun run dev:mcp                      # MCP server (builds deps first)
+bun run dev:cli                      # CLI (builds deps first)
+
+# Targeted builds (respects dependency order)
+bun run build:mcp                    # cli-core + mcp-server
+bun run build:cli                    # cli-core + cli
+bun run build:core                   # cli-core only
+
+# Targeted tests
+bun run test:core                    # @kitnai/core
+bun run test:cli                     # @kitnai/cli
+bun run test:cli-core                # @kitnai/cli-core
 
 # Per-package
 bun run --cwd packages/core test
@@ -29,8 +41,10 @@ packages/
     hono/           @kitnai/hono-adapter         — plain Hono adapter (routes, plugin factory)
     hono-openapi/   @kitnai/hono-openapi-adapter — OpenAPI Hono adapter (zod-openapi routes, /doc spec)
     elysia/         @kitnai/elysia-adapter       — Elysia adapter
-  client/     @kitnai/client — browser utilities (SSE parsing, audio recording, TTS playback)
-  cli/        @kitnai/cli    — CLI for the component registry (add, list, diff, update)
+  client/     @kitnai/client     — browser utilities (SSE parsing, audio recording, TTS playback)
+  cli-core/   @kitnai/cli-core   — pure logic shared by CLI + MCP server (no UI, no protocol)
+  cli/        @kitnai/cli        — CLI for the component registry (add, list, diff, update)
+  mcp-server/ @kitnai/mcp-server — MCP server for AI coding assistants (16 tools, 2 resources)
 examples/
   api/            REST API server
   app/            Solid.js frontend
@@ -40,7 +54,7 @@ examples/
 
 > **Note:** The `@kitnai/*` names above are internal workspace package names. User projects import from the published npm scope: `@kitn/core` (maps to `@kitnai/core`) and `@kitn/adapters/hono` (maps to `@kitnai/hono-adapter`).
 
-**Dependency graph:** adapters depend on `core`. `cli` and `client` are standalone.
+**Dependency graph:** adapters depend on `core`. `cli` and `mcp-server` depend on `cli-core`. `client` is standalone.
 
 ## Architecture
 
@@ -72,21 +86,29 @@ Reference: `packages/adapters/hono/src/routes/memory/` (memory.routes.ts + memor
 
 ## CLI Command Pattern
 
-Commands use commander + @clack/prompts + picocolors:
+Commands are split into two layers:
 
-1. Export `async function xxxCommand(args, opts)` from `packages/cli/src/commands/<name>.ts`
-2. Use `@clack/prompts` for UI (`p.intro`, `p.log`, `p.spinner`, `p.outro`)
-3. Use `picocolors` for formatting
-4. Read config with `readConfig(cwd)`
-5. Register in `packages/cli/src/index.ts` with dynamic import:
-   ```ts
-   program.command("<name>").description("...").action(async (...) => {
-     const { xxxCommand } = await import("./commands/<name>.js");
-     await xxxCommand(args, opts);
-   });
-   ```
+- **`cli-core`** — pure logic: takes all inputs upfront, returns structured results, throws typed errors. No UI, no `process.exit`, no `@clack/prompts`.
+- **`cli`** — thin UI wrapper: prompts for missing inputs, calls cli-core, formats output with `@clack/prompts` + `picocolors`.
 
-Reference: `packages/cli/src/commands/list.ts` (simple), `packages/cli/src/commands/add.ts` (complex)
+1. Core logic in `packages/cli-core/src/commands/<name>.ts` — export `async function xxxAction(opts): Promise<Result>`
+2. CLI wrapper in `packages/cli/src/commands/<name>.ts` — export `async function xxxCommand(args, opts)`
+3. Register in `packages/cli/src/index.ts` with dynamic import
+
+Reference: `packages/cli-core/src/commands/list.ts` (core) + `packages/cli/src/commands/list.ts` (wrapper)
+
+## MCP Server Tool Pattern
+
+Tools follow a register function pattern:
+
+1. Export `registerXxxTool(server: McpServer)` from `packages/mcp-server/src/tools/<name>.ts`
+2. Use Zod schemas with `.describe()` for input parameters
+3. Import core logic from `@kitnai/cli-core`
+4. Return `{ content: [{ type: "text", text: JSON.stringify(result, null, 2) }] }`
+5. Wrap in try/catch, return `{ isError: true }` on failure
+6. Register in `packages/mcp-server/src/server.ts`
+
+Reference: `packages/mcp-server/src/tools/project.ts` (simple), `packages/mcp-server/src/tools/add.ts` (complex)
 
 ## Testing
 

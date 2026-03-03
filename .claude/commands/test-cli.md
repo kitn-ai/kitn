@@ -9,9 +9,9 @@ Run this after making changes to `packages/cli/` to verify everything works.
 Run these in parallel:
 
 ```bash
-bun run --cwd packages/cli build
+bun run build:cli
 bun run typecheck
-bun run --cwd packages/cli test
+bun run test:cli
 ```
 
 All must pass before proceeding.

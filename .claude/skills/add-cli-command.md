@@ -1,53 +1,80 @@
 ---
 name: add-cli-command
-description: Add a new CLI command to @kitnai/cli following the established pattern
+description: Add a new CLI command to @kitnai/cli following the two-layer pattern (cli-core logic + CLI wrapper)
 ---
 
 # Add a CLI Command
 
-Follow these steps to add a new command to `@kitnai/cli`.
+Commands are split into two layers:
 
-## 1. Create command file
+- **`cli-core`** — pure logic: takes all inputs upfront, returns structured results, no UI
+- **`cli`** — thin UI wrapper: prompts for missing inputs, calls cli-core, formats output
+
+## 1. Create core logic in cli-core
+
+Create `packages/cli-core/src/commands/<name>.ts`:
+
+```ts
+import { readConfig, readLock } from "../config/io.js";
+import type { KitnConfig, LockFile } from "../types/config.js";
+
+export interface <Name>Opts {
+  cwd: string;
+  // all inputs provided upfront — no prompting
+}
+
+export interface <Name>Result {
+  // structured return data
+}
+
+export async function <name>Action(opts: <Name>Opts): Promise<<Name>Result> {
+  const config = await readConfig(opts.cwd);
+  if (!config) throw new Error("No kitn.json found. Run `kitn init` first.");
+
+  // Pure logic here — no @clack/prompts, no process.exit, no picocolors
+
+  return { /* result */ };
+}
+```
+
+Export from `packages/cli-core/src/index.ts`:
+
+```ts
+export * from "./commands/<name>.js";
+```
+
+## 2. Create CLI wrapper
 
 Create `packages/cli/src/commands/<name>.ts`:
 
 ```ts
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { readConfig } from "../utils/config.js";
+import { <name>Action } from "@kitnai/cli-core";
 
 interface <Name>Options {
-  // command-specific options
+  // CLI-specific options (may include interactive flags)
 }
 
 export async function <name>Command(opts: <Name>Options) {
+  p.intro(pc.bgCyan(pc.black(" kitn <name> ")));
+
   const cwd = process.cwd();
-  const config = await readConfig(cwd);
-  if (!config) {
-    p.log.error("No kitn.json found. Run `kitn init` first.");
-    process.exit(1);
-  }
 
-  const s = p.spinner();
-  s.start("Working...");
+  // Prompt for missing inputs if needed
+  // ...
 
-  // Command logic here
+  const result = await <name>Action({ cwd, /* ... */ });
 
-  s.stop("Done");
-  p.log.message(pc.dim("  Additional info"));
+  // Format and display result
+  p.log.success("Done");
+  p.outro("Finished");
 }
 ```
 
-### Key patterns
+## 3. Register in index.ts
 
-- Use `@clack/prompts` for all user interaction (`p.intro`, `p.log`, `p.spinner`, `p.outro`)
-- Use `picocolors` for color formatting (`pc.bold`, `pc.dim`, `pc.green`, `pc.red`, `pc.yellow`)
-- Read project config with `readConfig(cwd)` from `../utils/config.js`
-- Exit with `process.exit(1)` on unrecoverable errors
-
-## 2. Register in index.ts
-
-Edit `packages/cli/src/index.ts` and add a new command block:
+Edit `packages/cli/src/index.ts`:
 
 ```ts
 program
@@ -61,25 +88,46 @@ program
   });
 ```
 
-Use dynamic `import()` — this keeps startup fast since commander only loads the command that runs.
+## 4. Add MCP tool (if applicable)
 
-## 3. Add tests
+Create `packages/mcp-server/src/tools/<name>.ts`:
 
-Create `packages/cli/test/<name>.test.ts` using `bun:test`.
+```ts
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import { <name>Action } from "@kitnai/cli-core";
+import { registerTool } from "../register-tool.js";
 
-## 4. Verify
-
-```bash
-bun run --cwd packages/cli typecheck
-bun run --cwd packages/cli test
-bun run --cwd packages/cli build
+export function register<Name>Tool(server: McpServer) {
+  registerTool(server, "kitn_<name>", "Description", {
+    cwd: z.string().describe("Project working directory"),
+  }, async ({ cwd }) => {
+    try {
+      const result = await <name>Action({ cwd });
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    } catch (error: any) {
+      return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
+    }
+  });
+}
 ```
 
-The CLI builds with `tsup` — verify the build succeeds since it bundles differently than tsc.
+Register in `packages/mcp-server/src/server.ts`.
+
+## 5. Verify
+
+```bash
+bun run build:cli                      # builds cli-core + cli
+bun run build:mcp                      # builds cli-core + mcp-server
+bun run test:cli                       # CLI tests
+bun run test:cli-core                  # cli-core tests
+bun run typecheck                      # all packages
+```
 
 ## Reference files
 
-- Command registration: `packages/cli/src/index.ts`
-- Simple command: `packages/cli/src/commands/list.ts`
-- Complex command: `packages/cli/src/commands/add.ts`
-- Config utility: `packages/cli/src/utils/config.ts`
+- Core logic: `packages/cli-core/src/commands/list.ts` (simple), `packages/cli-core/src/commands/add.ts` (complex)
+- CLI wrapper: `packages/cli/src/commands/list.ts` (simple), `packages/cli/src/commands/add.ts` (complex)
+- MCP tool: `packages/mcp-server/src/tools/project.ts` (simple), `packages/mcp-server/src/tools/add.ts` (complex)
+- Config: `packages/cli-core/src/config/io.ts`
+- Barrel: `packages/cli-core/src/index.ts`

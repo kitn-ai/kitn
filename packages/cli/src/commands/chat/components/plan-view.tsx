@@ -53,7 +53,7 @@ export function PlanView({ plan, cwd, availableComponents, installedComponents, 
 
       // Check file exists for create steps
       if (step.action === "create" && step.type && step.name) {
-        const { componentFileExists } = await import("../../create.js");
+        const { componentFileExists } = await import("@kitnai/cli-core");
         const existingPath = await componentFileExists(step.type, step.name);
         if (existingPath) {
           setPhase({ type: "file-exists", stepIndex: i, stepName: step.name! });

@@ -8,6 +8,7 @@ import {
   GovernanceManager,
   type GovernanceConfig,
 } from "../governance/policies.js";
+import { RateLimiter } from "./rate-limiter.js";
 
 export type PermissionDecision = "allow" | "confirm" | "deny" | "draft";
 
@@ -80,12 +81,16 @@ export class PermissionManager {
   private sessionTrusted = new Set<string>();
   private runtimeGrantedDirs: string[];
   private governance?: GovernanceManager;
+  private rateLimiter?: RateLimiter;
 
   constructor(config: PermissionManagerConfig) {
     this.config = config;
     this.runtimeGrantedDirs = [...config.grantedDirs];
     if (config.governance) {
       this.governance = new GovernanceManager(config.governance);
+    }
+    if (config.rateLimits) {
+      this.rateLimiter = new RateLimiter(config.rateLimits);
     }
   }
 
@@ -122,7 +127,14 @@ export class PermissionManager {
 
     if (ALWAYS_ASK.includes(action)) return "confirm";
     if (this.sessionTrusted.has(toolName)) return "allow";
-    return getProfileDecision(this.config.profile, action);
+
+    const decision = getProfileDecision(this.config.profile, action);
+    if (decision === "allow" && this.rateLimiter && action !== "memory") {
+      if (!this.rateLimiter.tryAcquire(toolName)) {
+        return "deny";
+      }
+    }
+    return decision;
   }
 
   grantDirectory(dir: string): void {

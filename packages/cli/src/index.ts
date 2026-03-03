@@ -176,6 +176,14 @@ program
   });
 
 program
+  .command("doctor")
+  .description("Check project integrity (files, hashes, dependencies)")
+  .action(async () => {
+    const { doctorCommand } = await import("./commands/doctor.js");
+    await doctorCommand();
+  });
+
+program
   .command("check")
   .description("Check for CLI updates")
   .action(async () => {

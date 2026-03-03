@@ -42,4 +42,28 @@ program
     console.log(formatStatus(info));
   });
 
+program
+  .command("reset")
+  .description("Clear sessions, memory, or workspace data")
+  .option("--sessions", "Clear conversation sessions")
+  .option("--memory", "Clear memory database")
+  .option("--workspace", "Clear workspace tools/agents")
+  .option("--all", "Clear everything")
+  .action(async (opts: { sessions?: boolean; memory?: boolean; workspace?: boolean; all?: boolean }) => {
+    const { resetData } = await import("./commands/reset.js");
+    const targets: Array<"sessions" | "memory" | "workspace" | "all"> = [];
+    if (opts.all) targets.push("all");
+    else {
+      if (opts.sessions) targets.push("sessions");
+      if (opts.memory) targets.push("memory");
+      if (opts.workspace) targets.push("workspace");
+    }
+    if (targets.length === 0) {
+      console.log("Specify what to reset: --sessions, --memory, --workspace, or --all");
+      return;
+    }
+    const results = await resetData(targets);
+    for (const line of results) console.log(line);
+  });
+
 await program.parseAsync();

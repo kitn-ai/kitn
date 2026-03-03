@@ -17,16 +17,32 @@ A TypeScript framework for building multi-agent AI systems. Kitn gives you agent
 
 ## Packages
 
+### Core
+
 | Package | Description |
 |---------|-------------|
-| `@kitnai/core` | Framework-agnostic engine — agents, tools, storage, memory, events, voice |
-| `@kitnai/hono-adapter` | Plain Hono adapter — routes, plugin factory |
-| `@kitnai/hono-openapi-adapter` | OpenAPI Hono adapter — zod-openapi routes, /doc spec |
-| `@kitnai/elysia-adapter` | Elysia adapter |
-| `@kitnai/client` | Browser utilities — SSE parsing, audio recording, chunked TTS playback |
-| `@kitnai/cli` | CLI for the component registry — add, list, diff, update components |
-| `@kitnai/cli-core` | Pure logic shared by CLI and MCP server — no UI, no protocol |
-| `@kitnai/mcp-server` | MCP server — exposes kitn tools to Claude Code, Cursor, Copilot, etc. |
+| [`@kitnai/core`](packages/core/README.md) | Framework-agnostic engine — agents, tools, storage, memory, events, voice |
+| [`@kitnai/voice`](packages/voice/README.md) | Voice provider abstraction — speech-to-text and text-to-speech (OpenAI, Groq) |
+| [`@kitnai/client`](packages/client/README.md) | Browser utilities — SSE parsing, audio recording, chunked TTS playback |
+
+### Adapters
+
+| Package | Description |
+|---------|-------------|
+| [`@kitnai/hono-adapter`](packages/adapters/hono/README.md) | Plain Hono adapter — routes, plugin factory |
+| [`@kitnai/hono-openapi-adapter`](packages/adapters/hono-openapi/README.md) | OpenAPI Hono adapter — zod-openapi routes, /doc spec, Scalar UI |
+| [`@kitnai/elysia-adapter`](packages/adapters/elysia/README.md) | Elysia adapter — routes, plugin factory |
+| [`@kitnai/mcp-server-adapter`](packages/adapters/mcp-server/README.md) | MCP server adapter — expose your tools and agents via MCP |
+| [`@kitnai/mcp-client`](packages/mcp-client/README.md) | MCP client — consume external MCP servers as tool sources |
+
+### Tooling
+
+| Package | Description |
+|---------|-------------|
+| [`@kitnai/cli`](packages/cli/README.md) | CLI for the component registry — add, list, diff, update components |
+| [`@kitnai/cli-core`](packages/cli-core/README.md) | Pure logic shared by CLI and MCP server — no UI, no protocol |
+| [`@kitnai/mcp-server`](packages/mcp-server/README.md) | MCP server — exposes kitn tools to Claude Code, Cursor, Copilot, etc. |
+| [`@kitnai/claw`](packages/claw/) | General-purpose AI assistant with terminal TUI |
 
 ## Getting Started
 
@@ -166,14 +182,18 @@ All routes require an `X-API-Key` header unless noted.
 kitn/
   packages/
     core/           # @kitnai/core — framework-agnostic engine
+    voice/          # @kitnai/voice — voice provider abstraction (STT/TTS)
+    client/         # @kitnai/client — browser utilities
     adapters/
       hono/         # @kitnai/hono-adapter — plain Hono adapter
       hono-openapi/ # @kitnai/hono-openapi-adapter — OpenAPI Hono adapter
       elysia/       # @kitnai/elysia-adapter — Elysia adapter
-    client/         # @kitnai/client — browser utilities
+      mcp-server/   # @kitnai/mcp-server-adapter — MCP server adapter
+    mcp-client/     # @kitnai/mcp-client — MCP client for external servers
     cli-core/       # @kitnai/cli-core — pure logic (shared by CLI + MCP server)
     cli/            # @kitnai/cli — component registry CLI
     mcp-server/     # @kitnai/mcp-server — MCP server for AI coding assistants
+    claw/           # @kitnai/claw — general-purpose AI assistant
   examples/
     api/            # Example REST API server
     app/            # Example Solid.js frontend

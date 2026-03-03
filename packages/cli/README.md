@@ -22,18 +22,46 @@ pnpm dlx @kitnai/cli init
 
 ## Commands
 
-### `kitn init`
+### `kitn new [name]`
 
-Initialize kitn in your project. Creates `kitn.json`, installs the core engine and Hono routes, and sets up tsconfig path aliases.
+Create a new kitn project from a starter template. Scaffolds project files, initializes kitn, and installs dependencies.
 
 ```bash
-# Interactive (prompts for runtime and base directory)
+# Interactive (prompts for name, framework, runtime, provider)
+kitn new
+
+# Non-interactive
+kitn new my-app --runtime bun --provider openrouter -y
+
+# Use a custom GitHub template
+kitn new my-app --template github:user/repo
+
+# Scaffold in the current directory
+kitn new .
+```
+
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `-f, --framework <framework>` | Template to use (`hono`) |
+| `-t, --template <url>` | Custom template (`github:user/repo`) |
+| `-r, --runtime <runtime>` | Runtime to use (`bun`, `node`, `deno`) |
+| `-p, --provider <provider>` | AI provider (`openrouter`, `openai`, `anthropic`, `google`) |
+| `-y, --yes` | Accept all defaults without prompting |
+
+### `kitn init`
+
+Initialize kitn in an existing project. Creates `kitn.json`, installs the core engine and adapter routes, and sets up tsconfig path aliases.
+
+```bash
+# Interactive (prompts for runtime, framework, and base directory)
 kitn init
 
 # Non-interactive with flags
-kitn init --runtime bun --base src/ai
+kitn init --runtime bun --framework hono --base src/ai
 
-# Accept all defaults (runtime=bun, base=src/ai)
+# Accept all defaults (runtime=bun, framework=hono, base=src/ai)
 kitn init -y
 ```
 
@@ -42,6 +70,7 @@ kitn init -y
 | Flag | Description |
 |------|-------------|
 | `-r, --runtime <runtime>` | Runtime to use (`bun`, `node`, `deno`) — skips runtime prompt |
+| `-f, --framework <framework>` | HTTP framework (`hono`, `hono-openapi`, `elysia`) — skips framework prompt |
 | `-b, --base <path>` | Base directory for components (default: `src/ai`) — skips path prompt |
 | `-y, --yes` | Accept all defaults without prompting |
 
@@ -89,6 +118,7 @@ Third-party components install into a namespace subdirectory (e.g. `src/ai/agent
 |------|-------------|
 | `-o, --overwrite` | Overwrite existing files without prompting |
 | `-t, --type <type>` | Filter by component type during resolution |
+| `-y, --yes` | Skip confirmation prompt |
 
 When a file already exists and differs from the registry version, you'll see a unified diff and be prompted to keep your version or overwrite.
 
@@ -124,7 +154,7 @@ kitn list --verbose
 | Flag | Description |
 |------|-------------|
 | `-i, --installed` | Only show installed components |
-| `-t, --type <type>` | Filter by type (`agent`, `tool`, `skill`, `storage`, `package`) |
+| `-t, --type <type>` | Filter by type (`agent`, `tool`, `skill`, `storage`, `package`, `cron`) |
 | `-r, --registry <namespace>` | Only show components from this registry |
 | `-v, --verbose` | Show version numbers |
 
@@ -138,15 +168,19 @@ kitn diff weather-agent
 
 Outputs a unified diff for each file in the component. Shows "up to date" if there are no differences.
 
-### `kitn remove <component>`
+### `kitn remove [component]`
 
 Remove an installed component. Deletes files and removes tracking from `kitn.lock`.
 
 ```bash
+# Remove a specific component
 kitn remove weather-agent
+
+# Interactive — pick from installed components
+kitn remove
 ```
 
-Prompts for confirmation before deleting files.
+Prompts for confirmation before deleting files. Also aliased as `kitn uninstall`.
 
 ### `kitn update [components...]`
 
@@ -161,6 +195,96 @@ kitn update
 ```
 
 Re-fetches components from the registry and applies the same conflict resolution as `kitn add --overwrite`.
+
+### `kitn install`
+
+Install components from `kitn.lock` at their exact recorded versions (like `npm ci`). Useful for fresh clones and CI.
+
+```bash
+# Install all locked components
+kitn install
+
+# Fail if lock file is inconsistent (CI mode)
+kitn install --frozen
+```
+
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--frozen` | Fail if lock file is inconsistent or local files differ (for CI) |
+
+### `kitn search <query>`
+
+Search configured registries for components by name or description.
+
+```bash
+# Search for components
+kitn search weather
+
+# Filter by type
+kitn search agent --type tool
+```
+
+**Flags:**
+
+| Flag | Description |
+|------|-------------|
+| `-t, --type <type>` | Filter by component type |
+
+### `kitn outdated`
+
+Show installed components with newer versions available in the registry.
+
+```bash
+kitn outdated
+```
+
+Prints a table of installed vs. latest versions and tells you how many are outdated.
+
+### `kitn tree`
+
+Show the dependency tree of installed components.
+
+```bash
+kitn tree
+```
+
+Displays a visual tree with component types and deduplication markers.
+
+### `kitn why <component>`
+
+Explain why a component is installed by tracing its reverse dependency chain.
+
+```bash
+kitn why core
+```
+
+Shows whether the component is a top-level install or a transitive dependency, and prints the full dependency chain(s).
+
+### `kitn doctor`
+
+Check project integrity -- files, content hashes, dependencies, and orphans.
+
+```bash
+kitn doctor
+```
+
+Runs a series of health checks and reports pass/warn/fail status for each.
+
+### `kitn try [name]`
+
+Interactively test a tool or agent from your project.
+
+```bash
+# Pick a tool or agent interactively
+kitn try
+
+# Run a specific tool or agent by name
+kitn try weather
+```
+
+For tools, prompts for input parameters and displays the result. For agents, starts a chat session where you can send messages and see tool calls and responses.
 
 ### `kitn info <component>`
 
@@ -178,11 +302,12 @@ Displays the component's description, type, version, dependencies, files, and ch
 
 ### `kitn create <type> <name>`
 
-Scaffold a new kitn component.
+Scaffold a new kitn component. Valid types: `agent`, `tool`, `skill`, `storage`, `cron`.
 
 ```bash
 kitn create agent my-agent
 kitn create tool my-tool
+kitn create cron my-cron
 ```
 
 Creates a new component file with a template and wires it into the barrel file (`src/ai/index.ts`).
@@ -236,18 +361,6 @@ kitn rules
 ```
 
 Prompts you to select which AI coding tools you use, then fetches the latest rules template from the registry and generates the corresponding files. Works in any directory — uses project aliases from `kitn.json` if available, otherwise uses defaults.
-
-### `kitn build`
-
-Build registry JSON from components that have `registry.json` manifests.
-
-```bash
-# Scan from current directory
-kitn build
-
-# Specify directories and output
-kitn build src/components --output dist/r
-```
 
 ### `kitn check`
 
@@ -326,7 +439,7 @@ Created by `kitn init`. Controls where components are installed and which regist
 | Field | Description |
 |-------|-------------|
 | `runtime` | `bun`, `node`, or `deno` |
-| `framework` | `hono` |
+| `framework` | `hono`, `hono-openapi`, or `elysia` |
 | `aliases` | Directory paths for each component type |
 | `registries` | Named registries — each value is a URL string or an object with `url`, `homepage`, `description` |
 

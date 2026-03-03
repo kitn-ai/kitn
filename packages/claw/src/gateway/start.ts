@@ -5,6 +5,8 @@ import { registerBuiltinTools } from "../tools/register-builtin.js";
 import { PermissionManager } from "../permissions/manager.js";
 import { ChannelManager } from "../channels/manager.js";
 import { WorkspaceWatcher } from "./watcher.js";
+import { AuditLogger } from "../audit/logger.js";
+import { getGovernanceDb } from "../governance/db.js";
 import type { PluginContext } from "@kitnai/core";
 import type { ClawConfig } from "../config/schema.js";
 
@@ -40,6 +42,22 @@ export async function startGateway(): Promise<GatewayContext> {
   // 4. Register built-in tools
   registerBuiltinTools(plugin);
   console.log(`[kitnclaw] ${plugin.tools.list().length} tools registered`);
+
+  // 4b. Wire audit logging into lifecycle hooks
+  const govDb = getGovernanceDb();
+  const auditLogger = new AuditLogger(govDb);
+
+  if (plugin.hooks) {
+    plugin.hooks.on("tool:execute", (event) => {
+      auditLogger.log({
+        event: "tool:execute",
+        toolName: event.toolName,
+        input: event.input,
+        duration: event.duration,
+      });
+    });
+  }
+  console.log("[kitnclaw] Audit logging enabled");
 
   // 5. Initialize permission manager
   const sandbox = config.permissions.sandbox || join(CLAW_HOME, "workspace");

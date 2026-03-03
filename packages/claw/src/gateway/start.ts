@@ -9,6 +9,8 @@ import { AuditLogger } from "../audit/logger.js";
 import { getGovernanceDb } from "../governance/db.js";
 import { UserManager } from "../users/manager.js";
 import { createHttpServer, type HttpServer } from "./http.js";
+import { setupCronScheduler } from "../crons/setup.js";
+import type { CronScheduler } from "@kitnai/core";
 import type { PluginContext } from "@kitnai/core";
 import type { ClawConfig } from "../config/schema.js";
 
@@ -20,6 +22,7 @@ export interface GatewayContext {
   channels: ChannelManager;
   watcher: WorkspaceWatcher;
   httpServer: HttpServer;
+  scheduler: CronScheduler & { start(): void; stop(): void; tick(): Promise<void> };
 }
 
 export async function startGateway(): Promise<GatewayContext> {
@@ -62,6 +65,11 @@ export async function startGateway(): Promise<GatewayContext> {
     });
   }
   console.log("[kitnclaw] Audit logging enabled");
+
+  // 4c. Set up cron scheduler
+  const scheduler = setupCronScheduler(plugin);
+  scheduler.start();
+  console.log("[kitnclaw] Cron scheduler started");
 
   // 5. Initialize permission manager
   const sandbox = config.permissions.sandbox || join(CLAW_HOME, "workspace");
@@ -120,11 +128,12 @@ export async function startGateway(): Promise<GatewayContext> {
 
   console.log("[kitnclaw] Gateway running. Press Ctrl+C to stop.");
 
-  const ctx: GatewayContext = { config, plugin, permissions, users, channels, watcher, httpServer };
+  const ctx: GatewayContext = { config, plugin, permissions, users, channels, watcher, httpServer, scheduler };
 
   // Graceful shutdown
   process.on("SIGINT", () => {
     console.log("\n[kitnclaw] Shutting down...");
+    scheduler.stop();
     httpServer.stop();
     watcher.stop();
     channels.stopAll().then(() => process.exit(0));

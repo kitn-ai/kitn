@@ -1,4 +1,4 @@
-import type { Client } from "@libsql/client";
+import type { Client, InValue } from "@libsql/client";
 
 export interface AuditEntry {
   event: string;
@@ -81,7 +81,7 @@ export class AuditLogger {
   }): Promise<AuditEntry[]> {
     await this.ensureTable();
     const conditions: string[] = [];
-    const args: unknown[] = [];
+    const args: InValue[] = [];
 
     if (filters.event) {
       conditions.push("event = ?");

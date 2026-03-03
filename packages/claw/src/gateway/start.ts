@@ -7,6 +7,7 @@ import { ChannelManager } from "../channels/manager.js";
 import { WorkspaceWatcher } from "./watcher.js";
 import { AuditLogger } from "../audit/logger.js";
 import { getGovernanceDb } from "../governance/db.js";
+import { createHttpServer, type HttpServer } from "./http.js";
 import type { PluginContext } from "@kitnai/core";
 import type { ClawConfig } from "../config/schema.js";
 
@@ -16,6 +17,7 @@ export interface GatewayContext {
   permissions: PermissionManager;
   channels: ChannelManager;
   watcher: WorkspaceWatcher;
+  httpServer: HttpServer;
 }
 
 export async function startGateway(): Promise<GatewayContext> {
@@ -78,22 +80,45 @@ export async function startGateway(): Promise<GatewayContext> {
     permissions,
   });
 
-  // 8. Start terminal TUI if enabled
+  // 8. Start HTTP server
+  const bindHost = config.gateway.bind === "lan" ? "0.0.0.0" : "127.0.0.1";
+  const httpServer = createHttpServer({
+    port: config.gateway.port,
+    hostname: bindHost,
+    onMessage: async (sessionId, text) => {
+      const response = await channels.handleMessage({
+        sessionId,
+        text,
+        channelType: "http",
+      });
+      return { text: response.text, toolCalls: response.toolCalls };
+    },
+    getStatus: () => ({
+      version: "0.1.0",
+      model: config.model,
+      channels: Array.from(Object.keys(config.channels)),
+    }),
+  });
+  const addr = httpServer.start();
+  console.log(`[kitnclaw] HTTP server listening on ${bindHost}:${addr.port}`);
+
+  // 9. Start terminal TUI if enabled
   if (config.channels.terminal?.enabled !== false) {
     const { startTUI } = await import("../tui/index.js");
     await startTUI(config, channels, plugin);
   }
 
-  // 9. Start remaining channels
+  // 10. Start remaining channels
   await channels.startAll();
 
   console.log("[kitnclaw] Gateway running. Press Ctrl+C to stop.");
 
-  const ctx: GatewayContext = { config, plugin, permissions, channels, watcher };
+  const ctx: GatewayContext = { config, plugin, permissions, channels, watcher, httpServer };
 
   // Graceful shutdown
   process.on("SIGINT", () => {
     console.log("\n[kitnclaw] Shutting down...");
+    httpServer.stop();
     watcher.stop();
     channels.stopAll().then(() => process.exit(0));
   });

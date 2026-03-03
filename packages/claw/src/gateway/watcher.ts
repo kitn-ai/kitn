@@ -1,7 +1,7 @@
 import { watch, type FSWatcher } from "fs";
 import { readdir, stat } from "fs/promises";
-import { join, extname, basename } from "path";
-import type { PluginContext } from "@kitnai/core";
+import { join, extname } from "path";
+import { registerWithPlugin, type PluginContext } from "@kitnai/core";
 import { CLAW_HOME } from "../config/io.js";
 
 const WORKSPACE = join(CLAW_HOME, "workspace");
@@ -84,6 +84,8 @@ export class WorkspaceWatcher {
 
       try {
         await import(fullPath + `?t=${Date.now()}`);
+        // Flush any self-registrations into the plugin context
+        await registerWithPlugin(this.ctx);
         console.log(`[kitnclaw] Reloaded: ${filename}`);
       } catch (err: any) {
         console.error(`[kitnclaw] Failed to reload ${filename}: ${err.message}`);
@@ -98,6 +100,7 @@ export class WorkspaceWatcher {
   }
 
   private async loadAll(): Promise<void> {
+    let loaded = 0;
     for (const dir of ["tools", "agents"]) {
       const dirPath = join(WORKSPACE, dir);
       try {
@@ -107,6 +110,7 @@ export class WorkspaceWatcher {
           if (ext === ".ts" || ext === ".tsx" || ext === ".js") {
             try {
               await import(join(dirPath, file));
+              loaded++;
             } catch (err: any) {
               console.error(`[kitnclaw] Failed to load ${dir}/${file}: ${err.message}`);
             }
@@ -115,6 +119,10 @@ export class WorkspaceWatcher {
       } catch {
         // Directory doesn't exist yet
       }
+    }
+    // Flush any self-registrations from workspace files
+    if (loaded > 0) {
+      await registerWithPlugin(this.ctx);
     }
   }
 }

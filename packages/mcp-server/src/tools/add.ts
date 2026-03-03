@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { addComponents } from "@kitnai/cli-core";
+import { addComponents, readLock, readConfig, resolveRoutesAlias } from "@kitnai/cli-core";
 import { registerTool } from "../register-tool.js";
 
 export function registerAddTool(server: McpServer) {
@@ -26,6 +26,21 @@ export function registerAddTool(server: McpServer) {
           cwd,
           overwrite: true,
         });
+        // Check if routes adapter is installed — agents/tools won't be reachable without it
+        let routesWarning: string | undefined;
+        const hasAgentOrTool = result.resolved.some(
+          (i) => i.type === "kitn:agent" || i.type === "kitn:tool",
+        );
+        if (hasAgentOrTool) {
+          const [config, lock] = await Promise.all([readConfig(cwd), readLock(cwd)]);
+          if (config) {
+            const routesAdapter = resolveRoutesAlias(config);
+            if (!lock[routesAdapter]) {
+              routesWarning = `Routes adapter "${routesAdapter}" is not installed. Run kitn_add with ["${routesAdapter}"] or agents/tools will not be accessible via HTTP.`;
+            }
+          }
+        }
+
         const summary = {
           installed: result.resolved.map((item) => ({
             name: item.name,
@@ -43,6 +58,7 @@ export function registerAddTool(server: McpServer) {
           errors: result.errors,
           barrelUpdated: result.barrelUpdated,
           docs: result.resolved.flatMap((item) => item.docs ? [item.docs] : []),
+          ...(routesWarning ? { warning: routesWarning } : {}),
         };
         return {
           content: [{ type: "text", text: JSON.stringify(summary, null, 2) }],

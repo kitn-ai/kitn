@@ -1,5 +1,5 @@
 import { readdir, readFile, writeFile, mkdir, stat } from "fs/promises";
-import { join, relative } from "path";
+import { join, relative, basename } from "path";
 import { fileURLToPath } from "url";
 import { initProject, type InitResult } from "./init.js";
 import { addComponents } from "./add.js";
@@ -111,12 +111,8 @@ async function copyDir(
 export async function newProject(
   opts: NewProjectOpts,
 ): Promise<NewProjectResult> {
-  const {
-    name,
-    targetDir,
-    framework: templateName = "hono",
-    runtime = "bun",
-  } = opts;
+  const { targetDir, framework: templateName = "hono", runtime = "bun" } = opts;
+  let { name } = opts;
 
   // Validate template
   if (!VALID_TEMPLATES.includes(templateName as Template)) {
@@ -125,15 +121,41 @@ export async function newProject(
     );
   }
 
-  const projectPath = join(targetDir, name);
+  let projectPath: string;
 
-  // Check target doesn't exist
-  try {
-    await stat(projectPath);
-    throw new Error(`Directory "${name}" already exists in ${targetDir}`);
-  } catch (err: any) {
-    if (err.code !== "ENOENT") throw err;
-    // ENOENT means it doesn't exist — good
+  if (name === ".") {
+    // Create in current directory
+    projectPath = targetDir;
+    name = basename(targetDir);
+
+    // Check directory is empty (allow .git, .gitignore, etc.)
+    const SAFE_FILES = new Set([".git", ".gitignore", ".DS_Store"]);
+    try {
+      const entries = await readdir(projectPath);
+      const nonSafe = entries.filter((e) => !SAFE_FILES.has(e));
+      if (nonSafe.length > 0) {
+        throw new Error(
+          `Directory is not empty. Found: ${nonSafe.slice(0, 5).join(", ")}${nonSafe.length > 5 ? "..." : ""}`,
+        );
+      }
+    } catch (err: any) {
+      if (err.code === "ENOENT") {
+        // Directory doesn't exist yet — that's fine, mkdir will create it
+      } else if (err.message?.startsWith("Directory is not empty")) {
+        throw err;
+      }
+      // Other errors: let copyDir handle them
+    }
+  } else {
+    projectPath = join(targetDir, name);
+
+    // Check target doesn't exist
+    try {
+      await stat(projectPath);
+      throw new Error(`Directory "${name}" already exists in ${targetDir}`);
+    } catch (err: any) {
+      if (err.code !== "ENOENT") throw err;
+    }
   }
 
   // Copy template

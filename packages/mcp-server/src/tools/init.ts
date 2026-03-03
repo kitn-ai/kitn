@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { initProject } from "@kitnai/cli-core";
+import { initProject, addComponents, resolveRoutesAlias } from "@kitnai/cli-core";
 import { registerTool } from "../register-tool.js";
 
 export function registerInitTool(server: McpServer) {
@@ -32,13 +32,23 @@ export function registerInitTool(server: McpServer) {
     async ({ cwd, runtime, framework, baseDir }) => {
       try {
         const result = await initProject({ cwd, runtime, framework, baseDir });
+
+        // Install core engine + framework adapter (same as CLI initCommand)
+        const routesAdapter = resolveRoutesAlias(result.config);
+        const addResult = await addComponents({
+          components: ["core", routesAdapter],
+          cwd,
+          overwrite: true,
+        });
+
         return {
           content: [{ type: "text", text: JSON.stringify({
             configPath: result.configPath,
             runtime: result.config.runtime,
             framework: result.config.framework ?? framework,
             baseDir: result.config.aliases.base ?? baseDir ?? "src/ai",
-            filesCreated: result.filesCreated.length,
+            installed: addResult.resolved.map((i) => ({ name: i.name, type: i.type })),
+            npmDeps: addResult.npmDeps,
           }, null, 2) }],
         };
       } catch (error: any) {

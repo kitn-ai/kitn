@@ -33,4 +33,13 @@ program
     await setupWizard();
   });
 
+program
+  .command("status")
+  .description("Show KitnClaw configuration and status")
+  .action(async () => {
+    const { getStatus, formatStatus } = await import("./commands/status.js");
+    const info = await getStatus();
+    console.log(formatStatus(info));
+  });
+
 await program.parseAsync();

@@ -23,7 +23,14 @@ export async function startGateway(): Promise<GatewayContext> {
 
   // 2. Load config
   const config = await loadConfig();
-  console.log(`[kitnclaw] Model: ${config.model}`);
+
+  if (!config.provider) {
+    console.error("[kitnclaw] No AI provider configured.");
+    console.error("[kitnclaw] Run `kitnclaw setup` to configure your provider and API key.");
+    process.exit(1);
+  }
+
+  console.log(`[kitnclaw] Provider: ${config.provider.type}, Model: ${config.model}`);
 
   // 3. Create @kitnai/core plugin
   const plugin = createClawPlugin(config);

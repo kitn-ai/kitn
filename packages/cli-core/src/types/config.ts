@@ -5,13 +5,14 @@ import type { ComponentType } from "./registry.js";
 const componentType = z.enum(["kitn:agent", "kitn:tool", "kitn:skill", "kitn:storage", "kitn:package", "kitn:cron"]);
 
 export const installedComponentSchema = z.object({
-  registry: z.string().optional(),
-  type: componentType.optional(),
+  registry: z.string(),
+  type: componentType,
   slot: z.string().optional(),
   version: z.string(),
   installedAt: z.string(),
   files: z.array(z.string()),
-  hash: z.string(),
+  integrity: z.string(),
+  resolved: z.string(),
   registryDependencies: z.array(z.string()).optional(),
 });
 
@@ -82,8 +83,12 @@ export function resolveRoutesAlias(config: KitnConfig): string {
   return FRAMEWORK_TO_ADAPTER[fw] ?? fw;
 }
 
-export const lockSchema = z.record(z.string(), installedComponentSchema);
-export type LockFile = z.infer<typeof lockSchema>;
+export const lockComponentsSchema = z.record(z.string(), installedComponentSchema);
+export const lockSchema = z.object({
+  lockfileVersion: z.literal(1),
+  components: lockComponentsSchema,
+});
+export type LockFile = z.infer<typeof lockComponentsSchema>;
 
 export const CONFIG_FILE = "kitn.json";
 export const LOCK_FILE = "kitn.lock";

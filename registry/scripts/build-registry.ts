@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { registryItemSchema } from "../src/schema.js";
 import type { RegistryItem, RegistryIndex, ComponentType, ChangelogEntry } from "../src/schema.js";
 
@@ -88,6 +89,10 @@ export function buildRegistryItem(
     }));
   }
 
+  // Compute integrity hash of concatenated file contents
+  const allContent = files.map((f) => f.content).join("\n");
+  const integrity = "sha256:" + createHash("sha256").update(allContent).digest("hex");
+
   return registryItemSchema.parse({
     $schema: "https://kitn.dev/schema/registry-item.json",
     name: manifest.name,
@@ -102,6 +107,7 @@ export function buildRegistryItem(
     categories: manifest.categories,
     slot: manifest.slot,
     version: manifest.version ?? "1.0.0",
+    integrity,
     installDir: manifest.installDir,
     tsconfig: manifest.tsconfig,
     updatedAt: new Date().toISOString(),

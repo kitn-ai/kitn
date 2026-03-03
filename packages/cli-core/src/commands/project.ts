@@ -26,7 +26,7 @@ export async function getProjectContext(opts: {
 
   const installedComponents = Object.entries(lock).map(([name, entry]) => ({
     name,
-    type: entry.type?.replace("kitn:", "") ?? "unknown",
+    type: entry.type.replace("kitn:", ""),
     version: entry.version,
   }));
 

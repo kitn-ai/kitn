@@ -51,7 +51,7 @@ export async function diffComponent(opts: DiffComponentOpts): Promise<DiffCompon
     throw new Error(`Component "${ref.name}" is not installed.`);
   }
 
-  const namespace = installed.registry ?? ref.namespace;
+  const namespace = installed.registry;
   const fetcher = new RegistryFetcher(config.registries);
   const index = await fetcher.fetchIndex(namespace);
   const indexItem = index.items.find((i) => i.name === ref.name);

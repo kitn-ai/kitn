@@ -38,7 +38,6 @@ program
 
 program
   .command("add")
-  .alias("install")
   .description("Add components from the registry (supports type-first: kitn add agent <name>)")
   .argument("[components...]", "component names or type followed by names")
   .option("-o, --overwrite", "overwrite existing files without prompting")
@@ -47,6 +46,33 @@ program
   .action(async (components: string[], opts) => {
     const { addCommand } = await import("./commands/add.js");
     await addCommand(components, opts);
+  });
+
+program
+  .command("install")
+  .description("Install components from kitn.lock (like npm ci)")
+  .option("--frozen", "fail if lock file is inconsistent (for CI)")
+  .action(async (opts) => {
+    const { installCommand } = await import("./commands/install.js");
+    await installCommand(opts);
+  });
+
+program
+  .command("search")
+  .description("Search the registry for components")
+  .argument("<query>", "search query")
+  .option("-t, --type <type>", "filter by component type")
+  .action(async (query: string, opts) => {
+    const { searchCommand } = await import("./commands/search.js");
+    await searchCommand(query, opts);
+  });
+
+program
+  .command("outdated")
+  .description("Show installed components with newer versions available")
+  .action(async () => {
+    const { outdatedCommand } = await import("./commands/outdated.js");
+    await outdatedCommand();
   });
 
 program
@@ -124,12 +150,37 @@ program
   });
 
 program
+  .command("tree")
+  .description("Show the dependency tree of installed components")
+  .action(async () => {
+    const { treeCommand } = await import("./commands/tree.js");
+    await treeCommand();
+  });
+
+program
+  .command("why")
+  .description("Explain why a component is installed")
+  .argument("<component>", "component name")
+  .action(async (component: string) => {
+    const { whyCommand } = await import("./commands/why.js");
+    await whyCommand(component);
+  });
+
+program
   .command("info")
   .description("Show details about a component")
   .argument("<component>", "component name (e.g. weather-agent, @acme/tool@1.0.0)")
   .action(async (component: string) => {
     const { infoCommand } = await import("./commands/info.js");
     await infoCommand(component);
+  });
+
+program
+  .command("doctor")
+  .description("Check project integrity (files, hashes, dependencies)")
+  .action(async () => {
+    const { doctorCommand } = await import("./commands/doctor.js");
+    await doctorCommand();
   });
 
 program

@@ -55,12 +55,17 @@ describe("resolveToolByName", () => {
     await writeFile(
       join(tmpDir, "kitn.lock"),
       JSON.stringify({
-        "weather-tool": {
-          version: "1.0.0",
-          installedAt: "2026-01-01T00:00:00Z",
-          files: ["src/ai/tools/weather.ts"],
-          hash: "abc123",
-          type: "kitn:tool",
+        lockfileVersion: 1,
+        components: {
+          "weather-tool": {
+            registry: "@kitn",
+            type: "kitn:tool",
+            version: "1.0.0",
+            installedAt: "2026-01-01T00:00:00Z",
+            files: ["src/ai/tools/weather.ts"],
+            integrity: "sha256:abc123",
+            resolved: "https://kitn-ai.github.io/kitn/r/tools/weather-tool.json",
+          },
         },
       }),
     );

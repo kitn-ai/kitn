@@ -1,7 +1,7 @@
 import { readdir, readFile } from "fs/promises";
 import { join, relative } from "path";
 import type { KitnConfig, LockFile } from "../types/config.js";
-import { lockSchema, LOCK_FILE } from "../types/config.js";
+import { lockSchema, lockComponentsSchema, LOCK_FILE } from "../types/config.js";
 
 export interface ResolvedTool {
   filePath: string;       // absolute path to tool file
@@ -29,7 +29,11 @@ function stripSuffix(name: string, suffix: string): string {
 async function readLock(projectDir: string): Promise<LockFile> {
   try {
     const raw = await readFile(join(projectDir, LOCK_FILE), "utf-8");
-    return lockSchema.parse(JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    if (parsed.lockfileVersion) {
+      return lockSchema.parse(parsed).components;
+    }
+    return lockComponentsSchema.parse(parsed);
   } catch {
     return {};
   }

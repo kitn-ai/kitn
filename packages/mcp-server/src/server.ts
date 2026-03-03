@@ -22,6 +22,13 @@ import {
 import { registerHelpTool } from "./tools/help.js";
 import { registerTryTools } from "./tools/try.js";
 
+// Package manager tools
+import { registerInstallTool } from "./tools/install.js";
+import { registerOutdatedTool } from "./tools/outdated.js";
+import { registerWhyTool } from "./tools/why.js";
+import { registerTreeTool } from "./tools/tree.js";
+import { registerDoctorTool } from "./tools/doctor.js";
+
 // Resources
 import { registerRulesResource } from "./resources/rules.js";
 import { registerProjectResource } from "./resources/project.js";
@@ -60,6 +67,13 @@ export function createServer() {
 
   // Try (interactive testing)
   registerTryTools(server);
+
+  // Package manager tools
+  registerInstallTool(server);
+  registerOutdatedTool(server);
+  registerWhyTool(server);
+  registerTreeTool(server);
+  registerDoctorTool(server);
 
   // Resources
   registerRulesResource(server);

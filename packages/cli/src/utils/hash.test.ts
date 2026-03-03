@@ -14,8 +14,8 @@ describe("contentHash", () => {
     expect(h1).not.toBe(h2);
   });
 
-  it("returns an 8-character hex string", () => {
+  it("returns sha256-prefixed hex string", () => {
     const hash = contentHash("test");
-    expect(hash).toMatch(/^[a-f0-9]{8}$/);
+    expect(hash).toMatch(/^sha256:[a-f0-9]{64}$/);
   });
 });

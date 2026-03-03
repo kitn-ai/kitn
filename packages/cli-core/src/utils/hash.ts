@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
 
 export function contentHash(content: string): string {
-  return createHash("sha256").update(content).digest("hex").slice(0, 8);
+  return "sha256:" + createHash("sha256").update(content).digest("hex");
 }

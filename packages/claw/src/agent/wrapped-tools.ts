@@ -1,21 +1,38 @@
 import { tool } from "ai";
 import type { PluginContext } from "@kitnai/core";
 import { PermissionManager } from "../permissions/manager.js";
+import type { BudgetLedger } from "../governance/budget.js";
 
 export interface PermissionHandler {
   onConfirm(toolName: string, input: unknown): Promise<"allow" | "deny" | "trust" | "grant-dir">;
 }
 
+export interface WrapToolsOptions {
+  channelType?: string;
+  budgetLedger?: BudgetLedger;
+}
+
 /**
- * Wrap all registered tools with permission checks.
+ * Wrap all registered tools with permission checks and optional budget enforcement.
  * Returns a Record<string, tool> suitable for passing to generateText().
+ *
+ * When a `budgetLedger` is provided and a tool's input includes `_spending`
+ * metadata (`{ domain: string, amount: number }`), the budget is checked
+ * before execution. The AI cannot override spending limits because this
+ * check happens inside the tool's execute function.
  */
 export function wrapToolsWithPermissions(
   ctx: PluginContext,
   permissions: PermissionManager,
   handler: PermissionHandler,
-  channelType?: string,
+  channelTypeOrOptions?: string | WrapToolsOptions,
 ): Record<string, any> {
+  const opts: WrapToolsOptions =
+    typeof channelTypeOrOptions === "string"
+      ? { channelType: channelTypeOrOptions }
+      : channelTypeOrOptions ?? {};
+
+  const { channelType, budgetLedger } = opts;
   const wrapped: Record<string, any> = {};
 
   for (const reg of ctx.tools.list()) {
@@ -43,6 +60,19 @@ export function wrapToolsWithPermissions(
             if (path) {
               const dir = path.substring(0, path.lastIndexOf("/") + 1);
               if (dir) permissions.grantDirectory(dir);
+            }
+          }
+        }
+
+        // Budget enforcement — check before executing
+        if (budgetLedger && input?._spending) {
+          const { domain, amount } = input._spending;
+          if (typeof domain === "string" && typeof amount === "number") {
+            const result = await budgetLedger.trySpend(domain, amount);
+            if (!result.allowed) {
+              return {
+                error: `Budget exceeded for ${domain}. Remaining: $${result.remaining} of $${result.limit} limit.`,
+              };
             }
           }
         }

@@ -13,5 +13,7 @@ export default defineConfig({
     "@ai-sdk/openai",
     "@ai-sdk/anthropic",
     "@ai-sdk/google",
+    // libSQL has native bindings that can't be bundled
+    "@libsql/client",
   ],
 });

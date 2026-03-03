@@ -19,6 +19,7 @@
     "@kitnai/core": "workspace:*",
     "@kitnai/cli-core": "workspace:*",
     "commander": "^13.1.0",
+    "@libsql/client": "^0.15.0",
     "ai": "^6.0.91",
     "zod": "^4.3.6"
   },

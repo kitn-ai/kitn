@@ -58,7 +58,7 @@ export async function startGateway(): Promise<GatewayContext> {
   // 8. Start terminal TUI if enabled
   if (config.channels.terminal?.enabled !== false) {
     const { startTUI } = await import("../tui/index.js");
-    await startTUI(config, channels);
+    await startTUI(config, channels, plugin);
   }
 
   // 9. Start remaining channels

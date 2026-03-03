@@ -9,6 +9,7 @@ import { PermissionPrompt } from "./components/PermissionPrompt.js";
 import { useKeyboard } from "@opentui/react";
 import type { ChannelManager } from "../channels/manager.js";
 import type { ClawConfig } from "../config/schema.js";
+import type { PluginContext } from "@kitnai/core";
 
 const SESSION_ID = `terminal-${Date.now()}`;
 
@@ -24,6 +25,7 @@ interface PendingPermission {
 export async function startTUI(
   config: ClawConfig,
   channelManager: ChannelManager,
+  ctx?: PluginContext,
 ): Promise<TerminalChannel> {
   const terminalChannel = new TerminalChannel();
   channelManager.register(terminalChannel);
@@ -63,6 +65,11 @@ export async function startTUI(
     });
   };
 
+  // Build tool list for /tools command
+  const toolDescriptions = ctx
+    ? ctx.tools.list().map((t) => `- **${t.name}** — ${t.description}`)
+    : [];
+
   const handleExit = () => {
     root.unmount();
     renderer.stop();
@@ -72,6 +79,7 @@ export async function startTUI(
   root.render(
     <TUIApp
       model={config.model}
+      toolDescriptions={toolDescriptions}
       onMessage={handleMessage}
       onExit={handleExit}
       registerPushMessage={(fn) => { pushMessage = fn; }}
@@ -84,12 +92,14 @@ export async function startTUI(
 
 function TUIApp({
   model,
+  toolDescriptions,
   onMessage,
   onExit,
   registerPushMessage,
   registerShowPermission,
 }: {
   model: string;
+  toolDescriptions: string[];
   onMessage: (text: string) => Promise<void>;
   onExit: () => void;
   registerPushMessage: (fn: (msg: DisplayMessage) => void) => void;
@@ -114,6 +124,14 @@ function TUIApp({
     }
   });
 
+  const helpText =
+    "**Commands:**\n" +
+    "- `/clear` — Clear messages\n" +
+    "- `/tools` — List available tools\n" +
+    "- `/exit` — Exit KitnClaw\n" +
+    "- `/help` — Show this help\n" +
+    "- `Ctrl+Q` — Quick exit";
+
   const handleSubmit = useCallback(async (text: string) => {
     if (text === "/exit" || text === "/quit") {
       onExit();
@@ -126,10 +144,17 @@ function TUIApp({
     if (text === "/help") {
       setMessages((prev) => [
         ...prev,
-        {
-          role: "assistant" as const,
-          content: "**Commands:**\n- `/clear` — Clear messages\n- `/exit` — Exit KitnClaw\n- `/help` — Show this help\n- `Ctrl+Q` — Quick exit",
-        },
+        { role: "assistant" as const, content: helpText },
+      ]);
+      return;
+    }
+    if (text === "/tools") {
+      const content = toolDescriptions.length > 0
+        ? `**Available tools (${toolDescriptions.length}):**\n${toolDescriptions.join("\n")}`
+        : "No tools registered.";
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant" as const, content },
       ]);
       return;
     }
@@ -149,7 +174,7 @@ function TUIApp({
     } finally {
       setIsLoading(false);
     }
-  }, [onMessage, onExit]);
+  }, [onMessage, onExit, toolDescriptions, helpText]);
 
   const handlePermissionDecision = useCallback((decision: "allow" | "deny" | "trust") => {
     if (pendingPermission) {

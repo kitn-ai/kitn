@@ -150,6 +150,14 @@ program
   });
 
 program
+  .command("tree")
+  .description("Show the dependency tree of installed components")
+  .action(async () => {
+    const { treeCommand } = await import("./commands/tree.js");
+    await treeCommand();
+  });
+
+program
   .command("why")
   .description("Explain why a component is installed")
   .argument("<component>", "component name")

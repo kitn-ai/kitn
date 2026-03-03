@@ -57,3 +57,4 @@ export * from "./commands/install.js";
 export * from "./commands/outdated.js";
 export * from "./commands/search.js";
 export * from "./commands/why.js";
+export * from "./commands/tree.js";

@@ -55,3 +55,4 @@ export * from "./commands/project.js";
 export * from "./commands/try.js";
 export * from "./commands/install.js";
 export * from "./commands/outdated.js";
+export * from "./commands/search.js";

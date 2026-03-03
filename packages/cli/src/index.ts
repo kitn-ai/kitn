@@ -58,6 +58,16 @@ program
   });
 
 program
+  .command("search")
+  .description("Search the registry for components")
+  .argument("<query>", "search query")
+  .option("-t, --type <type>", "filter by component type")
+  .action(async (query: string, opts) => {
+    const { searchCommand } = await import("./commands/search.js");
+    await searchCommand(query, opts);
+  });
+
+program
   .command("outdated")
   .description("Show installed components with newer versions available")
   .action(async () => {

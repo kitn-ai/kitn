@@ -58,6 +58,14 @@ program
   });
 
 program
+  .command("outdated")
+  .description("Show installed components with newer versions available")
+  .action(async () => {
+    const { outdatedCommand } = await import("./commands/outdated.js");
+    await outdatedCommand();
+  });
+
+program
   .command("list")
   .argument("[type]", "filter by type (agents, tools, skills, storages, packages)")
   .description("List available and installed components")

@@ -20,11 +20,15 @@
     "@kitnai/cli-core": "workspace:*",
     "commander": "^13.1.0",
     "@libsql/client": "^0.15.0",
+    "@opentui/core": "^0.1.85",
+    "@opentui/react": "^0.1.85",
     "ai": "^6.0.91",
+    "react": "^19.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/bun": "^1.3.9",
+    "@types/react": "^19.1.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   }

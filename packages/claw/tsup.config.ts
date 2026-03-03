@@ -15,5 +15,9 @@ export default defineConfig({
     "@ai-sdk/google",
     // libSQL has native bindings that can't be bundled
     "@libsql/client",
+    // OpenTUI has native Zig bindings
+    "@opentui/core",
+    "@opentui/react",
+    "react",
   ],
 });

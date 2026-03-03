@@ -48,7 +48,13 @@ export async function startGateway(): Promise<GatewayContext> {
     permissions,
   });
 
-  // 8. Start channels
+  // 8. Start terminal TUI if enabled
+  if (config.channels.terminal?.enabled !== false) {
+    const { startTUI } = await import("../tui/index.js");
+    await startTUI(config, channels);
+  }
+
+  // 9. Start remaining channels
   await channels.startAll();
 
   console.log("[kitnclaw] Gateway running. Press Ctrl+C to stop.");

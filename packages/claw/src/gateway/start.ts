@@ -7,6 +7,7 @@ import { ChannelManager } from "../channels/manager.js";
 import { WorkspaceWatcher } from "./watcher.js";
 import { AuditLogger } from "../audit/logger.js";
 import { getGovernanceDb } from "../governance/db.js";
+import { UserManager } from "../users/manager.js";
 import { createHttpServer, type HttpServer } from "./http.js";
 import type { PluginContext } from "@kitnai/core";
 import type { ClawConfig } from "../config/schema.js";
@@ -15,6 +16,7 @@ export interface GatewayContext {
   config: ClawConfig;
   plugin: PluginContext;
   permissions: PermissionManager;
+  users: UserManager;
   channels: ChannelManager;
   watcher: WorkspaceWatcher;
   httpServer: HttpServer;
@@ -68,6 +70,10 @@ export async function startGateway(): Promise<GatewayContext> {
     sandbox,
   });
 
+  // 5b. Initialize user manager
+  const users = new UserManager(config.users);
+  console.log(`[kitnclaw] ${Object.keys(config.users).length} user(s) configured`);
+
   // 6. Start workspace watcher (hot-reload)
   const watcher = new WorkspaceWatcher(plugin);
   await watcher.start();
@@ -114,7 +120,7 @@ export async function startGateway(): Promise<GatewayContext> {
 
   console.log("[kitnclaw] Gateway running. Press Ctrl+C to stop.");
 
-  const ctx: GatewayContext = { config, plugin, permissions, channels, watcher, httpServer };
+  const ctx: GatewayContext = { config, plugin, permissions, users, channels, watcher, httpServer };
 
   // Graceful shutdown
   process.on("SIGINT", () => {

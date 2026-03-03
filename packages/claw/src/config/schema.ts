@@ -78,6 +78,12 @@ const mcpServerSchema = z.object({
   env: z.record(z.string(), z.string()).optional(),
 });
 
+const userConfigSchema = z.object({
+  role: z.enum(["operator", "user", "guest"]),
+  channels: z.array(z.string()).optional(),
+  denied: z.array(z.string()).optional(),
+});
+
 const gatewaySchema = z.object({
   port: z.number().default(18800),
   bind: z.enum(["loopback", "lan"]).default("loopback"),
@@ -94,6 +100,7 @@ export const configSchema = z.object({
   registries: z.record(z.string(), z.string()).default({
     "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
   }),
+  users: z.record(z.string(), userConfigSchema).default({}),
   gateway: gatewaySchema,
 });
 

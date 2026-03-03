@@ -19,8 +19,8 @@ program
   .command("setup")
   .description("Configure KitnClaw (provider, model, channels)")
   .action(async () => {
-    // TODO: Phase 8 — setup wizard
-    console.log("Setup wizard not yet implemented. Edit ~/.kitnclaw/kitnclaw.json manually.");
+    const { setupWizard } = await import("./setup.js");
+    await setupWizard();
   });
 
 await program.parseAsync();

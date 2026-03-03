@@ -67,22 +67,30 @@ export async function runAgentLoop(
   // 4. Wrap tools with permissions
   const wrappedTools = wrapToolsWithPermissions(ctx, permissions, permissionHandler);
 
-  // 5. Run the agent
+  // 5. Set up tool call capture via lifecycle hooks
+  const toolCalls: ToolCallInfo[] = [];
+  let unsubscribe: (() => void) | undefined;
+  if (ctx.hooks) {
+    unsubscribe = ctx.hooks.on("tool:execute", (event) => {
+      toolCalls.push({
+        name: event.toolName,
+        input: event.input,
+        result: event.output,
+      });
+    });
+  }
+
+  // 6. Run the agent
   const result = await runAgent(
     ctx,
     { system, tools: wrappedTools, agentName: "kitnclaw" },
     history,
   );
 
-  // 6. Extract tool call info from the result
-  const toolCalls: ToolCallInfo[] = [];
-  if (result.toolsUsed && result.toolsUsed.length > 0) {
-    for (const toolName of result.toolsUsed) {
-      toolCalls.push({ name: toolName, input: {} });
-    }
-  }
+  // Clean up hook listener
+  unsubscribe?.();
 
-  // 7. Persist assistant response
+  // 7. Persist assistant response (tool call details now include full input/output)
   const assistantMessage: ConversationMessage = {
     role: "assistant",
     content: result.response,

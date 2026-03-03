@@ -138,6 +138,14 @@ function TUIApp({
     setIsLoading(true);
     try {
       await onMessage(text);
+    } catch (err: any) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant" as const,
+          content: `**Error:** ${err.message ?? String(err)}`,
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }

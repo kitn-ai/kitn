@@ -3,6 +3,7 @@ import {
   ToolRegistry,
   CardRegistry,
   createMemoryStorage,
+  createLifecycleHooks,
   type PluginContext,
 } from "@kitnai/core";
 import type { ClawConfig } from "../config/schema.js";
@@ -38,12 +39,16 @@ export function createClawPlugin(config: ClawConfig): PluginContext {
     memory,
   };
 
+  // Enable trace-level hooks so agent loop can capture tool call details
+  const hooks = createLifecycleHooks({ level: "trace" });
+
   return {
     agents: new AgentRegistry(),
     tools: new ToolRegistry(),
     cards: new CardRegistry(),
     storage,
     model,
+    hooks,
     maxDelegationDepth: 3,
     defaultMaxSteps: 10,
     config: { model, storage },

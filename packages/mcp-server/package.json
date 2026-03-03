@@ -21,15 +21,16 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "bun test",
+    "test": "echo 'No tests yet'",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kitnai/cli-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.12.1",
+    "diff": "^7.0.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@kitnai/cli-core": "workspace:*",
     "tsup": "^8.4.0",
     "typescript": "^5.8.2"
   },

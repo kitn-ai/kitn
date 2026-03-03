@@ -10,8 +10,10 @@ export default defineConfig({
   banner: { js: "#!/usr/bin/env node" },
   splitting: false,
   sourcemap: true,
+  noExternal: ["@kitnai/cli-core"],
   esbuildOptions(options) {
     options.jsx = "automatic";
+    options.conditions = ["bun", "import"];
   },
   define: {
     __CLI_VERSION__: JSON.stringify(pkg.version),

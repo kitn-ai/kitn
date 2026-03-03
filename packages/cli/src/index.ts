@@ -38,7 +38,6 @@ program
 
 program
   .command("add")
-  .alias("install")
   .description("Add components from the registry (supports type-first: kitn add agent <name>)")
   .argument("[components...]", "component names or type followed by names")
   .option("-o, --overwrite", "overwrite existing files without prompting")

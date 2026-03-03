@@ -31,11 +31,31 @@ const channelsSchema = z.object({
   whatsapp: whatsappChannelSchema.optional(),
 }).default({ terminal: { enabled: true } });
 
+const toolRuleSchema = z.object({
+  allowPatterns: z.array(z.string()).optional(),
+  allowPaths: z.array(z.string()).optional(),
+  denyPatterns: z.array(z.string()).optional(),
+  denyPaths: z.array(z.string()).optional(),
+});
+
+const channelOverrideSchema = z.object({
+  denied: z.array(z.string()).optional(),
+});
+
+const rateLimitsSchema = z.object({
+  maxPerMinute: z.number(),
+  toolLimits: z.record(z.string(), z.number()).optional(),
+});
+
 const permissionsSchema = z.object({
-  trusted: z.array(z.string()).default([]),
-  requireConfirmation: z.array(z.string()).default([]),
+  profile: z.enum(["cautious", "balanced", "autonomous"]).default("balanced"),
+  sandbox: z.string().default(""),
+  grantedDirs: z.array(z.string()).default([]),
   denied: z.array(z.string()).default([]),
-}).default({ trusted: [], requireConfirmation: [], denied: [] });
+  rules: z.record(z.string(), toolRuleSchema).optional(),
+  channelOverrides: z.record(z.string(), channelOverrideSchema).optional(),
+  rateLimits: rateLimitsSchema.optional(),
+}).default({ profile: "balanced", sandbox: "", grantedDirs: [], denied: [] });
 
 const mcpServerSchema = z.object({
   command: z.string(),

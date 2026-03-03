@@ -124,15 +124,16 @@ describe("gateway integration", () => {
       const { PermissionManager } = await import("../../src/permissions/manager.js");
 
       const pm = new PermissionManager({
-        trusted: ["bash", "file-write"],
-        requireConfirmation: [],
+        profile: "autonomous",
+        grantedDirs: [],
+        sandbox: "/tmp/test-workspace",
         denied: ["web-search"],
       });
 
-      expect(pm.check("bash")).toBe("allow");
-      expect(pm.check("file-write")).toBe("allow");
-      expect(pm.check("web-search")).toBe("deny");
-      expect(pm.check("file-read")).toBe("allow"); // safe by default
+      expect(pm.evaluate("bash", { command: "ls" })).toBe("allow");
+      expect(pm.evaluate("file-write", { path: "/anywhere/file.txt" })).toBe("allow");
+      expect(pm.evaluate("web-search", {})).toBe("deny");
+      expect(pm.evaluate("file-read", { path: "/any/path" })).toBe("allow");
     });
 
     test("wrapped tools intercept denied tools", async () => {
@@ -146,8 +147,9 @@ describe("gateway integration", () => {
       registerBuiltinTools(plugin);
 
       const pm = new PermissionManager({
-        trusted: [],
-        requireConfirmation: [],
+        profile: "balanced",
+        grantedDirs: [],
+        sandbox: "/tmp/test-workspace",
         denied: ["bash"],
       });
 
@@ -262,8 +264,9 @@ describe("gateway integration", () => {
 
       // 3. Create permissions
       const pm = new PermissionManager({
-        trusted: ["file-read"],
-        requireConfirmation: [],
+        profile: "balanced",
+        grantedDirs: [],
+        sandbox: "/tmp/test-workspace",
         denied: ["bash"],
       });
 

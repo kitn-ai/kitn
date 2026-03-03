@@ -1,4 +1,5 @@
-import { loadConfig, ensureClawHome } from "../config/io.js";
+import { loadConfig, ensureClawHome, CLAW_HOME } from "../config/io.js";
+import { join } from "path";
 import { createClawPlugin } from "./create-plugin.js";
 import { registerBuiltinTools } from "../tools/register-builtin.js";
 import { PermissionManager } from "../permissions/manager.js";
@@ -41,7 +42,11 @@ export async function startGateway(): Promise<GatewayContext> {
   console.log(`[kitnclaw] ${plugin.tools.list().length} tools registered`);
 
   // 5. Initialize permission manager
-  const permissions = new PermissionManager(config.permissions);
+  const sandbox = config.permissions.sandbox || join(CLAW_HOME, "workspace");
+  const permissions = new PermissionManager({
+    ...config.permissions,
+    sandbox,
+  });
 
   // 6. Start workspace watcher (hot-reload)
   const watcher = new WorkspaceWatcher(plugin);

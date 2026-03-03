@@ -1,9 +1,9 @@
 import { tool } from "ai";
 import type { PluginContext } from "@kitnai/core";
-import { PermissionManager, type PermissionDecision } from "../permissions/manager.js";
+import { PermissionManager } from "../permissions/manager.js";
 
 export interface PermissionHandler {
-  onConfirm(toolName: string, input: unknown): Promise<"allow" | "deny" | "trust">;
+  onConfirm(toolName: string, input: unknown): Promise<"allow" | "deny" | "trust" | "grant-dir">;
 }
 
 /**
@@ -14,6 +14,7 @@ export function wrapToolsWithPermissions(
   ctx: PluginContext,
   permissions: PermissionManager,
   handler: PermissionHandler,
+  channelType?: string,
 ): Record<string, any> {
   const wrapped: Record<string, any> = {};
 
@@ -22,7 +23,7 @@ export function wrapToolsWithPermissions(
       description: reg.description,
       inputSchema: reg.inputSchema,
       execute: async (input: any) => {
-        const decision = permissions.check(reg.name);
+        const decision = permissions.evaluate(reg.name, input ?? {}, channelType);
 
         if (decision === "deny") {
           return { error: `Tool "${reg.name}" is denied by configuration.` };
@@ -35,6 +36,14 @@ export function wrapToolsWithPermissions(
           }
           if (response === "trust") {
             permissions.trustForSession(reg.name);
+          }
+          if (response === "grant-dir") {
+            // Grant access to the directory containing the target path
+            const path = typeof input?.path === "string" ? input.path : null;
+            if (path) {
+              const dir = path.substring(0, path.lastIndexOf("/")) || "/";
+              permissions.grantDirectory(dir);
+            }
           }
         }
 

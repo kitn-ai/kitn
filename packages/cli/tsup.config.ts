@@ -12,7 +12,6 @@ export default defineConfig({
   sourcemap: true,
   noExternal: ["@kitnai/cli-core"],
   esbuildOptions(options) {
-    options.jsx = "automatic";
     options.conditions = ["bun", "import"];
   },
   define: {

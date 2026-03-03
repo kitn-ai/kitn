@@ -64,7 +64,6 @@ Fields:
 - `framework` — `"hono"`, `"hono-openapi"`, `"elysia"`, `"cloudflare"`, `"fastify"`, or `"express"`
 - `aliases` — where CLI installs components. `base` is the parent directory (default `src/ai`). Each component type maps to a subdirectory.
 - `registries` — named registries for `kitn add`. Each has a `url` template with `{type}/{name}.json` placeholders. Can be a string URL or an object with `url`, `homepage`, `description`. Users may have private registries (e.g. `@myteam`).
-- `chatService` — optional `{ url: string }` for custom `kitn code` service endpoint
 
 The `kitn.lock` file (auto-managed) tracks installed components with their version, files, hash, and registry source.
 

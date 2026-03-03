@@ -14,7 +14,6 @@
     "dev:api": "bun run --cwd examples/api dev",
     "dev:app": "bun run --cwd examples/app dev",
     "dev:voice": "bun run --cwd examples/voice dev",
-    "dev:chat": "bun run --cwd packages/chat-service dev",
     "dev:mcp": "bun --watch packages/mcp-server/src/index.ts",
     "dev:cli": "bun run --cwd packages/cli-core build && bun run --cwd packages/cli build && bun run packages/cli/dist/index.js",
 

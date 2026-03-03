@@ -37,6 +37,11 @@ export * from "./utils/component-resolver.js";
 export * from "./rules/template.js";
 export * from "./rules/sections.js";
 
+// Templates
+export * from "./templates/tar.js";
+export * from "./templates/github.js";
+export * from "./templates/fetcher.js";
+
 // Commands
 export * from "./commands/create.js";
 export * from "./commands/link.js";

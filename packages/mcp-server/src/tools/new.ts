@@ -11,6 +11,7 @@ export function registerNewTool(server: McpServer) {
     runtime?: string;
     provider?: string;
     apiKey?: string;
+    template?: string;
   }>(
     server,
     "kitn_new",
@@ -40,9 +41,15 @@ export function registerNewTool(server: McpServer) {
           .string()
           .optional()
           .describe("API key for the selected provider (written to .env)"),
+        template: z
+          .string()
+          .optional()
+          .describe(
+            "Custom template URL (e.g. github:user/repo, https://github.com/user/repo/tree/main/subdir)",
+          ),
       },
     },
-    async ({ name, path, framework, runtime, provider, apiKey }) => {
+    async ({ name, path, framework, runtime, provider, apiKey, template }) => {
       try {
         const result = await newProject({
           name,
@@ -51,6 +58,7 @@ export function registerNewTool(server: McpServer) {
           runtime,
           provider,
           apiKey,
+          template,
         });
 
         const providerDef = PROVIDERS[provider ?? "openrouter"];

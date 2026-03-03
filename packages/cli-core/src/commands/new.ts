@@ -1,11 +1,14 @@
 import { readdir, readFile, writeFile, mkdir, stat } from "fs/promises";
 import { join, relative, basename } from "path";
-import { fileURLToPath } from "url";
 import { initProject, type InitResult } from "./init.js";
 import { addComponents } from "./add.js";
 import { resolveRoutesAlias } from "../types/config.js";
 import { generateRulesFiles } from "./rules.js";
 import { PROVIDERS, VALID_PROVIDERS } from "./providers.js";
+import {
+  fetchBuiltinTemplate,
+  fetchCustomTemplate,
+} from "../templates/fetcher.js";
 export type { ProviderDef } from "./providers.js";
 export { PROVIDERS, VALID_PROVIDERS } from "./providers.js";
 
@@ -28,6 +31,7 @@ export interface NewProjectOpts {
   runtime?: string; // default: "bun"
   provider?: string; // default: "openrouter"
   apiKey?: string; // optional — writes .env with real key
+  template?: string; // custom template URL (github:user/repo)
 }
 
 export interface NewProjectResult {
@@ -37,40 +41,6 @@ export interface NewProjectResult {
   filesCreated: string[];
   npmDeps: string[];
   npmDevDeps: string[];
-}
-
-// ---------------------------------------------------------------------------
-// Template resolution
-// ---------------------------------------------------------------------------
-
-/**
- * Resolve the absolute path to a template directory.
- *
- * Strategy: walk up from this file's directory until we find a directory
- * containing `templates/<name>/package.json`. Works in:
- * - Dev: bun runs from source, walks up to repo root
- * - Dist: templates are copied to dist/templates/ during build
- */
-async function resolveTemplatePath(templateName: string): Promise<string> {
-  const thisFile = fileURLToPath(import.meta.url);
-  let dir = join(thisFile, "..");
-
-  for (let i = 0; i < 10; i++) {
-    const candidate = join(dir, "templates", templateName);
-    try {
-      const s = await stat(join(candidate, "package.json"));
-      if (s.isFile()) return candidate;
-    } catch {
-      // not found, keep walking
-    }
-    const parent = join(dir, "..");
-    if (parent === dir) break; // reached filesystem root
-    dir = parent;
-  }
-
-  throw new Error(
-    `Could not find template "${templateName}". Looked for templates/${templateName}/package.json`,
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -122,19 +92,22 @@ export async function newProject(
     runtime = "bun",
     provider: providerKey = "openrouter",
     apiKey,
+    template: customTemplate,
   } = opts;
   let { name } = opts;
 
-  // Validate provider
-  const providerDef = PROVIDERS[providerKey];
-  if (!providerDef) {
+  const isCustom = !!customTemplate;
+
+  // Validate provider (only for built-in templates)
+  const providerDef = !isCustom ? PROVIDERS[providerKey] : undefined;
+  if (!isCustom && !providerDef) {
     throw new Error(
       `Unknown provider: "${providerKey}". Available: ${VALID_PROVIDERS.join(", ")}`,
     );
   }
 
-  // Validate template
-  if (!VALID_TEMPLATES.includes(templateName as Template)) {
+  // Validate template (only for built-in templates)
+  if (!isCustom && !VALID_TEMPLATES.includes(templateName as Template)) {
     throw new Error(
       `Unknown template: "${templateName}". Available: ${VALID_TEMPLATES.join(", ")}`,
     );
@@ -177,80 +150,94 @@ export async function newProject(
     }
   }
 
-  // Copy template
-  const templatePath = await resolveTemplatePath(templateName);
-  const replacements: Record<string, string> = {
-    "{{name}}": name,
-    "{{provider_package}}": providerDef.package,
-    "{{provider_package_version}}": providerDef.packageVersion,
-    "{{provider_import}}": providerDef.importStatement,
-    "{{provider_call}}": providerDef.providerCall,
-    "{{api_key_env}}": providerDef.envVar,
-    "{{api_key_placeholder}}": providerDef.envPlaceholder,
-    "{{api_key_url}}": providerDef.envUrl,
-    "{{default_model}}": providerDef.defaultModel,
-  };
-  const filesCreated = await copyDir(templatePath, projectPath, replacements);
+  // Fetch template (GitHub with local fallback for built-in, GitHub-only for custom)
+  const fetched = isCustom
+    ? await fetchCustomTemplate(customTemplate)
+    : await fetchBuiltinTemplate(templateName);
 
-  // Create .env from .env.example (with real key if provided)
-  const envExamplePath = join(projectPath, ".env.example");
-  const envPath = join(projectPath, ".env");
   try {
-    let envContent = await readFile(envExamplePath, "utf-8");
-    if (apiKey) {
-      envContent = envContent.replace(providerDef.envPlaceholder, apiKey);
+    // Copy template with placeholder replacements (empty for custom templates)
+    const replacements: Record<string, string> = isCustom
+      ? { "{{name}}": name }
+      : {
+          "{{name}}": name,
+          "{{provider_package}}": providerDef!.package,
+          "{{provider_package_version}}": providerDef!.packageVersion,
+          "{{provider_import}}": providerDef!.importStatement,
+          "{{provider_call}}": providerDef!.providerCall,
+          "{{api_key_env}}": providerDef!.envVar,
+          "{{api_key_placeholder}}": providerDef!.envPlaceholder,
+          "{{api_key_url}}": providerDef!.envUrl,
+          "{{default_model}}": providerDef!.defaultModel,
+        };
+    const filesCreated = await copyDir(fetched.dir, projectPath, replacements);
+
+    // Create .env from .env.example (only for built-in templates)
+    if (!isCustom) {
+      const envExamplePath = join(projectPath, ".env.example");
+      const envPath = join(projectPath, ".env");
+      try {
+        let envContent = await readFile(envExamplePath, "utf-8");
+        if (apiKey) {
+          envContent = envContent.replace(providerDef!.envPlaceholder, apiKey);
+        }
+        await writeFile(envPath, envContent);
+        filesCreated.push(envPath);
+      } catch {
+        // .env.example might not exist for some templates — skip
+      }
     }
-    await writeFile(envPath, envContent);
-    filesCreated.push(envPath);
-  } catch {
-    // .env.example might not exist for some templates — skip
+
+    // Map template name to framework value for initProject
+    const framework = isCustom
+      ? templateName
+      : (TEMPLATE_TO_FRAMEWORK[templateName] ?? templateName);
+
+    // Run kitn init inside the new project
+    const initResult = await initProject({
+      cwd: projectPath,
+      runtime,
+      framework,
+      provider: providerKey,
+    });
+
+    // Install core + routes adapter
+    const routesAdapter = resolveRoutesAlias(initResult.config);
+    const addResult = await addComponents({
+      components: ["core", routesAdapter],
+      cwd: projectPath,
+      overwrite: true,
+    });
+
+    // Replace the stub src/ai.ts with a re-export from the real plugin.
+    // The template ships a stub (empty router) so the app compiles before
+    // kitn init runs. Now that init has created src/ai/plugin.ts, wire it up.
+    const stubPath = join(projectPath, "src", "ai.ts");
+    try {
+      await writeFile(
+        stubPath,
+        `export { ai } from "./ai/plugin.js";\n`,
+      );
+    } catch {
+      // Template may not have the stub — skip
+    }
+
+    // Generate rules files (all tools, non-interactive)
+    try {
+      await generateRulesFiles(projectPath, initResult.config);
+    } catch {
+      // Non-fatal — rules are a nice-to-have
+    }
+
+    return {
+      projectPath,
+      framework: templateName,
+      runtime,
+      filesCreated: filesCreated.map((f) => relative(projectPath, f)),
+      npmDeps: addResult.npmDeps,
+      npmDevDeps: addResult.npmDevDeps,
+    };
+  } finally {
+    await fetched.cleanup();
   }
-
-  // Map template name to framework value for initProject
-  const framework = TEMPLATE_TO_FRAMEWORK[templateName] ?? templateName;
-
-  // Run kitn init inside the new project
-  const initResult = await initProject({
-    cwd: projectPath,
-    runtime,
-    framework,
-    provider: providerKey,
-  });
-
-  // Install core + routes adapter
-  const routesAdapter = resolveRoutesAlias(initResult.config);
-  const addResult = await addComponents({
-    components: ["core", routesAdapter],
-    cwd: projectPath,
-    overwrite: true,
-  });
-
-  // Replace the stub src/ai.ts with a re-export from the real plugin.
-  // The template ships a stub (empty router) so the app compiles before
-  // kitn init runs. Now that init has created src/ai/plugin.ts, wire it up.
-  const stubPath = join(projectPath, "src", "ai.ts");
-  try {
-    await writeFile(
-      stubPath,
-      `export { ai } from "./ai/plugin.js";\n`,
-    );
-  } catch {
-    // Template may not have the stub — skip
-  }
-
-  // Generate rules files (all tools, non-interactive)
-  try {
-    await generateRulesFiles(projectPath, initResult.config);
-  } catch {
-    // Non-fatal — rules are a nice-to-have
-  }
-
-  return {
-    projectPath,
-    framework: templateName,
-    runtime,
-    filesCreated: filesCreated.map((f) => relative(projectPath, f)),
-    npmDeps: addResult.npmDeps,
-    npmDevDeps: addResult.npmDevDeps,
-  };
 }

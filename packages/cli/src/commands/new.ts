@@ -4,6 +4,7 @@ import { newProject, VALID_TEMPLATES, PROVIDERS, VALID_PROVIDERS } from "@kitnai
 
 interface NewOptions {
   framework?: string;
+  template?: string;
   runtime?: string;
   provider?: string;
   yes?: boolean;
@@ -40,10 +41,14 @@ export async function newCommand(nameArg?: string, opts: NewOptions = {}) {
   }
 
   const useCurrentDir = name === ".";
+  const customTemplate = opts.template;
 
   // --- Resolve framework (template) ---
+  // Skip framework selection when using a custom template
   let framework: string;
-  if (opts.framework) {
+  if (customTemplate) {
+    framework = "hono"; // default; initProject still needs a framework value
+  } else if (opts.framework) {
     if (!VALID_TEMPLATES.includes(opts.framework as any)) {
       p.log.error(
         `Invalid framework: ${opts.framework}. Available: ${VALID_TEMPLATES.join(", ")}`,
@@ -147,11 +152,23 @@ export async function newCommand(nameArg?: string, opts: NewOptions = {}) {
   // --- Scaffold ---
   const displayName = useCurrentDir ? "project" : name;
   const s = p.spinner();
-  s.start(`Creating ${pc.bold(displayName)}`);
+  s.start(
+    customTemplate
+      ? `Fetching template and creating ${pc.bold(displayName)}`
+      : `Creating ${pc.bold(displayName)}`,
+  );
 
   let result;
   try {
-    result = await newProject({ name, targetDir, framework, runtime, provider, apiKey });
+    result = await newProject({
+      name,
+      targetDir,
+      framework,
+      runtime,
+      provider,
+      apiKey,
+      template: customTemplate,
+    });
   } catch (err: any) {
     s.stop(pc.red("Failed"));
     p.log.error(err.message);

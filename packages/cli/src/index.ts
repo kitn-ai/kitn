@@ -28,6 +28,7 @@ program
   .description("Create a new kitn project from a starter template")
   .argument("[name]", "project name")
   .option("-f, --framework <framework>", "template to use (hono)")
+  .option("-t, --template <url>", "custom template (github:user/repo)")
   .option("-r, --runtime <runtime>", "runtime (bun, node, deno)")
   .option("-p, --provider <provider>", "AI provider (openrouter, openai, anthropic, google)")
   .option("-y, --yes", "accept all defaults without prompting")

@@ -4,7 +4,7 @@ import { existsSync } from "fs";
 import { writeFile } from "fs/promises";
 import { homedir } from "os";
 import { join } from "path";
-import { loadConfig, saveConfig, ensureClawHome, CLAW_HOME, CONFIG_PATH } from "./config/io.js";
+import { loadConfig, saveConfig, ensureClawHome, getCredentialStore, CLAW_HOME, CONFIG_PATH } from "./config/io.js";
 import type { ClawConfig } from "./config/schema.js";
 import type { SafetyProfile } from "./permissions/profiles.js";
 
@@ -65,9 +65,11 @@ export async function setupWizard(): Promise<void> {
   // 2. API key
   let apiKey: string | undefined;
   if (NEEDS_API_KEY.has(providerType)) {
-    const currentKey = existing.provider?.type === providerType
-      ? existing.provider.apiKey
-      : undefined;
+    // Try credential store first, fall back to config file
+    const credStore = getCredentialStore();
+    const storedKey = await credStore.get(`${providerType}-api-key`);
+    const currentKey = storedKey
+      ?? (existing.provider?.type === providerType ? existing.provider.apiKey : undefined);
 
     const maskedCurrent = currentKey
       ? `${currentKey.slice(0, 4)}...${currentKey.slice(-4)}`
@@ -214,6 +216,12 @@ export async function setupWizard(): Promise<void> {
   };
 
   await saveConfig(config);
+
+  // Store API key in credential store (OS keychain with file fallback)
+  if (apiKey) {
+    const credStore = getCredentialStore();
+    await credStore.set(`${providerType}-api-key`, apiKey);
+  }
 
   p.log.success(`Config saved to ${pc.dim(CONFIG_PATH)}`);
   p.log.info(

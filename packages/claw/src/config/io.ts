@@ -2,6 +2,7 @@ import { readFile, writeFile, mkdir, chmod } from "fs/promises";
 import { join } from "path";
 import { homedir } from "os";
 import { parseConfig, type ClawConfig } from "./schema.js";
+import { CredentialStore } from "./credentials.js";
 
 export const CLAW_HOME = join(homedir(), ".kitnclaw");
 export const CONFIG_PATH = join(CLAW_HOME, "kitnclaw.json");
@@ -46,4 +47,10 @@ export async function saveConfig(config: ClawConfig): Promise<void> {
   } catch {
     // Non-critical
   }
+}
+
+export function getCredentialStore(): CredentialStore {
+  return new CredentialStore({
+    path: join(CLAW_HOME, "credentials"),
+  });
 }

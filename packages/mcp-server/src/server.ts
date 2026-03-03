@@ -20,6 +20,7 @@ import {
   registerRegistryAddTool,
 } from "./tools/registry.js";
 import { registerHelpTool } from "./tools/help.js";
+import { registerTryTools } from "./tools/try.js";
 
 // Resources
 import { registerRulesResource } from "./resources/rules.js";
@@ -56,6 +57,9 @@ export function createServer() {
 
   // Help
   registerHelpTool(server);
+
+  // Try (interactive testing)
+  registerTryTools(server);
 
   // Resources
   registerRulesResource(server);

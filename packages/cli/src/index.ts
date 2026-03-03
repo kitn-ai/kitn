@@ -198,6 +198,15 @@ registry
     await registryListCommand();
   });
 
+program
+  .command("try")
+  .description("Interactively test a tool or agent")
+  .argument("[name]", "tool or agent name")
+  .action(async (name?: string) => {
+    const { tryCommand } = await import("./commands/try.js");
+    await tryCommand(name);
+  });
+
 const config = program
   .command("config")
   .description("Manage user-level configuration");

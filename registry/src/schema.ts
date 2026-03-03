@@ -50,6 +50,7 @@ export const registryItemSchema = z.object({
   categories: z.array(z.string()).optional(),
   slot: z.string().optional().describe("Exclusive slot — components sharing a slot value conflict at install time"),
   version: z.string().optional().default("1.0.0"),
+  integrity: z.string().optional(),
   updatedAt: z.string().optional(),
   changelog: z.array(changelogEntrySchema).optional(),
 });
@@ -79,13 +80,14 @@ export type RegistryIndex = z.infer<typeof registryIndexSchema>;
 
 // Installed component tracking
 export const installedComponentSchema = z.object({
-  registry: z.string().optional(),
-  type: componentType.optional(),
+  registry: z.string(),
+  type: componentType,
   slot: z.string().optional(),
   version: z.string(),
   installedAt: z.string(),
   files: z.array(z.string()),
-  hash: z.string(),
+  integrity: z.string(),
+  resolved: z.string(),
   registryDependencies: z.array(z.string()).optional(),
 });
 export type InstalledComponent = z.infer<typeof installedComponentSchema>;
@@ -114,8 +116,12 @@ export const configSchema = z.object({
 export type KitnConfig = z.infer<typeof configSchema>;
 
 // kitn.lock — installed component tracking (separate from config)
-export const lockSchema = z.record(z.string(), installedComponentSchema);
-export type LockFile = z.infer<typeof lockSchema>;
+export const lockComponentsSchema = z.record(z.string(), installedComponentSchema);
+export const lockSchema = z.object({
+  lockfileVersion: z.literal(1),
+  components: lockComponentsSchema,
+});
+export type LockFile = z.infer<typeof lockComponentsSchema>;
 
 // Map component type to alias key (excludes kitn:package which uses installDir)
 export const typeToAliasKey: Partial<Record<ComponentType, keyof KitnConfig["aliases"]>> = {

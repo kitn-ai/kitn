@@ -67,11 +67,11 @@ export async function installFromLock(opts: InstallFromLockOpts): Promise<Instal
 
   for (const [name, entry] of entries) {
     try {
-      // Check if all files exist with matching hash
-      const filesExist = await checkFilesMatchHash(cwd, entry.files, entry.hash, entry.type);
+      // Check if all files exist with matching integrity
+      const filesExist = await checkFilesMatchIntegrity(cwd, entry.files, entry.integrity);
 
       if (filesExist) {
-        skipped.push({ name, reason: "files exist with matching hash" });
+        skipped.push({ name, reason: "files exist with matching integrity" });
         continue;
       }
 
@@ -84,8 +84,8 @@ export async function installFromLock(opts: InstallFromLockOpts): Promise<Instal
       }
 
       // Fetch the component at its exact version
-      const registry = entry.registry ?? "@kitn";
-      const type = entry.type ?? "kitn:agent";
+      const registry = entry.registry;
+      const type = entry.type;
       const dir = typeToDir[type];
       const version = entry.version;
 
@@ -143,11 +143,10 @@ export async function installFromLock(opts: InstallFromLockOpts): Promise<Instal
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function checkFilesMatchHash(
+async function checkFilesMatchIntegrity(
   cwd: string,
   files: string[],
-  expectedHash: string,
-  type?: string,
+  expectedIntegrity: string,
 ): Promise<boolean> {
   try {
     const contents: string[] = [];
@@ -156,8 +155,7 @@ async function checkFilesMatchHash(
       const content = await readFile(fullPath, "utf-8");
       contents.push(content);
     }
-    const hash = contentHash(contents.join("\n"));
-    return hash === expectedHash;
+    return contentHash(contents.join("\n")) === expectedIntegrity;
   } catch {
     return false;
   }

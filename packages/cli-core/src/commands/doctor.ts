@@ -129,7 +129,7 @@ export async function doctorCheck(opts: DoctorCheckOpts): Promise<DoctorResult> 
     });
   }
 
-  // Check 4: Content hashes match lock
+  // Check 4: Content integrity matches lock
   const modifiedComponents: string[] = [];
   for (const [name, entry] of lockEntries) {
     try {
@@ -139,8 +139,7 @@ export async function doctorCheck(opts: DoctorCheckOpts): Promise<DoctorResult> 
         const content = await readFile(fullPath, "utf-8");
         contents.push(content);
       }
-      const hash = contentHash(contents.join("\n"));
-      if (hash !== entry.hash) {
+      if (contentHash(contents.join("\n")) !== entry.integrity) {
         modifiedComponents.push(name);
       }
     } catch {
@@ -150,13 +149,13 @@ export async function doctorCheck(opts: DoctorCheckOpts): Promise<DoctorResult> 
 
   if (modifiedComponents.length === 0 && lockEntries.length > 0) {
     checks.push({
-      name: "Content hashes",
+      name: "Integrity",
       status: "pass",
-      message: "All component hashes match lock file",
+      message: "All component integrity hashes match lock file",
     });
   } else if (modifiedComponents.length > 0) {
     checks.push({
-      name: "Content hashes",
+      name: "Integrity",
       status: "warn",
       message: `${modifiedComponents.length} component(s) modified locally`,
       details: modifiedComponents.map((c) => `${c} (local modifications detected)`),

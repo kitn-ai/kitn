@@ -109,31 +109,44 @@ describe("configSchema", () => {
 describe("lockSchema", () => {
   it("validates a lock file with installed components", () => {
     const lock = {
-      "weather-agent": {
-        registry: "@kitn",
-        type: "kitn:agent",
-        version: "1.0.0",
-        installedAt: "2026-02-24T10:30:00Z",
-        files: ["src/agents/weather-agent.ts"],
-        hash: "a1b2c3d4",
+      lockfileVersion: 1 as const,
+      components: {
+        "weather-agent": {
+          registry: "@kitn",
+          type: "kitn:agent",
+          version: "1.0.0",
+          installedAt: "2026-02-24T10:30:00Z",
+          files: ["src/agents/weather-agent.ts"],
+          integrity: "sha256:abc123",
+          resolved: "https://kitn-ai.github.io/kitn/r/agents/weather-agent.json",
+        },
       },
     };
     expect(lockSchema.parse(lock)).toBeDefined();
   });
 
-  it("validates a lock entry without optional type field", () => {
-    const lock = {
-      "weather-agent": {
-        version: "1.0.0",
-        installedAt: "2026-02-24T10:30:00Z",
-        files: ["src/agents/weather-agent.ts"],
-        hash: "a1b2c3d4",
-      },
-    };
-    expect(lockSchema.parse(lock)).toBeDefined();
+  it("rejects a lock entry without required registry field", () => {
+    expect(() =>
+      lockSchema.parse({
+        lockfileVersion: 1,
+        components: {
+          "weather-agent": {
+            type: "kitn:agent",
+            version: "1.0.0",
+            installedAt: "2026-02-24T10:30:00Z",
+            files: ["src/agents/weather-agent.ts"],
+            integrity: "sha256:abc123",
+            resolved: "https://example.com",
+          },
+        },
+      })
+    ).toThrow();
   });
 
-  it("validates an empty lock file", () => {
-    expect(lockSchema.parse({})).toEqual({});
+  it("validates a lock file with no components", () => {
+    expect(lockSchema.parse({ lockfileVersion: 1, components: {} })).toEqual({
+      lockfileVersion: 1,
+      components: {},
+    });
   });
 });

@@ -93,38 +93,46 @@ describe("config schema rejects installed field", () => {
 });
 
 describe("lock schema", () => {
-  test("lock entry accepts registry field", () => {
+  test("lock entry with all required fields", () => {
     const { lockSchema } = require("../src/utils/config.js");
     const lock = {
-      "weather-agent": {
-        registry: "@kitn",
-        type: "kitn:agent",
-        version: "1.0.0",
-        installedAt: "2026-02-25T00:00:00Z",
-        files: ["src/ai/agents/weather-agent.ts"],
-        hash: "abc12345",
+      lockfileVersion: 1,
+      components: {
+        "weather-agent": {
+          registry: "@kitn",
+          type: "kitn:agent",
+          version: "1.0.0",
+          installedAt: "2026-02-25T00:00:00Z",
+          files: ["src/ai/agents/weather-agent.ts"],
+          integrity: "sha256:abc123",
+          resolved: "https://kitn-ai.github.io/kitn/r/agents/weather-agent.json",
+        },
       },
     };
     expect(() => lockSchema.parse(lock)).not.toThrow();
   });
 
-  test("registry field is optional", () => {
+  test("rejects lock entry without required registry", () => {
     const { lockSchema } = require("../src/utils/config.js");
     const lock = {
-      "weather-agent": {
-        type: "kitn:agent",
-        version: "1.0.0",
-        installedAt: "2026-02-25T00:00:00Z",
-        files: ["src/agents/weather-agent.ts"],
-        hash: "abc12345",
+      lockfileVersion: 1,
+      components: {
+        "weather-agent": {
+          type: "kitn:agent",
+          version: "1.0.0",
+          installedAt: "2026-02-25T00:00:00Z",
+          files: ["src/agents/weather-agent.ts"],
+          integrity: "sha256:abc123",
+          resolved: "https://example.com",
+        },
       },
     };
-    expect(() => lockSchema.parse(lock)).not.toThrow();
+    expect(() => lockSchema.parse(lock)).toThrow();
   });
 
   test("empty lock is valid", () => {
     const { lockSchema } = require("../src/utils/config.js");
-    expect(() => lockSchema.parse({})).not.toThrow();
+    expect(() => lockSchema.parse({ lockfileVersion: 1, components: {} })).not.toThrow();
   });
 });
 

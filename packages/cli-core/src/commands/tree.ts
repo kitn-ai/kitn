@@ -74,7 +74,7 @@ export async function componentTree(opts: ComponentTreeOpts): Promise<ComponentT
 
   function buildNode(name: string): TreeNode {
     const entry = lock[name];
-    const type = entry?.type?.replace("kitn:", "") ?? "unknown";
+    const type = entry?.type.replace("kitn:", "") ?? "unknown";
     const version = entry?.version ?? "?";
     const deps = adjacency.get(name) ?? [];
 

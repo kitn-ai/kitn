@@ -64,6 +64,7 @@ export const registryItemSchema = z.object({
   categories: z.array(z.string()).optional(),
   slot: z.string().optional(),
   version: z.string().optional(),
+  integrity: z.string().optional(),
   updatedAt: z.string().optional(),
   changelog: z.array(changelogEntrySchema).optional(),
 });

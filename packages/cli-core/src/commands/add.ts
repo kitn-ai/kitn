@@ -8,6 +8,7 @@ import type { KitnConfig, LockFile } from "../types/config.js";
 import { typeToDir } from "../types/registry.js";
 import type { RegistryItem, ComponentType, RegistryIndex } from "../types/registry.js";
 import { RegistryFetcher } from "../registry/fetcher.js";
+import type { TypeDir } from "../registry/fetcher.js";
 import { resolveDependencies } from "../registry/resolver.js";
 import { resolveTypeAlias, toComponentType } from "../utils/type-aliases.js";
 import { parseComponentRef } from "../utils/parse-ref.js";
@@ -479,7 +480,7 @@ export async function addComponents(opts: AddComponentsOpts): Promise<AddResult>
       const existingInstall = lock[item.name];
       if (existingInstall && item.type === "kitn:package") {
         const allContent = item.files.map((f) => f.content).join("\n");
-        if (contentHash(allContent) === existingInstall.hash) {
+        if (contentHash(allContent) === existingInstall.integrity) {
           continue;
         }
       }
@@ -534,6 +535,8 @@ export async function addComponents(opts: AddComponentsOpts): Promise<AddResult>
         const allContent = item.files.map((f) => f.content).join("\n");
         const ref = refs.find((r) => r.name === item.name) ?? { namespace: "@kitn", name: item.name, version: undefined };
         const installedKey = ref.namespace === "@kitn" ? item.name : `${ref.namespace}/${item.name}`;
+        const dir = typeToDir[item.type] as TypeDir;
+        const resolvedUrl = fetcher.resolveUrl(item.name, dir, ref.namespace, ref.version);
         lock[installedKey] = {
           registry: ref.namespace,
           type: item.type,
@@ -541,7 +544,8 @@ export async function addComponents(opts: AddComponentsOpts): Promise<AddResult>
           version: item.version ?? "1.0.0",
           installedAt: new Date().toISOString(),
           files: item.files.map((f) => join(baseDir, f.path)),
-          hash: contentHash(allContent),
+          integrity: contentHash(allContent),
+          resolved: resolvedUrl,
           registryDependencies: item.registryDependencies,
         };
 
@@ -605,6 +609,8 @@ export async function addComponents(opts: AddComponentsOpts): Promise<AddResult>
           return rewriteKitnImports(f.content, item.type, fn, config.aliases);
         }).join("\n");
         const installedKey = ns === "@kitn" ? item.name : `${ns}/${item.name}`;
+        const dir = typeToDir[item.type] as TypeDir;
+        const resolvedUrl = fetcher.resolveUrl(item.name, dir, ns, ref.version);
         lock[installedKey] = {
           registry: ns,
           type: item.type,
@@ -615,7 +621,8 @@ export async function addComponents(opts: AddComponentsOpts): Promise<AddResult>
             const fileName = f.path.split("/").pop()!;
             return getInstallPath(config, item.type as Exclude<ComponentType, "kitn:package">, fileName, ns);
           }),
-          hash: contentHash(allContent),
+          integrity: contentHash(allContent),
+          resolved: resolvedUrl,
           registryDependencies: item.registryDependencies,
         };
 

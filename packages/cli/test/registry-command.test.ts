@@ -155,7 +155,8 @@ describe("registryRemoveCommand", () => {
         version: "1.0.0",
         installedAt: new Date().toISOString(),
         files: ["src/ai/agents/custom-agent.ts"],
-        hash: "abc123",
+        integrity: "sha256:abc123",
+        resolved: "https://myteam.dev/r/agents/custom-agent.json",
       },
     });
     const result = await registryRemoveCommand("@myteam", { cwd: dir });

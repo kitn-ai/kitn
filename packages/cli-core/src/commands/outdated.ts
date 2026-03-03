@@ -79,8 +79,8 @@ export async function outdatedComponents(opts: OutdatedComponentsOpts): Promise<
   let unknown = 0;
 
   for (const [name, entry] of entries) {
-    const registry = entry.registry ?? "@kitn";
-    const type = entry.type?.replace("kitn:", "") ?? "unknown";
+    const registry = entry.registry;
+    const type = entry.type.replace("kitn:", "");
     const installedVersion = entry.version;
 
     const index = indexCache.get(registry);

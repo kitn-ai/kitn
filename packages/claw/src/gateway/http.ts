@@ -13,9 +13,13 @@ export interface HttpServer {
   stop(): void;
 }
 
+interface WebSocketData {
+  sessionId?: string;
+}
+
 /**
  * Create a lightweight HTTP server using Bun.serve.
- * Provides health, status, message, and SSE stream endpoints.
+ * Provides health, status, message, SSE stream, and WebSocket endpoints.
  */
 export function createHttpServer(opts: HttpServerOptions): HttpServer {
   const { authToken, getStatus, onMessage } = opts;
@@ -39,7 +43,7 @@ export function createHttpServer(opts: HttpServerOptions): HttpServer {
     return null;
   }
 
-  async function handleRequest(req: Request): Promise<Response> {
+  async function handleHttpRequest(req: Request): Promise<Response> {
     const url = new URL(req.url);
     const { pathname } = url;
 
@@ -140,10 +144,76 @@ export function createHttpServer(opts: HttpServerOptions): HttpServer {
 
   return {
     start() {
-      bunServer = Bun.serve({
+      bunServer = Bun.serve<WebSocketData>({
         port: opts.port,
         hostname: opts.hostname ?? "127.0.0.1",
-        fetch: handleRequest,
+        fetch(req, server) {
+          const url = new URL(req.url);
+
+          // WebSocket upgrade at /ws
+          if (url.pathname === "/ws") {
+            // Check auth token from query param if configured
+            if (authToken) {
+              const token = url.searchParams.get("token");
+              if (token !== authToken) {
+                return new Response(JSON.stringify({ error: "Unauthorized" }), {
+                  status: 401,
+                  headers: { "Content-Type": "application/json" },
+                });
+              }
+            }
+
+            const sessionId = url.searchParams.get("sessionId") ?? undefined;
+            const upgraded = server.upgrade(req, {
+              data: { sessionId },
+            });
+            if (upgraded) return undefined;
+            return new Response(JSON.stringify({ error: "WebSocket upgrade failed" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+
+          // Delegate to HTTP handler
+          return handleHttpRequest(req);
+        },
+        websocket: {
+          async message(ws, message) {
+            const raw = typeof message === "string" ? message : message.toString();
+
+            let parsed: any;
+            try {
+              parsed = JSON.parse(raw);
+            } catch {
+              ws.send(JSON.stringify({ error: "Invalid JSON" }));
+              return;
+            }
+
+            const { sessionId, text } = parsed;
+            if (!sessionId || !text) {
+              ws.send(JSON.stringify({ error: "Missing sessionId or text" }));
+              return;
+            }
+
+            if (!onMessage) {
+              ws.send(JSON.stringify({ error: "No message handler configured" }));
+              return;
+            }
+
+            try {
+              const response = await onMessage(sessionId, text);
+              ws.send(JSON.stringify(response));
+            } catch (err: any) {
+              ws.send(JSON.stringify({ error: err.message ?? "Internal error" }));
+            }
+          },
+          open(_ws) {
+            // Connection opened
+          },
+          close(_ws) {
+            // Connection closed
+          },
+        },
       });
       return { port: bunServer.port! };
     },

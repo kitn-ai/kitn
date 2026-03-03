@@ -43,6 +43,15 @@ program
   });
 
 program
+  .command("connect <url>")
+  .description("Connect to a remote KitnClaw gateway")
+  .option("-t, --token <token>", "Authentication token")
+  .action(async (url: string, opts: { token?: string }) => {
+    const { connectRemote } = await import("./gateway/connect.js");
+    await connectRemote(url, opts.token);
+  });
+
+program
   .command("reset")
   .description("Clear sessions, memory, or workspace data")
   .option("--sessions", "Clear conversation sessions")

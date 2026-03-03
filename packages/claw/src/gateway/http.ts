@@ -1,4 +1,5 @@
 import type { OutboundMessage } from "../channels/types.js";
+import { WEB_HTML } from "../web/assets.js";
 
 export interface HttpServerOptions {
   port: number;
@@ -44,6 +45,14 @@ export function createHttpServer(opts: HttpServerOptions): HttpServer {
   async function handleHttpRequest(req: Request): Promise<Response> {
     const url = new URL(req.url);
     const { pathname } = url;
+
+    // GET / — serve web chat UI (no auth)
+    if (pathname === "/" && req.method === "GET") {
+      return new Response(WEB_HTML, {
+        status: 200,
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    }
 
     // GET /health — no auth
     if (pathname === "/health" && req.method === "GET") {

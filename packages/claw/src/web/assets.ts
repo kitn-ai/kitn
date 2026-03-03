@@ -1,0 +1,366 @@
+/**
+ * Embedded web chat UI for KitnClaw.
+ *
+ * The HTML, CSS, and JS are all inlined as a single string constant so the
+ * HTTP server can serve the UI without any static file dependencies.
+ */
+
+export const WEB_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KitnClaw</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;
+  --fg:#c9d1d9;--fg2:#8b949e;
+  --blue:#1f6feb;--green:#238636;--red:#da3633;
+  --font:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --radius:8px;
+}
+html,body{height:100%;background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.5}
+#app{display:flex;flex-direction:column;height:100%;max-width:720px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--bg3);flex-shrink:0}
+header h1{font-size:15px;font-weight:600;color:var(--green)}
+header .sid{font-size:11px;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
+#messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:85%;padding:10px 14px;border-radius:var(--radius);word-wrap:break-word;font-size:13px}
+.msg.user{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:2px}
+.msg.assistant{align-self:flex-start;background:var(--bg2);border:1px solid var(--bg3);border-bottom-left-radius:2px}
+.msg.assistant p{margin:0 0 6px}
+.msg.assistant p:last-child{margin-bottom:0}
+.msg.assistant code{background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:12px}
+.msg.assistant pre{background:var(--bg);border:1px solid var(--bg3);border-radius:4px;padding:8px 10px;overflow-x:auto;margin:6px 0}
+.msg.assistant pre code{background:none;padding:0}
+.msg.assistant a{color:var(--blue);text-decoration:underline}
+.msg.assistant ul,.msg.assistant ol{margin:4px 0 4px 20px}
+.msg.assistant strong{font-weight:700}
+.msg.assistant em{font-style:italic}
+.tool-card{background:var(--bg);border:1px solid var(--bg3);border-radius:4px;margin:8px 0;font-size:12px}
+.tool-header{display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;user-select:none}
+.tool-header .icon{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tool-header .icon.ok{background:var(--green)}
+.tool-header .icon.pending{background:var(--fg2)}
+.tool-header .name{font-weight:600;color:var(--fg)}
+.tool-header .chevron{margin-left:auto;color:var(--fg2);transition:transform .15s}
+.tool-header .chevron.open{transform:rotate(90deg)}
+.tool-body{display:none;padding:6px 10px;border-top:1px solid var(--bg3);white-space:pre-wrap;color:var(--fg2);max-height:200px;overflow:auto}
+.tool-body.open{display:block}
+.typing{align-self:flex-start;padding:12px 18px}
+.typing span{display:inline-block;width:6px;height:6px;background:var(--fg2);border-radius:50%;margin:0 2px;animation:bounce .6s infinite alternate}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{to{opacity:.3;transform:translateY(-4px)}}
+#input-bar{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--bg3);flex-shrink:0;background:var(--bg)}
+#input-bar textarea{flex:1;background:var(--bg2);color:var(--fg);border:1px solid var(--bg3);border-radius:var(--radius);padding:8px 12px;font-family:var(--font);font-size:13px;resize:none;min-height:38px;max-height:120px;line-height:1.4}
+#input-bar textarea:focus{outline:none;border-color:var(--blue)}
+#input-bar button{background:var(--blue);color:#fff;border:none;border-radius:var(--radius);padding:0 16px;font-family:var(--font);font-size:13px;cursor:pointer;flex-shrink:0}
+#input-bar button:disabled{opacity:.4;cursor:default}
+#input-bar button:hover:not(:disabled){filter:brightness(1.15)}
+#auth-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:10}
+#auth-box{background:var(--bg2);border:1px solid var(--bg3);border-radius:var(--radius);padding:24px;width:320px;max-width:90vw}
+#auth-box h2{font-size:15px;margin-bottom:12px;color:var(--green)}
+#auth-box p{font-size:12px;color:var(--fg2);margin-bottom:12px}
+#auth-box input{width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--bg3);border-radius:4px;padding:8px 10px;font-family:var(--font);font-size:13px;margin-bottom:12px}
+#auth-box input:focus{outline:none;border-color:var(--blue)}
+#auth-box button{background:var(--blue);color:#fff;border:none;border-radius:4px;padding:8px 16px;font-family:var(--font);font-size:13px;cursor:pointer;width:100%}
+.hidden{display:none!important}
+@media(max-width:480px){
+  .msg{max-width:92%}
+  header .sid{max-width:100px}
+  #input-bar{padding:8px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>KitnClaw</h1>
+    <span class="sid" id="sid-display"></span>
+  </header>
+  <div id="messages" role="log" aria-live="polite" aria-label="Chat messages"></div>
+  <div id="input-bar">
+    <textarea id="input" placeholder="Type a message..." rows="1" aria-label="Message input"></textarea>
+    <button id="send-btn" type="button" aria-label="Send message">Send</button>
+  </div>
+</div>
+<div id="auth-overlay" class="hidden">
+  <div id="auth-box" role="dialog" aria-label="Authentication required">
+    <h2>Authentication Required</h2>
+    <p>This server requires an auth token. Enter it below.</p>
+    <input id="auth-input" type="password" placeholder="Bearer token" aria-label="Auth token">
+    <button id="auth-btn" type="button">Connect</button>
+  </div>
+</div>
+<script>
+(function(){
+  "use strict";
+
+  // --- State ---
+  var sessionId = "s-" + Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+  var token = localStorage.getItem("claw_token") || "";
+  var sending = false;
+  var eventSource = null;
+
+  // --- DOM refs ---
+  var messagesEl = document.getElementById("messages");
+  var inputEl = document.getElementById("input");
+  var sendBtn = document.getElementById("send-btn");
+  var sidDisplay = document.getElementById("sid-display");
+  var authOverlay = document.getElementById("auth-overlay");
+  var authInput = document.getElementById("auth-input");
+  var authBtn = document.getElementById("auth-btn");
+
+  sidDisplay.textContent = sessionId;
+
+  // --- Minimal markdown ---
+  function md(text) {
+    if (!text) return "";
+    // Escape HTML
+    var s = text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    // Code blocks
+    s = s.replace(/\`\`\`([\\s\\S]*?)\`\`\`/g, function(_,c){ return "<pre><code>"+c.trim()+"</code></pre>"; });
+    // Inline code
+    s = s.replace(/\`([^\`]+)\`/g, "<code>$1</code>");
+    // Bold
+    s = s.replace(/\\*\\*(.+?)\\*\\*/g, "<strong>$1</strong>");
+    // Italic
+    s = s.replace(/\\*(.+?)\\*/g, "<em>$1</em>");
+    // Links
+    s = s.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    // Unordered lists
+    s = s.replace(/(^|\\n)- (.+)/g, function(_,pre,item){ return pre+"<li>"+item+"</li>"; });
+    s = s.replace(/(<li>.*<\\/li>)/g, "<ul>$1</ul>");
+    // Remove duplicate nested <ul>
+    s = s.replace(/<\\/ul>\\s*<ul>/g, "");
+    // Paragraphs — split on double newline
+    s = s.replace(/\\n\\n/g, "</p><p>");
+    s = "<p>" + s + "</p>";
+    // Single newlines to <br>
+    s = s.replace(/\\n/g, "<br>");
+    // Clean empty paragraphs
+    s = s.replace(/<p><\\/p>/g, "");
+    return s;
+  }
+
+  // --- UI helpers ---
+  function scrollBottom() {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function addUserMsg(text) {
+    var el = document.createElement("div");
+    el.className = "msg user";
+    el.setAttribute("role", "article");
+    el.setAttribute("aria-label", "You said");
+    el.textContent = text;
+    messagesEl.appendChild(el);
+    scrollBottom();
+  }
+
+  function addAssistantMsg(data) {
+    // Remove typing indicator if present
+    removeTyping();
+    var el = document.createElement("div");
+    el.className = "msg assistant";
+    el.setAttribute("role", "article");
+    el.setAttribute("aria-label", "Assistant said");
+    el.innerHTML = md(data.text);
+
+    if (data.toolCalls && data.toolCalls.length) {
+      for (var i = 0; i < data.toolCalls.length; i++) {
+        el.appendChild(buildToolCard(data.toolCalls[i]));
+      }
+    }
+    messagesEl.appendChild(el);
+    scrollBottom();
+  }
+
+  function buildToolCard(tc) {
+    var card = document.createElement("div");
+    card.className = "tool-card";
+    var header = document.createElement("div");
+    header.className = "tool-header";
+    header.setAttribute("role", "button");
+    header.setAttribute("tabindex", "0");
+    header.setAttribute("aria-expanded", "false");
+    header.setAttribute("aria-label", "Tool: " + tc.name);
+    var icon = document.createElement("span");
+    icon.className = "icon " + (tc.result !== undefined ? "ok" : "pending");
+    var name = document.createElement("span");
+    name.className = "name";
+    name.textContent = tc.name;
+    var chevron = document.createElement("span");
+    chevron.className = "chevron";
+    chevron.textContent = "\\u25B6";
+    header.appendChild(icon);
+    header.appendChild(name);
+    header.appendChild(chevron);
+
+    var body = document.createElement("div");
+    body.className = "tool-body";
+    var detail = "Input: " + JSON.stringify(tc.input, null, 2);
+    if (tc.result !== undefined) {
+      detail += "\\n\\nResult: " + (typeof tc.result === "string" ? tc.result : JSON.stringify(tc.result, null, 2));
+    }
+    body.textContent = detail;
+
+    function toggle() {
+      var open = body.classList.toggle("open");
+      chevron.classList.toggle("open", open);
+      header.setAttribute("aria-expanded", String(open));
+    }
+    header.addEventListener("click", toggle);
+    header.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); }
+    });
+
+    card.appendChild(header);
+    card.appendChild(body);
+    return card;
+  }
+
+  function showTyping() {
+    if (document.getElementById("typing")) return;
+    var el = document.createElement("div");
+    el.className = "typing";
+    el.id = "typing";
+    el.setAttribute("aria-label", "Assistant is typing");
+    el.innerHTML = "<span></span><span></span><span></span>";
+    messagesEl.appendChild(el);
+    scrollBottom();
+  }
+
+  function removeTyping() {
+    var el = document.getElementById("typing");
+    if (el) el.remove();
+  }
+
+  // --- Auth ---
+  function headers() {
+    var h = { "Content-Type": "application/json" };
+    if (token) h["Authorization"] = "Bearer " + token;
+    return h;
+  }
+
+  function showAuth() {
+    authOverlay.classList.remove("hidden");
+    authInput.focus();
+  }
+
+  function hideAuth() {
+    authOverlay.classList.add("hidden");
+  }
+
+  authBtn.addEventListener("click", function() {
+    token = authInput.value.trim();
+    if (!token) return;
+    localStorage.setItem("claw_token", token);
+    hideAuth();
+    checkStatus();
+  });
+
+  authInput.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") authBtn.click();
+  });
+
+  // --- Network ---
+  function checkStatus() {
+    fetch("/api/status", { headers: headers() })
+      .then(function(res) {
+        if (res.status === 401) { showAuth(); return; }
+        connectSSE();
+      })
+      .catch(function() {
+        // Server might not be ready; retry once after a delay
+        setTimeout(function(){ connectSSE(); }, 1000);
+      });
+  }
+
+  function connectSSE() {
+    if (eventSource) { eventSource.close(); }
+    var url = "/api/stream?sessionId=" + encodeURIComponent(sessionId);
+    // EventSource doesn't support custom headers, so we use fetch for auth
+    // and rely on the fact that SSE is on /api/* and needs the token.
+    // If auth is required we fall back to polling via POST responses.
+    // For simplicity, we try without token first (it's in the Authorization header flow).
+    eventSource = new EventSource(url);
+    eventSource.onmessage = function(e) {
+      try {
+        var data = JSON.parse(e.data);
+        addAssistantMsg(data);
+        sending = false;
+        sendBtn.disabled = false;
+      } catch(err) { /* ignore non-JSON like :connected */ }
+    };
+    eventSource.onerror = function() {
+      // Silently reconnect — EventSource handles this automatically
+    };
+  }
+
+  // --- Send ---
+  function sendMessage() {
+    var text = inputEl.value.trim();
+    if (!text || sending) return;
+    sending = true;
+    sendBtn.disabled = true;
+    addUserMsg(text);
+    inputEl.value = "";
+    inputEl.style.height = "auto";
+    showTyping();
+
+    fetch("/api/message", {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({ sessionId: sessionId, text: text })
+    })
+    .then(function(res) {
+      if (res.status === 401) { showAuth(); removeTyping(); sending = false; sendBtn.disabled = false; return null; }
+      return res.json();
+    })
+    .then(function(data) {
+      if (!data) return;
+      // The SSE stream should also deliver this message, but in case
+      // the SSE connection is not established (auth required), render
+      // from the POST response directly.
+      // To avoid duplicates when SSE works, we don't render here if SSE
+      // is connected. But since SSE may fail with auth, always render.
+      // The SSE handler will just show it again — acceptable trade-off
+      // for reliability. To prevent true duplicates, we remove typing
+      // and render only if SSE isn't connected.
+      if (!eventSource || eventSource.readyState !== EventSource.OPEN) {
+        addAssistantMsg(data);
+      }
+      sending = false;
+      sendBtn.disabled = false;
+    })
+    .catch(function() {
+      removeTyping();
+      sending = false;
+      sendBtn.disabled = false;
+    });
+  }
+
+  sendBtn.addEventListener("click", sendMessage);
+
+  inputEl.addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // Auto-resize textarea
+  inputEl.addEventListener("input", function() {
+    this.style.height = "auto";
+    this.style.height = Math.min(this.scrollHeight, 120) + "px";
+  });
+
+  // --- Init ---
+  checkStatus();
+})();
+</script>
+</body>
+</html>`;

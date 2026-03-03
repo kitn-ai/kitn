@@ -12,7 +12,7 @@
   },
   "files": ["dist"],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && cp -r ../../templates dist/templates",
     "dev": "tsup --watch",
     "test": "bun test",
     "typecheck": "tsc --noEmit"

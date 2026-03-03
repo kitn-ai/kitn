@@ -4,8 +4,12 @@ import {
   ALWAYS_ASK,
   getProfileDecision,
 } from "./profiles.js";
+import {
+  GovernanceManager,
+  type GovernanceConfig,
+} from "../governance/policies.js";
 
-export type PermissionDecision = "allow" | "confirm" | "deny";
+export type PermissionDecision = "allow" | "confirm" | "deny" | "draft";
 
 export interface PermissionManagerConfig {
   profile: SafetyProfile;
@@ -15,6 +19,7 @@ export interface PermissionManagerConfig {
   rules?: Record<string, ToolRule>;
   channelOverrides?: Record<string, { denied?: string[] }>;
   rateLimits?: { maxPerMinute: number; toolLimits?: Record<string, number> };
+  governance?: GovernanceConfig;
 }
 
 export interface ToolRule {
@@ -74,10 +79,14 @@ export class PermissionManager {
   private config: PermissionManagerConfig;
   private sessionTrusted = new Set<string>();
   private runtimeGrantedDirs: string[];
+  private governance?: GovernanceManager;
 
   constructor(config: PermissionManagerConfig) {
     this.config = config;
     this.runtimeGrantedDirs = [...config.grantedDirs];
+    if (config.governance) {
+      this.governance = new GovernanceManager(config.governance);
+    }
   }
 
   evaluate(
@@ -97,6 +106,11 @@ export class PermissionManager {
       const ruleResult = this.checkRule(rule, input);
       if (ruleResult === "deny") return "deny";
       if (ruleResult === "allow") return "allow";
+    }
+
+    if (this.governance) {
+      const govDecision = this.governance.evaluate(toolName);
+      if (govDecision !== "pass") return govDecision;
     }
 
     const action = classifyAction(

@@ -57,6 +57,21 @@ const permissionsSchema = z.object({
   rateLimits: rateLimitsSchema.optional(),
 }).default({ profile: "balanced", sandbox: "", grantedDirs: [], denied: [] });
 
+const governanceSchema = z.object({
+  actions: z.record(z.string(), z.enum(["auto", "draft", "blocked"])).default({
+    "send-message": "draft",
+    "post-public": "draft",
+    "schedule": "draft",
+  }),
+  budgets: z.record(z.string(), z.object({
+    limit: z.number(),
+    period: z.enum(["daily", "weekly", "monthly"]).default("monthly"),
+  })).default({}),
+}).default({
+  actions: { "send-message": "draft", "post-public": "draft", "schedule": "draft" },
+  budgets: {},
+});
+
 const mcpServerSchema = z.object({
   command: z.string(),
   args: z.array(z.string()).default([]),
@@ -74,6 +89,7 @@ export const configSchema = z.object({
   channels: channelsSchema,
   mcpServers: z.record(z.string(), mcpServerSchema).default({}),
   permissions: permissionsSchema,
+  governance: governanceSchema,
   registries: z.record(z.string(), z.string()).default({
     "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
   }),

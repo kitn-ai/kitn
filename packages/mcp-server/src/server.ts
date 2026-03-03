@@ -10,6 +10,7 @@ import { registerCreateTool } from "./tools/create.js";
 import { registerLinkTool } from "./tools/link.js";
 import { registerUnlinkTool } from "./tools/unlink.js";
 import { registerInitTool } from "./tools/init.js";
+import { registerNewTool } from "./tools/new.js";
 import { registerUpdateTool } from "./tools/update.js";
 import { registerDiffTool } from "./tools/diff.js";
 import { registerRulesTool } from "./tools/rules.js";
@@ -41,8 +42,9 @@ export function createServer() {
   registerLinkTool(server);
   registerUnlinkTool(server);
 
-  // Init, update, diff, rules
+  // Init, new, update, diff, rules
   registerInitTool(server);
+  registerNewTool(server);
   registerUpdateTool(server);
   registerDiffTool(server);
   registerRulesTool(server);

@@ -2,6 +2,8 @@ import { tool } from "ai";
 import type { PluginContext } from "@kitnai/core";
 import { PermissionManager } from "../permissions/manager.js";
 import type { BudgetLedger } from "../governance/budget.js";
+import type { DraftQueue } from "../governance/drafts.js";
+import { describeAction } from "../permissions/describe.js";
 
 export interface PermissionHandler {
   onConfirm(toolName: string, input: unknown): Promise<"allow" | "deny" | "trust" | "grant-dir">;
@@ -10,6 +12,8 @@ export interface PermissionHandler {
 export interface WrapToolsOptions {
   channelType?: string;
   budgetLedger?: BudgetLedger;
+  draftQueue?: DraftQueue;
+  sessionId?: string;
 }
 
 /**
@@ -32,7 +36,7 @@ export function wrapToolsWithPermissions(
       ? { channelType: channelTypeOrOptions }
       : channelTypeOrOptions ?? {};
 
-  const { channelType, budgetLedger } = opts;
+  const { channelType, budgetLedger, draftQueue, sessionId } = opts;
   const wrapped: Record<string, any> = {};
 
   for (const reg of ctx.tools.list()) {
@@ -44,6 +48,21 @@ export function wrapToolsWithPermissions(
 
         if (decision === "deny") {
           return { error: `Tool "${reg.name}" is denied by configuration.` };
+        }
+
+        if (decision === "draft" && draftQueue) {
+          const preview = describeAction(reg.name, input ?? {});
+          await draftQueue.create({
+            action: preview.summary,
+            toolName: reg.name,
+            input: input ?? {},
+            preview: `${preview.icon} ${preview.summary}${preview.detail ? ` — ${preview.detail}` : ""}`,
+            sessionId: sessionId ?? "unknown",
+          });
+          return {
+            draft: true,
+            message: `This action has been saved as a draft for your review: ${preview.summary}`,
+          };
         }
 
         if (decision === "confirm") {

@@ -7,10 +7,10 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
-    OPENROUTER_API_KEY: z
+    {{api_key_env}}: z
       .string()
-      .min(1, "OPENROUTER_API_KEY is required — get one at https://openrouter.ai/keys"),
-    DEFAULT_MODEL: z.string().default("openai/gpt-4o-mini"),
+      .min(1, "{{api_key_env}} is required — get one at {{api_key_url}}"),
+    DEFAULT_MODEL: z.string().default("{{default_model}}"),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

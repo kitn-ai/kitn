@@ -49,7 +49,7 @@ export function createApp(env: Env) {
   registerHelloRoute(app);
   registerCheckRoute(app, env);
 
-  // kitn AI routes (stub until `kitn init` is run)
+  // kitn AI routes
   app.route("/api", ai.router);
 
   // API Documentation

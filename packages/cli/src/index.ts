@@ -29,6 +29,7 @@ program
   .argument("[name]", "project name")
   .option("-f, --framework <framework>", "template to use (hono)")
   .option("-r, --runtime <runtime>", "runtime (bun, node, deno)")
+  .option("-p, --provider <provider>", "AI provider (openrouter, openai, anthropic, google)")
   .option("-y, --yes", "accept all defaults without prompting")
   .action(async (name: string | undefined, opts) => {
     const { newCommand } = await import("./commands/new.js");

@@ -5,6 +5,7 @@ import { DEFAULT_REGISTRY_URL } from "../types/config.js";
 import type { KitnConfig } from "../types/config.js";
 import { patchTsconfig } from "../installers/tsconfig-patcher.js";
 import { createBarrelFile } from "../installers/barrel-manager.js";
+import { PROVIDERS } from "./providers.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -21,6 +22,7 @@ export interface InitProjectOpts {
   runtime: string;
   framework: string;
   baseDir?: string;
+  provider?: string;
 }
 
 export interface InitResult {
@@ -53,9 +55,31 @@ export async function detectFramework(cwd: string): Promise<Framework | null> {
 
 /**
  * Generate the plugin.ts template for a given framework.
+ *
+ * When `provider` is given (e.g. from `kitn new`), generates working code
+ * with the import and model getter. Without it, keeps commented-out examples
+ * (backward-compatible with `kitn init`).
  */
-export function getPluginTemplate(framework: string): string {
+export function getPluginTemplate(framework: string, provider?: string): string {
   const adapterName = framework === "hono-openapi" ? "hono-openapi" : framework;
+
+  if (provider) {
+    const def = PROVIDERS[provider];
+    if (def) {
+      return `${def.importStatement}
+import { createAIPlugin } from "@kitn/adapters/${adapterName}";
+import { registerWithPlugin } from "./index.js";
+
+export const ai = createAIPlugin({
+  model: (id) => ${def.providerCall}(id ?? "${def.defaultModel}"),
+});
+
+// Flush all auto-registered components into the plugin
+registerWithPlugin(ai);
+`;
+    }
+  }
+
   return `import { createAIPlugin } from "@kitn/adapters/${adapterName}";
 import { registerWithPlugin } from "./index.js";
 
@@ -94,7 +118,7 @@ registerWithPlugin(ai);
  * - Output formatting
  */
 export async function initProject(opts: InitProjectOpts): Promise<InitResult> {
-  const { cwd, runtime, framework, baseDir: baseDirOpt } = opts;
+  const { cwd, runtime, framework, baseDir: baseDirOpt, provider } = opts;
 
   // Validate runtime
   if (!VALID_RUNTIMES.includes(runtime as Runtime)) {
@@ -158,7 +182,7 @@ export async function initProject(opts: InitProjectOpts): Promise<InitResult> {
   filesCreated.push(`${baseDir}/index.ts`);
 
   const pluginPath = join(aiDir, "plugin.ts");
-  const pluginTemplate = getPluginTemplate(framework);
+  const pluginTemplate = getPluginTemplate(framework, provider);
   await writeFile(pluginPath, pluginTemplate);
   filesCreated.push(`${baseDir}/plugin.ts`);
 

@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { newProject } from "@kitnai/cli-core";
+import { newProject, PROVIDERS, VALID_PROVIDERS } from "@kitnai/cli-core";
 import { registerTool } from "../register-tool.js";
 
 export function registerNewTool(server: McpServer) {
@@ -9,6 +9,8 @@ export function registerNewTool(server: McpServer) {
     path: string;
     framework?: string;
     runtime?: string;
+    provider?: string;
+    apiKey?: string;
   }>(
     server,
     "kitn_new",
@@ -28,20 +30,39 @@ export function registerNewTool(server: McpServer) {
           .string()
           .optional()
           .describe("Runtime: bun (default), node, deno"),
+        provider: z
+          .string()
+          .optional()
+          .describe(
+            `AI provider: ${VALID_PROVIDERS.join(", ")} (default: openrouter)`,
+          ),
+        apiKey: z
+          .string()
+          .optional()
+          .describe("API key for the selected provider (written to .env)"),
       },
     },
-    async ({ name, path, framework, runtime }) => {
+    async ({ name, path, framework, runtime, provider, apiKey }) => {
       try {
         const result = await newProject({
           name,
           targetDir: path,
           framework,
           runtime,
+          provider,
+          apiKey,
         });
 
+        const providerDef = PROVIDERS[provider ?? "openrouter"];
         const installCmd =
           result.runtime === "bun" ? "bun install" : "npm install";
         const runCmd = result.runtime === "bun" ? "bun dev" : "npm run dev";
+
+        const nextSteps = [`cd ${name}`, installCmd];
+        if (!apiKey) {
+          nextSteps.push(`Edit .env  # add your ${providerDef.envVar}`);
+        }
+        nextSteps.push(runCmd);
 
         return {
           content: [
@@ -54,12 +75,8 @@ export function registerNewTool(server: McpServer) {
                   runtime: result.runtime,
                   filesCreated: result.filesCreated.length,
                   npmDeps: result.npmDeps,
-                  nextSteps: [
-                    `cd ${name}`,
-                    installCmd,
-                    "cp .env.example .env  # add OPENROUTER_API_KEY",
-                    runCmd,
-                  ],
+                  provider: provider ?? "openrouter",
+                  nextSteps,
                 },
                 null,
                 2,

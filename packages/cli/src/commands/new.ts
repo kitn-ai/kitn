@@ -1,10 +1,11 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
-import { newProject, VALID_TEMPLATES } from "@kitnai/cli-core";
+import { newProject, VALID_TEMPLATES, PROVIDERS, VALID_PROVIDERS } from "@kitnai/cli-core";
 
 interface NewOptions {
   framework?: string;
   runtime?: string;
+  provider?: string;
   yes?: boolean;
 }
 
@@ -99,6 +100,50 @@ export async function newCommand(nameArg?: string, opts: NewOptions = {}) {
     runtime = selected as string;
   }
 
+  // --- Resolve provider ---
+  let provider: string;
+  if (opts.provider) {
+    if (!VALID_PROVIDERS.includes(opts.provider)) {
+      p.log.error(
+        `Invalid provider: ${opts.provider}. Available: ${VALID_PROVIDERS.join(", ")}`,
+      );
+      process.exit(1);
+    }
+    provider = opts.provider;
+  } else if (opts.yes) {
+    provider = "openrouter";
+  } else {
+    const selected = await p.select({
+      message: "Which AI provider?",
+      options: VALID_PROVIDERS.map((key, i) => ({
+        value: key,
+        label: PROVIDERS[key].name,
+        hint: `${i === 0 ? "recommended — " : ""}${PROVIDERS[key].hint}`,
+      })),
+    });
+    if (p.isCancel(selected)) {
+      p.cancel("Cancelled.");
+      process.exit(0);
+    }
+    provider = selected as string;
+  }
+
+  // --- Optional API key ---
+  let apiKey: string | undefined;
+  if (!opts.yes) {
+    const providerDef = PROVIDERS[provider];
+    const input = await p.password({
+      message: `Enter your ${providerDef.name} API key (or press Enter to skip):`,
+      mask: "*",
+    });
+    if (p.isCancel(input)) {
+      p.cancel("Cancelled.");
+      process.exit(0);
+    }
+    const trimmed = (input as string).trim();
+    if (trimmed) apiKey = trimmed;
+  }
+
   // --- Scaffold ---
   const displayName = useCurrentDir ? "project" : name;
   const s = p.spinner();
@@ -106,7 +151,7 @@ export async function newCommand(nameArg?: string, opts: NewOptions = {}) {
 
   let result;
   try {
-    result = await newProject({ name, targetDir, framework, runtime });
+    result = await newProject({ name, targetDir, framework, runtime, provider, apiKey });
   } catch (err: any) {
     s.stop(pc.red("Failed"));
     p.log.error(err.message);
@@ -158,6 +203,7 @@ export async function newCommand(nameArg?: string, opts: NewOptions = {}) {
   const runCmd = runtime === "bun" ? "bun" : "npm run";
   const installCmd = runtime === "bun" ? "bun install" : "npm install";
 
+  const providerDef = PROVIDERS[provider];
   const nextSteps: string[] = [];
   if (!useCurrentDir) {
     nextSteps.push(`cd ${name}`);
@@ -165,9 +211,11 @@ export async function newCommand(nameArg?: string, opts: NewOptions = {}) {
   if (!didInstall) {
     nextSteps.push(installCmd);
   }
-  nextSteps.push(
-    `cp .env.example .env  ${pc.dim("# add your OPENROUTER_API_KEY")}`,
-  );
+  if (!apiKey) {
+    nextSteps.push(
+      `Edit .env  ${pc.dim(`# add your ${providerDef.envVar}`)}`,
+    );
+  }
   nextSteps.push(`${runCmd} dev`);
 
   p.note(nextSteps.join("\n"), "Next steps:");

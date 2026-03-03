@@ -1,7 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import type { OpenAPIHono } from "@hono/zod-openapi";
 import { generateText } from "ai";
-import { openrouter } from "@openrouter/ai-sdk-provider";
+{{provider_import}}
 import type { Env } from "../env.js";
 
 const CheckResponseSchema = z.object({
@@ -23,7 +23,7 @@ const route = createRoute({
   tags: ["Health"],
   summary: "Test AI connection",
   description:
-    "Sends a simple prompt to the configured AI model and returns the response. Use this to verify your OpenRouter API key and model are working.",
+    "Sends a simple prompt to the configured AI model and returns the response. Use this to verify your API key and model are working.",
   responses: {
     200: {
       description: "AI connection check result",
@@ -39,7 +39,7 @@ export function registerCheckRoute(app: OpenAPIHono, env: Env) {
     const model = env.DEFAULT_MODEL;
     try {
       const { text } = await generateText({
-        model: openrouter(model),
+        model: {{provider_call}}(model),
         prompt: "Say hello in one short sentence.",
         maxOutputTokens: 50,
       });

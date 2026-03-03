@@ -5,6 +5,9 @@ import { initProject, type InitResult } from "./init.js";
 import { addComponents } from "./add.js";
 import { resolveRoutesAlias } from "../types/config.js";
 import { generateRulesFiles } from "./rules.js";
+import { PROVIDERS, VALID_PROVIDERS } from "./providers.js";
+export type { ProviderDef } from "./providers.js";
+export { PROVIDERS, VALID_PROVIDERS } from "./providers.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -23,6 +26,8 @@ export interface NewProjectOpts {
   targetDir: string;
   framework?: string; // default: "hono"
   runtime?: string; // default: "bun"
+  provider?: string; // default: "openrouter"
+  apiKey?: string; // optional — writes .env with real key
 }
 
 export interface NewProjectResult {
@@ -111,8 +116,22 @@ async function copyDir(
 export async function newProject(
   opts: NewProjectOpts,
 ): Promise<NewProjectResult> {
-  const { targetDir, framework: templateName = "hono", runtime = "bun" } = opts;
+  const {
+    targetDir,
+    framework: templateName = "hono",
+    runtime = "bun",
+    provider: providerKey = "openrouter",
+    apiKey,
+  } = opts;
   let { name } = opts;
+
+  // Validate provider
+  const providerDef = PROVIDERS[providerKey];
+  if (!providerDef) {
+    throw new Error(
+      `Unknown provider: "${providerKey}". Available: ${VALID_PROVIDERS.join(", ")}`,
+    );
+  }
 
   // Validate template
   if (!VALID_TEMPLATES.includes(templateName as Template)) {
@@ -160,8 +179,32 @@ export async function newProject(
 
   // Copy template
   const templatePath = await resolveTemplatePath(templateName);
-  const replacements = { "{{name}}": name };
+  const replacements: Record<string, string> = {
+    "{{name}}": name,
+    "{{provider_package}}": providerDef.package,
+    "{{provider_package_version}}": providerDef.packageVersion,
+    "{{provider_import}}": providerDef.importStatement,
+    "{{provider_call}}": providerDef.providerCall,
+    "{{api_key_env}}": providerDef.envVar,
+    "{{api_key_placeholder}}": providerDef.envPlaceholder,
+    "{{api_key_url}}": providerDef.envUrl,
+    "{{default_model}}": providerDef.defaultModel,
+  };
   const filesCreated = await copyDir(templatePath, projectPath, replacements);
+
+  // Create .env from .env.example (with real key if provided)
+  const envExamplePath = join(projectPath, ".env.example");
+  const envPath = join(projectPath, ".env");
+  try {
+    let envContent = await readFile(envExamplePath, "utf-8");
+    if (apiKey) {
+      envContent = envContent.replace(providerDef.envPlaceholder, apiKey);
+    }
+    await writeFile(envPath, envContent);
+    filesCreated.push(envPath);
+  } catch {
+    // .env.example might not exist for some templates — skip
+  }
 
   // Map template name to framework value for initProject
   const framework = TEMPLATE_TO_FRAMEWORK[templateName] ?? templateName;
@@ -171,6 +214,7 @@ export async function newProject(
     cwd: projectPath,
     runtime,
     framework,
+    provider: providerKey,
   });
 
   // Install core + routes adapter
@@ -180,6 +224,19 @@ export async function newProject(
     cwd: projectPath,
     overwrite: true,
   });
+
+  // Replace the stub src/ai.ts with a re-export from the real plugin.
+  // The template ships a stub (empty router) so the app compiles before
+  // kitn init runs. Now that init has created src/ai/plugin.ts, wire it up.
+  const stubPath = join(projectPath, "src", "ai.ts");
+  try {
+    await writeFile(
+      stubPath,
+      `export { ai } from "./ai/plugin.js";\n`,
+    );
+  } catch {
+    // Template may not have the stub — skip
+  }
 
   // Generate rules files (all tools, non-interactive)
   try {

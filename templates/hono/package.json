@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@hono/zod-openapi": "^1.2.2",
-    "@openrouter/ai-sdk-provider": "^2.2.3",
+    "{{provider_package}}": "{{provider_package_version}}",
     "@scalar/hono-api-reference": "^0.9.46",
     "@t3-oss/env-core": "^0.13.8",
     "ai": "^6.0.104",

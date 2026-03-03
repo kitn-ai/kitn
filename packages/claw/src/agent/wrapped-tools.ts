@@ -41,8 +41,8 @@ export function wrapToolsWithPermissions(
             // Grant access to the directory containing the target path
             const path = typeof input?.path === "string" ? input.path : null;
             if (path) {
-              const dir = path.substring(0, path.lastIndexOf("/")) || "/";
-              permissions.grantDirectory(dir);
+              const dir = path.substring(0, path.lastIndexOf("/") + 1);
+              if (dir) permissions.grantDirectory(dir);
             }
           }
         }

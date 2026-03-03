@@ -142,6 +142,149 @@ describe("PermissionManager", () => {
     });
   });
 
+  describe("prefix collision prevention", () => {
+    test("sandbox path does not match similar prefixes", () => {
+      const pm = new PermissionManager({
+        profile: "balanced",
+        grantedDirs: [],
+        sandbox: "/tmp/test-workspace",
+      });
+      // Should NOT match — different directory with shared prefix
+      expect(
+        pm.evaluate("file-write", { path: "/tmp/test-workspace2/malicious.txt" }),
+      ).toBe("confirm");
+      // Should match — actual file inside sandbox
+      expect(
+        pm.evaluate("file-write", { path: "/tmp/test-workspace/safe.txt" }),
+      ).toBe("allow");
+    });
+
+    test("granted dir does not match similar prefixes", () => {
+      const pm = new PermissionManager({
+        profile: "balanced",
+        grantedDirs: ["/home/user/Desktop"],
+        sandbox: "/tmp/test-workspace",
+      });
+      // Should NOT match — different directory with shared prefix
+      expect(
+        pm.evaluate("file-write", { path: "/home/user/Desktop2/secret.txt" }),
+      ).toBe("confirm");
+      // Should match — actual file inside granted dir
+      expect(
+        pm.evaluate("file-write", { path: "/home/user/Desktop/file.txt" }),
+      ).toBe("allow");
+    });
+
+    test("exact sandbox path match is allowed", () => {
+      const pm = new PermissionManager({
+        profile: "balanced",
+        grantedDirs: [],
+        sandbox: "/tmp/test-workspace",
+      });
+      expect(
+        pm.evaluate("file-write", { path: "/tmp/test-workspace" }),
+      ).toBe("allow");
+    });
+
+    test("exact granted dir path match is allowed", () => {
+      const pm = new PermissionManager({
+        profile: "balanced",
+        grantedDirs: ["/home/user/Desktop"],
+        sandbox: "/tmp/test-workspace",
+      });
+      expect(
+        pm.evaluate("file-write", { path: "/home/user/Desktop" }),
+      ).toBe("allow");
+    });
+  });
+
+  describe("firewall rules", () => {
+    test("denyPatterns blocks matching command", () => {
+      const pm = new PermissionManager({
+        profile: "autonomous",
+        grantedDirs: [],
+        sandbox: "/tmp/test-workspace",
+        rules: {
+          bash: {
+            denyPatterns: ["^rm\\s+-rf", "sudo"],
+          },
+        },
+      });
+      expect(pm.evaluate("bash", { command: "rm -rf /" })).toBe("deny");
+      expect(pm.evaluate("bash", { command: "sudo apt install" })).toBe("deny");
+      expect(pm.evaluate("bash", { command: "ls -la" })).toBe("allow");
+    });
+
+    test("allowPatterns allows matching and denies non-matching", () => {
+      const pm = new PermissionManager({
+        profile: "autonomous",
+        grantedDirs: [],
+        sandbox: "/tmp/test-workspace",
+        rules: {
+          bash: {
+            allowPatterns: ["^ls", "^cat", "^echo"],
+          },
+        },
+      });
+      expect(pm.evaluate("bash", { command: "ls -la" })).toBe("allow");
+      expect(pm.evaluate("bash", { command: "cat file.txt" })).toBe("allow");
+      expect(pm.evaluate("bash", { command: "rm -rf /" })).toBe("deny");
+    });
+
+    test("denyPaths blocks matching paths", () => {
+      const pm = new PermissionManager({
+        profile: "autonomous",
+        grantedDirs: [],
+        sandbox: "/tmp/test-workspace",
+        rules: {
+          "file-write": {
+            denyPaths: ["/etc/", "/usr/"],
+          },
+        },
+      });
+      expect(pm.evaluate("file-write", { path: "/etc/passwd" })).toBe("deny");
+      expect(pm.evaluate("file-write", { path: "/usr/local/bin/foo" })).toBe("deny");
+      expect(pm.evaluate("file-write", { path: "/tmp/test-workspace/ok.txt" })).toBe("allow");
+    });
+
+    test("invalid regex pattern does not crash", () => {
+      const pm = new PermissionManager({
+        profile: "autonomous",
+        grantedDirs: [],
+        sandbox: "/tmp/test-workspace",
+        rules: {
+          bash: {
+            denyPatterns: ["[invalid(regex"],
+            allowPatterns: ["[also(broken"],
+          },
+        },
+      });
+      // Should not throw — invalid patterns are silently skipped
+      // With allowPatterns set but no match, result is "deny"
+      expect(pm.evaluate("bash", { command: "ls" })).toBe("deny");
+    });
+
+    test("rule with both allowPatterns and allowPaths checks both", () => {
+      const pm = new PermissionManager({
+        profile: "autonomous",
+        grantedDirs: [],
+        sandbox: "/tmp/test-workspace",
+        rules: {
+          bash: {
+            allowPatterns: ["^ls"],
+            allowPaths: ["/home/user/"],
+          },
+        },
+      });
+      // Command matches allowPatterns
+      expect(pm.evaluate("bash", { command: "ls" })).toBe("allow");
+      // Command doesn't match allowPatterns, but path matches allowPaths
+      expect(pm.evaluate("bash", { command: "cat", path: "/home/user/file.txt" })).toBe("allow");
+      // Neither matches
+      expect(pm.evaluate("bash", { command: "rm", path: "/etc/passwd" })).toBe("deny");
+    });
+  });
+
   describe("explicit deny list (backward compat)", () => {
     test("denied tools are always denied", () => {
       const pm = new PermissionManager({

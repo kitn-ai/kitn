@@ -36,9 +36,13 @@ function classifyAction(
       return "read-file";
     case "file-write": {
       const path = typeof input.path === "string" ? input.path : "";
-      if (path.startsWith(sandbox)) return "write-file-sandbox";
+      const sandboxPrefix = sandbox.endsWith("/") ? sandbox : sandbox + "/";
+      if (path.startsWith(sandboxPrefix) || path === sandbox)
+        return "write-file-sandbox";
       for (const dir of grantedDirs) {
-        if (path.startsWith(dir)) return "write-file-granted";
+        const dirPrefix = dir.endsWith("/") ? dir : dir + "/";
+        if (path.startsWith(dirPrefix) || path === dir)
+          return "write-file-granted";
       }
       return "write-file-other";
     }
@@ -132,9 +136,12 @@ export class PermissionManager {
     const command = typeof input.command === "string" ? input.command : null;
     const path = typeof input.path === "string" ? input.path : null;
 
+    // Deny checks take priority
     if (rule.denyPatterns && command) {
       for (const p of rule.denyPatterns) {
-        if (new RegExp(p).test(command)) return "deny";
+        try {
+          if (new RegExp(p).test(command)) return "deny";
+        } catch {}
       }
     }
     if (rule.denyPaths && path) {
@@ -143,17 +150,22 @@ export class PermissionManager {
       }
     }
 
-    if (rule.allowPatterns && command) {
-      for (const p of rule.allowPatterns) {
-        if (new RegExp(p).test(command)) return "allow";
+    // Allow checks — if ANY allow constraint is set, input must match at least one
+    const hasAllowConstraints = rule.allowPatterns || rule.allowPaths;
+    if (hasAllowConstraints) {
+      if (rule.allowPatterns && command) {
+        for (const p of rule.allowPatterns) {
+          try {
+            if (new RegExp(p).test(command)) return "allow";
+          } catch {}
+        }
       }
-      return "deny";
-    }
-    if (rule.allowPaths && path) {
-      for (const prefix of rule.allowPaths) {
-        if (path.startsWith(prefix)) return "allow";
+      if (rule.allowPaths && path) {
+        for (const prefix of rule.allowPaths) {
+          if (path.startsWith(prefix)) return "allow";
+        }
       }
-      return "deny";
+      return "deny"; // Had allow constraints but nothing matched
     }
 
     return "pass";

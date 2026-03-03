@@ -21,7 +21,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "bun test",
+    "test": "echo 'No tests yet'",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

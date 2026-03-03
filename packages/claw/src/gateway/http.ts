@@ -99,8 +99,10 @@ export function createHttpServer(opts: HttpServerOptions): HttpServer {
         return json({ error: "Missing sessionId query parameter" }, 400);
       }
 
+      let ctrl: ReadableStreamDefaultController;
       const stream = new ReadableStream({
         start(controller) {
+          ctrl = controller;
           // Send initial SSE comment so the response resolves immediately
           const encoder = new TextEncoder();
           controller.enqueue(encoder.encode(":connected\n\n"));
@@ -109,10 +111,10 @@ export function createHttpServer(opts: HttpServerOptions): HttpServer {
           }
           sseControllers.get(sessionId)!.add(controller);
         },
-        cancel(controller) {
+        cancel() {
           const controllers = sseControllers.get(sessionId);
           if (controllers) {
-            controllers.delete(controller as ReadableStreamDefaultController);
+            controllers.delete(ctrl);
             if (controllers.size === 0) {
               sseControllers.delete(sessionId);
             }

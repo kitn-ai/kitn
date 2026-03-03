@@ -85,6 +85,7 @@ export async function startGateway(): Promise<GatewayContext> {
   const httpServer = createHttpServer({
     port: config.gateway.port,
     hostname: bindHost,
+    authToken: config.gateway.authToken,
     onMessage: async (sessionId, text) => {
       const response = await channels.handleMessage({
         sessionId,

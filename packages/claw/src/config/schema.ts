@@ -81,6 +81,7 @@ const mcpServerSchema = z.object({
 const gatewaySchema = z.object({
   port: z.number().default(18800),
   bind: z.enum(["loopback", "lan"]).default("loopback"),
+  authToken: z.string().optional(),
 }).default({ port: 18800, bind: "loopback" as const });
 
 export const configSchema = z.object({

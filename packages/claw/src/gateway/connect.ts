@@ -32,9 +32,15 @@ export async function connectRemote(url: string, authToken?: string): Promise<vo
   const ws = new WebSocket(wsUrl);
 
   const connected = await new Promise<boolean>((resolve) => {
-    ws.onopen = () => resolve(true);
-    ws.onerror = () => resolve(false);
     const timeout = setTimeout(() => resolve(false), 10000);
+    ws.onopen = () => {
+      clearTimeout(timeout);
+      resolve(true);
+    };
+    ws.onerror = () => {
+      clearTimeout(timeout);
+      resolve(false);
+    };
     ws.onclose = () => {
       clearTimeout(timeout);
       resolve(false);

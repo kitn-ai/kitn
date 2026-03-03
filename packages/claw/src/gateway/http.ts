@@ -5,7 +5,7 @@ export interface HttpServerOptions {
   hostname?: string;
   authToken?: string;
   getStatus?: () => Record<string, unknown>;
-  onMessage?: (sessionId: string, text: string) => Promise<OutboundMessage>;
+  onMessage?: (sessionId: string, text: string, channelType?: string) => Promise<OutboundMessage>;
 }
 
 export interface HttpServer {
@@ -13,9 +13,7 @@ export interface HttpServer {
   stop(): void;
 }
 
-interface WebSocketData {
-  sessionId?: string;
-}
+interface WebSocketData {}
 
 /**
  * Create a lightweight HTTP server using Bun.serve.
@@ -74,7 +72,7 @@ export function createHttpServer(opts: HttpServerOptions): HttpServer {
         if (!onMessage) {
           return json({ error: "No message handler configured" }, 503);
         }
-        const response = await onMessage(body.sessionId as string, body.text as string);
+        const response = await onMessage(body.sessionId as string, body.text as string, "http");
 
         // Push to any SSE listeners for this session
         const controllers = sseControllers.get(body.sessionId as string);
@@ -163,10 +161,7 @@ export function createHttpServer(opts: HttpServerOptions): HttpServer {
               }
             }
 
-            const sessionId = url.searchParams.get("sessionId") ?? undefined;
-            const upgraded = server.upgrade(req, {
-              data: { sessionId },
-            });
+            const upgraded = server.upgrade(req, { data: {} });
             if (upgraded) return undefined;
             return new Response(JSON.stringify({ error: "WebSocket upgrade failed" }), {
               status: 400,
@@ -201,7 +196,7 @@ export function createHttpServer(opts: HttpServerOptions): HttpServer {
             }
 
             try {
-              const response = await onMessage(sessionId, text);
+              const response = await onMessage(sessionId, text, "websocket");
               ws.send(JSON.stringify(response));
             } catch (err: any) {
               ws.send(JSON.stringify({ error: err.message ?? "Internal error" }));

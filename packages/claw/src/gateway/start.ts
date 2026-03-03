@@ -86,11 +86,11 @@ export async function startGateway(): Promise<GatewayContext> {
     port: config.gateway.port,
     hostname: bindHost,
     authToken: config.gateway.authToken,
-    onMessage: async (sessionId, text) => {
+    onMessage: async (sessionId, text, channelType) => {
       const response = await channels.handleMessage({
         sessionId,
         text,
-        channelType: "http",
+        channelType: channelType ?? "http",
       });
       return { text: response.text, toolCalls: response.toolCalls };
     },

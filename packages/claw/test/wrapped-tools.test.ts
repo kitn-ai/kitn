@@ -31,6 +31,20 @@ const echoTool = tool({
   execute: async ({ message }) => ({ echoed: message }),
 });
 
+function makePermissions(overrides?: {
+  profile?: "cautious" | "balanced" | "autonomous";
+  denied?: string[];
+  sandbox?: string;
+  grantedDirs?: string[];
+}) {
+  return new PermissionManager({
+    profile: overrides?.profile ?? "balanced",
+    grantedDirs: overrides?.grantedDirs ?? [],
+    sandbox: overrides?.sandbox ?? "/tmp/test-workspace",
+    denied: overrides?.denied,
+  });
+}
+
 describe("wrapToolsWithPermissions", () => {
   test("allows safe tools without confirmation", async () => {
     const ctx = createTestContext();
@@ -41,7 +55,7 @@ describe("wrapToolsWithPermissions", () => {
       tool: echoTool,
     });
 
-    const pm = new PermissionManager({ trusted: [], requireConfirmation: [], denied: [] });
+    const pm = makePermissions();
     const handler: PermissionHandler = {
       onConfirm: async () => "deny", // should never be called
     };
@@ -65,7 +79,7 @@ describe("wrapToolsWithPermissions", () => {
       tool: echoTool,
     });
 
-    const pm = new PermissionManager({ trusted: [], requireConfirmation: [], denied: ["bash"] });
+    const pm = makePermissions({ denied: ["bash"] });
     const handler: PermissionHandler = {
       onConfirm: async () => "allow",
     };
@@ -88,7 +102,7 @@ describe("wrapToolsWithPermissions", () => {
     });
 
     let confirmCalled = false;
-    const pm = new PermissionManager({ trusted: [], requireConfirmation: [], denied: [] });
+    const pm = makePermissions();
     const handler: PermissionHandler = {
       onConfirm: async () => {
         confirmCalled = true;
@@ -97,6 +111,7 @@ describe("wrapToolsWithPermissions", () => {
     };
 
     const wrapped = wrapToolsWithPermissions(ctx, pm, handler);
+    // file-write with no path (or a path outside sandbox) should trigger confirm in balanced profile
     const result = await wrapped["file-write"].execute!(
       { message: "test" },
       { toolCallId: "test", messages: [], abortSignal: undefined as any },
@@ -115,7 +130,7 @@ describe("wrapToolsWithPermissions", () => {
     });
 
     let confirmCount = 0;
-    const pm = new PermissionManager({ trusted: [], requireConfirmation: [], denied: [] });
+    const pm = makePermissions();
     const handler: PermissionHandler = {
       onConfirm: async () => {
         confirmCount++;

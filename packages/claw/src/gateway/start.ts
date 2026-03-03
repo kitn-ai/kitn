@@ -1,9 +1,16 @@
-import { loadConfig, ensureClawHome } from "../config/io.js";
+import { loadConfig, ensureClawHome, CLAW_HOME } from "../config/io.js";
+import { join } from "path";
 import { createClawPlugin } from "./create-plugin.js";
 import { registerBuiltinTools } from "../tools/register-builtin.js";
 import { PermissionManager } from "../permissions/manager.js";
 import { ChannelManager } from "../channels/manager.js";
 import { WorkspaceWatcher } from "./watcher.js";
+import { AuditLogger } from "../audit/logger.js";
+import { getGovernanceDb } from "../governance/db.js";
+import { UserManager } from "../users/manager.js";
+import { createHttpServer, type HttpServer } from "./http.js";
+import { setupCronScheduler } from "../crons/setup.js";
+import type { CronScheduler } from "@kitnai/core";
 import type { PluginContext } from "@kitnai/core";
 import type { ClawConfig } from "../config/schema.js";
 
@@ -11,8 +18,11 @@ export interface GatewayContext {
   config: ClawConfig;
   plugin: PluginContext;
   permissions: PermissionManager;
+  users: UserManager;
   channels: ChannelManager;
   watcher: WorkspaceWatcher;
+  httpServer: HttpServer;
+  scheduler: CronScheduler & { start(): void; stop(): void; tick(): Promise<void> };
 }
 
 export async function startGateway(): Promise<GatewayContext> {
@@ -40,8 +50,37 @@ export async function startGateway(): Promise<GatewayContext> {
   registerBuiltinTools(plugin);
   console.log(`[kitnclaw] ${plugin.tools.list().length} tools registered`);
 
+  // 4b. Wire audit logging into lifecycle hooks
+  const govDb = getGovernanceDb();
+  const auditLogger = new AuditLogger(govDb);
+
+  if (plugin.hooks) {
+    plugin.hooks.on("tool:execute", (event) => {
+      auditLogger.log({
+        event: "tool:execute",
+        toolName: event.toolName,
+        input: event.input,
+        duration: event.duration,
+      });
+    });
+  }
+  console.log("[kitnclaw] Audit logging enabled");
+
+  // 4c. Set up cron scheduler
+  const scheduler = setupCronScheduler(plugin);
+  scheduler.start();
+  console.log("[kitnclaw] Cron scheduler started");
+
   // 5. Initialize permission manager
-  const permissions = new PermissionManager(config.permissions);
+  const sandbox = config.permissions.sandbox || join(CLAW_HOME, "workspace");
+  const permissions = new PermissionManager({
+    ...config.permissions,
+    sandbox,
+  });
+
+  // 5b. Initialize user manager
+  const users = new UserManager(config.users);
+  console.log(`[kitnclaw] ${Object.keys(config.users).length} user(s) configured`);
 
   // 6. Start workspace watcher (hot-reload)
   const watcher = new WorkspaceWatcher(plugin);
@@ -55,22 +94,47 @@ export async function startGateway(): Promise<GatewayContext> {
     permissions,
   });
 
-  // 8. Start terminal TUI if enabled
+  // 8. Start HTTP server
+  const bindHost = config.gateway.bind === "lan" ? "0.0.0.0" : "127.0.0.1";
+  const httpServer = createHttpServer({
+    port: config.gateway.port,
+    hostname: bindHost,
+    authToken: config.gateway.authToken,
+    onMessage: async (sessionId, text, channelType) => {
+      const response = await channels.handleMessage({
+        sessionId,
+        text,
+        channelType: channelType ?? "http",
+      });
+      return { text: response.text, toolCalls: response.toolCalls };
+    },
+    getStatus: () => ({
+      version: "0.1.0",
+      model: config.model,
+      channels: Array.from(Object.keys(config.channels)),
+    }),
+  });
+  const addr = httpServer.start();
+  console.log(`[kitnclaw] HTTP server listening on ${bindHost}:${addr.port}`);
+
+  // 9. Start terminal TUI if enabled
   if (config.channels.terminal?.enabled !== false) {
     const { startTUI } = await import("../tui/index.js");
     await startTUI(config, channels, plugin);
   }
 
-  // 9. Start remaining channels
+  // 10. Start remaining channels
   await channels.startAll();
 
   console.log("[kitnclaw] Gateway running. Press Ctrl+C to stop.");
 
-  const ctx: GatewayContext = { config, plugin, permissions, channels, watcher };
+  const ctx: GatewayContext = { config, plugin, permissions, users, channels, watcher, httpServer, scheduler };
 
   // Graceful shutdown
   process.on("SIGINT", () => {
     console.log("\n[kitnclaw] Shutting down...");
+    scheduler.stop();
+    httpServer.stop();
     watcher.stop();
     channels.stopAll().then(() => process.exit(0));
   });

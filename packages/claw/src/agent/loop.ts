@@ -65,7 +65,7 @@ export async function runAgentLoop(
   const system = await buildSystemPrompt(ctx, config, channelType);
 
   // 4. Wrap tools with permissions
-  const wrappedTools = wrapToolsWithPermissions(ctx, permissions, permissionHandler);
+  const wrappedTools = wrapToolsWithPermissions(ctx, permissions, permissionHandler, channelType);
 
   // 5. Set up tool call capture via lifecycle hooks
   const toolCalls: ToolCallInfo[] = [];

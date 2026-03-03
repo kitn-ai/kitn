@@ -16,7 +16,8 @@ describe("config", () => {
     const config = parseConfig({});
     expect(config.model).toBe("openai/gpt-4o-mini");
     expect(config.channels.terminal.enabled).toBe(true);
-    expect(config.permissions.trusted).toEqual([]);
+    expect(config.permissions.profile).toBe("balanced");
+    expect(config.permissions.grantedDirs).toEqual([]);
     expect(config.permissions.denied).toEqual([]);
     expect(config.gateway.port).toBe(18800);
     expect(config.gateway.bind).toBe("loopback");
@@ -56,11 +57,13 @@ describe("config", () => {
   test("parses permissions", () => {
     const config = parseConfig({
       permissions: {
-        trusted: ["file-read", "web-search"],
+        profile: "cautious",
+        grantedDirs: ["/home/user/Documents"],
         denied: ["bash"],
       },
     });
-    expect(config.permissions.trusted).toEqual(["file-read", "web-search"]);
+    expect(config.permissions.profile).toBe("cautious");
+    expect(config.permissions.grantedDirs).toEqual(["/home/user/Documents"]);
     expect(config.permissions.denied).toEqual(["bash"]);
   });
 

@@ -16,7 +16,7 @@ const SESSION_ID = `terminal-${Date.now()}`;
 interface PendingPermission {
   toolName: string;
   input: unknown;
-  resolve: (decision: "allow" | "deny" | "trust") => void;
+  resolve: (decision: "allow" | "deny" | "trust" | "grant-dir") => void;
 }
 
 /**
@@ -176,7 +176,7 @@ function TUIApp({
     }
   }, [onMessage, onExit, toolDescriptions, helpText]);
 
-  const handlePermissionDecision = useCallback((decision: "allow" | "deny" | "trust") => {
+  const handlePermissionDecision = useCallback((decision: "allow" | "deny" | "trust" | "grant-dir") => {
     if (pendingPermission) {
       pendingPermission.resolve(decision);
       setPendingPermission(null);

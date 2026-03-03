@@ -31,11 +31,46 @@ const channelsSchema = z.object({
   whatsapp: whatsappChannelSchema.optional(),
 }).default({ terminal: { enabled: true } });
 
+const toolRuleSchema = z.object({
+  allowPatterns: z.array(z.string()).optional(),
+  allowPaths: z.array(z.string()).optional(),
+  denyPatterns: z.array(z.string()).optional(),
+  denyPaths: z.array(z.string()).optional(),
+});
+
+const channelOverrideSchema = z.object({
+  denied: z.array(z.string()).optional(),
+});
+
+const rateLimitsSchema = z.object({
+  maxPerMinute: z.number(),
+  toolLimits: z.record(z.string(), z.number()).optional(),
+});
+
 const permissionsSchema = z.object({
-  trusted: z.array(z.string()).default([]),
-  requireConfirmation: z.array(z.string()).default([]),
+  profile: z.enum(["cautious", "balanced", "autonomous"]).default("balanced"),
+  sandbox: z.string().default(""),
+  grantedDirs: z.array(z.string()).default([]),
   denied: z.array(z.string()).default([]),
-}).default({ trusted: [], requireConfirmation: [], denied: [] });
+  rules: z.record(z.string(), toolRuleSchema).optional(),
+  channelOverrides: z.record(z.string(), channelOverrideSchema).optional(),
+  rateLimits: rateLimitsSchema.optional(),
+}).default({ profile: "balanced", sandbox: "", grantedDirs: [], denied: [] });
+
+const governanceSchema = z.object({
+  actions: z.record(z.string(), z.enum(["auto", "draft", "blocked"])).default({
+    "send-message": "draft",
+    "post-public": "draft",
+    "schedule": "draft",
+  }),
+  budgets: z.record(z.string(), z.object({
+    limit: z.number(),
+    period: z.enum(["daily", "weekly", "monthly"]).default("monthly"),
+  })).default({}),
+}).default({
+  actions: { "send-message": "draft", "post-public": "draft", "schedule": "draft" },
+  budgets: {},
+});
 
 const mcpServerSchema = z.object({
   command: z.string(),
@@ -43,9 +78,16 @@ const mcpServerSchema = z.object({
   env: z.record(z.string(), z.string()).optional(),
 });
 
+const userConfigSchema = z.object({
+  role: z.enum(["operator", "user", "guest"]),
+  channels: z.array(z.string()).optional(),
+  denied: z.array(z.string()).optional(),
+});
+
 const gatewaySchema = z.object({
   port: z.number().default(18800),
   bind: z.enum(["loopback", "lan"]).default("loopback"),
+  authToken: z.string().optional(),
 }).default({ port: 18800, bind: "loopback" as const });
 
 export const configSchema = z.object({
@@ -54,9 +96,11 @@ export const configSchema = z.object({
   channels: channelsSchema,
   mcpServers: z.record(z.string(), mcpServerSchema).default({}),
   permissions: permissionsSchema,
+  governance: governanceSchema,
   registries: z.record(z.string(), z.string()).default({
     "@kitn": "https://kitn-ai.github.io/kitn/r/{type}/{name}.json",
   }),
+  users: z.record(z.string(), userConfigSchema).default({}),
   gateway: gatewaySchema,
 });
 

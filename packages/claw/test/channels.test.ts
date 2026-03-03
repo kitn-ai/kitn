@@ -40,10 +40,10 @@ class MockChannel implements Channel {
 describe("ChannelManager", () => {
   test("registers and retrieves channels", () => {
     const ctx = createTestContext();
-    const permissions = new PermissionManager({ trusted: [], requireConfirmation: [], denied: [] });
+    const permissions = new PermissionManager({ profile: "balanced", grantedDirs: [], sandbox: "/tmp/test-workspace" });
     const manager = new ChannelManager({
       ctx,
-      config: { model: "test", channels: { terminal: { enabled: true } }, permissions: { trusted: [], requireConfirmation: [], denied: [] }, mcpServers: {}, registries: {}, gateway: { port: 18800, bind: "loopback" as const } },
+      config: { model: "test", channels: { terminal: { enabled: true } }, permissions: { profile: "balanced", sandbox: "/tmp/test-workspace", grantedDirs: [], denied: [] }, mcpServers: {}, registries: {}, gateway: { port: 18800, bind: "loopback" as const } },
       permissions,
     });
 
@@ -54,10 +54,10 @@ describe("ChannelManager", () => {
 
   test("starts and stops all channels", async () => {
     const ctx = createTestContext();
-    const permissions = new PermissionManager({ trusted: [], requireConfirmation: [], denied: [] });
+    const permissions = new PermissionManager({ profile: "balanced", grantedDirs: [], sandbox: "/tmp/test-workspace" });
     const manager = new ChannelManager({
       ctx,
-      config: { model: "test", channels: { terminal: { enabled: true } }, permissions: { trusted: [], requireConfirmation: [], denied: [] }, mcpServers: {}, registries: {}, gateway: { port: 18800, bind: "loopback" as const } },
+      config: { model: "test", channels: { terminal: { enabled: true } }, permissions: { profile: "balanced", sandbox: "/tmp/test-workspace", grantedDirs: [], denied: [] }, mcpServers: {}, registries: {}, gateway: { port: 18800, bind: "loopback" as const } },
       permissions,
     });
 

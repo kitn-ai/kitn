@@ -18,7 +18,7 @@ export interface OutboundMessage {
 export interface PermissionRequest {
   toolName: string;
   input: unknown;
-  resolve: (decision: "allow" | "deny" | "trust") => void;
+  resolve: (decision: "allow" | "deny" | "trust" | "grant-dir") => void;
 }
 
 export interface Channel {

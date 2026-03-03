@@ -42,7 +42,7 @@ export class ChannelManager {
           const permissionHandler: PermissionHandler = {
             onConfirm: async (toolName: string, input: unknown) => {
               if (channel?.onPermissionRequest) {
-                return new Promise<"allow" | "deny" | "trust">((res) => {
+                return new Promise<"allow" | "deny" | "trust" | "grant-dir">((res) => {
                   channel.onPermissionRequest!({
                     toolName,
                     input,

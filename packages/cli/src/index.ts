@@ -49,6 +49,15 @@ program
   });
 
 program
+  .command("install")
+  .description("Install components from kitn.lock (like npm ci)")
+  .option("--frozen", "fail if lock file is inconsistent (for CI)")
+  .action(async (opts) => {
+    const { installCommand } = await import("./commands/install.js");
+    await installCommand(opts);
+  });
+
+program
   .command("list")
   .argument("[type]", "filter by type (agents, tools, skills, storages, packages)")
   .description("List available and installed components")

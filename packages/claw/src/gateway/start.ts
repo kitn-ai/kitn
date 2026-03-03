@@ -2,6 +2,8 @@ import { loadConfig, ensureClawHome } from "../config/io.js";
 import { createClawPlugin } from "./create-plugin.js";
 import { registerBuiltinTools } from "../tools/register-builtin.js";
 import { PermissionManager } from "../permissions/manager.js";
+import { ChannelManager } from "../channels/manager.js";
+import { WorkspaceWatcher } from "./watcher.js";
 import type { PluginContext } from "@kitnai/core";
 import type { ClawConfig } from "../config/schema.js";
 
@@ -9,6 +11,8 @@ export interface GatewayContext {
   config: ClawConfig;
   plugin: PluginContext;
   permissions: PermissionManager;
+  channels: ChannelManager;
+  watcher: WorkspaceWatcher;
 }
 
 export async function startGateway(): Promise<GatewayContext> {
@@ -32,23 +36,30 @@ export async function startGateway(): Promise<GatewayContext> {
   // 5. Initialize permission manager
   const permissions = new PermissionManager(config.permissions);
 
-  // 6. Load workspace components (Phase 6)
-  // TODO: loadWorkspaceComponents(plugin);
+  // 6. Start workspace watcher (hot-reload)
+  const watcher = new WorkspaceWatcher(plugin);
+  await watcher.start();
+  console.log("[kitnclaw] Workspace watcher started");
 
-  // 7. Start channels (Phase 5)
-  // TODO: startChannels(config, plugin);
+  // 7. Create channel manager
+  const channels = new ChannelManager({
+    ctx: plugin,
+    config,
+    permissions,
+  });
 
-  // 8. Start TUI (Phase 4)
-  // TODO: startTUI(config, plugin);
+  // 8. Start channels
+  await channels.startAll();
 
   console.log("[kitnclaw] Gateway running. Press Ctrl+C to stop.");
 
-  const ctx: GatewayContext = { config, plugin, permissions };
+  const ctx: GatewayContext = { config, plugin, permissions, channels, watcher };
 
-  // Keep process alive until interrupted
+  // Graceful shutdown
   process.on("SIGINT", () => {
     console.log("\n[kitnclaw] Shutting down...");
-    process.exit(0);
+    watcher.stop();
+    channels.stopAll().then(() => process.exit(0));
   });
 
   return ctx;

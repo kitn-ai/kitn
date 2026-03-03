@@ -65,6 +65,7 @@ export async function searchRegistry(opts: SearchRegistryOpts): Promise<SearchRe
 
     const lowerName = item.name.toLowerCase();
     const lowerDesc = item.description.toLowerCase();
+    const lowerCategories = (item.categories ?? []).map((c) => c.toLowerCase());
 
     let score = 0;
 
@@ -74,6 +75,8 @@ export async function searchRegistry(opts: SearchRegistryOpts): Promise<SearchRe
       score = 80;
     } else if (lowerName.includes(lowerQuery)) {
       score = 60;
+    } else if (lowerCategories.some((c) => c.includes(lowerQuery))) {
+      score = 50;
     } else if (lowerDesc.includes(lowerQuery)) {
       score = 40;
     }

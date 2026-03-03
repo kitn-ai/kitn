@@ -48,6 +48,6 @@ export async function treeCommand() {
   console.log();
 
   p.log.info(
-    `${result.totalComponents} component(s), ${result.totalDependencies} dependency link(s)`,
+    `${result.totalComponents} component(s), ${result.roots.length} root(s)`,
   );
 }

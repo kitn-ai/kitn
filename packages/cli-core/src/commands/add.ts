@@ -78,6 +78,7 @@ export interface IndexItem {
   type: ComponentType;
   namespace: string;
   description: string;
+  categories?: string[];
 }
 
 export interface DisambiguationCandidate {
@@ -145,7 +146,7 @@ export async function fetchAllIndexItems(
     try {
       const index = await fetcher.fetchIndex(namespace);
       for (const item of index.items) {
-        allItems.push({ name: item.name, type: item.type, namespace, description: item.description });
+        allItems.push({ name: item.name, type: item.type, namespace, description: item.description, categories: item.categories });
       }
     } catch {
       // Skip failing registries

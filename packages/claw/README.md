@@ -11,14 +11,36 @@ Built on [@kitn/core](https://github.com/kitn-ai/kitn), KitnClaw combines a rich
 git clone https://github.com/kitn-ai/kitn.git
 cd kitn
 bun install
-
-# Build the claw package and its dependencies
-bun run --cwd packages/claw build
 ```
 
-Then run the setup wizard:
+### Option A: Run from source (recommended for development)
+
+No build step needed -- run directly with Bun:
 
 ```bash
+bun run --cwd packages/claw dev
+```
+
+### Option B: Install as a global command
+
+Build and link to make `kitnclaw` and `kclaw` available globally:
+
+```bash
+bun run --cwd packages/claw build
+cd packages/claw && bun link
+```
+
+After linking, you can run `kitnclaw` from anywhere.
+
+### Setup
+
+On first launch, KitnClaw automatically runs the setup wizard. You can also run it manually:
+
+```bash
+# If using Option A:
+bun run --cwd packages/claw dev setup
+
+# If using Option B:
 kitnclaw setup
 ```
 
@@ -194,13 +216,15 @@ KitnClaw parses the headings and body text, extracts schedule patterns (cron exp
 
 ## Commands
 
-| Command | Description |
-|---|---|
-| `kitnclaw` | Start the gateway (runs setup on first launch) |
-| `kitnclaw setup` | Configure provider, model, safety profile |
-| `kitnclaw status` | Show current configuration and workspace stats |
-| `kitnclaw connect <url>` | Connect to a remote gateway via WebSocket |
-| `kitnclaw reset` | Clear sessions, memory, or workspace data |
+All commands can be run either via global command (after `bun link`) or from source:
+
+| Global command | From source | Description |
+|---|---|---|
+| `kitnclaw` | `bun run --cwd packages/claw dev` | Start the gateway (runs setup on first launch) |
+| `kitnclaw setup` | `bun run --cwd packages/claw dev setup` | Configure provider, model, safety profile |
+| `kitnclaw status` | `bun run --cwd packages/claw dev status` | Show current configuration and workspace stats |
+| `kitnclaw connect <url>` | `bun run --cwd packages/claw dev connect <url>` | Connect to a remote gateway via WebSocket |
+| `kitnclaw reset` | `bun run --cwd packages/claw dev reset` | Clear sessions, memory, or workspace data |
 
 ### Reset options
 

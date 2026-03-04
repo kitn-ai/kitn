@@ -16,13 +16,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@kitnai/core": "workspace:*",
     "@kitnai/cli-core": "workspace:*",
-    "commander": "^13.1.0",
+    "@kitnai/core": "workspace:*",
     "@libsql/client": "^0.15.0",
+    "@openrouter/ai-sdk-provider": "^2.2.3",
     "@opentui/core": "^0.1.85",
     "@opentui/react": "^0.1.85",
     "ai": "^6.0.91",
+    "commander": "^13.1.0",
     "react": "^19.1.0",
     "zod": "^4.3.6"
   },

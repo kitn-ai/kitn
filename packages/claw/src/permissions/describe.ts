@@ -113,10 +113,63 @@ export function describeAction(
         canGrantDir: false,
       };
 
+    case "kitn-registry-search":
+      return {
+        summary: "Search the component registry",
+        detail:
+          typeof input.query === "string"
+            ? `"${input.query}"${typeof input.type === "string" ? ` (${input.type}s)` : ""}`
+            : undefined,
+        icon: "🔍",
+        destructive: false,
+        canGrantDir: false,
+      };
+
+    case "memory-save":
+      return {
+        summary: "Save something to memory",
+        detail:
+          typeof input.content === "string"
+            ? input.content.slice(0, 60)
+            : undefined,
+        icon: "🧠",
+        destructive: false,
+        canGrantDir: false,
+      };
+
+    case "memory-search":
+      return {
+        summary: "Search your memory",
+        detail:
+          typeof input.query === "string" ? `"${input.query}"` : undefined,
+        icon: "🧠",
+        destructive: false,
+        canGrantDir: false,
+      };
+
+    case "create-tool":
+      return {
+        summary: "Create a new custom tool",
+        detail:
+          typeof input.name === "string" ? input.name : undefined,
+        icon: "🛠️",
+        destructive: false,
+        canGrantDir: false,
+      };
+
+    case "create-agent":
+      return {
+        summary: "Create a new custom agent",
+        detail:
+          typeof input.name === "string" ? input.name : undefined,
+        icon: "🤖",
+        destructive: false,
+        canGrantDir: false,
+      };
+
     default:
       return {
         summary: `Use the tool "${toolName}"`,
-        detail: JSON.stringify(input).slice(0, 100),
         icon: "🔧",
         destructive: false,
         canGrantDir: false,

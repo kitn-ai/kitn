@@ -31,6 +31,12 @@ program
   .action(async () => {
     const { setupWizard } = await import("./setup.js");
     await setupWizard();
+
+    // Launch the gateway automatically after setup
+    console.log();
+    const { startGateway } = await import("./gateway/start.js");
+    await startGateway();
+    await new Promise(() => {});
   });
 
 program

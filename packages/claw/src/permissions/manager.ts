@@ -65,8 +65,9 @@ function classifyAction(
       return "shell-command";
     case "send-message":
       return "send-message";
-    case "kitn-add":
     case "kitn-registry-search":
+      return "web-search"; // read-only, same risk as a web search
+    case "kitn-add":
       return "install-component";
     case "create-tool":
     case "create-agent":

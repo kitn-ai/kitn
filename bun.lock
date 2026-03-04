@@ -172,6 +172,7 @@
         "@kitnai/cli-core": "workspace:*",
         "@kitnai/core": "workspace:*",
         "@libsql/client": "^0.15.0",
+        "@openrouter/ai-sdk-provider": "^2.2.3",
         "@opentui/core": "^0.1.85",
         "@opentui/react": "^0.1.85",
         "ai": "^6.0.91",
@@ -190,7 +191,7 @@
     },
     "packages/cli": {
       "name": "@kitnai/cli",
-      "version": "0.1.40",
+      "version": "0.1.44",
       "bin": {
         "kitn": "./dist/index.js",
       },
@@ -273,7 +274,6 @@
       },
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.12.1",
-        "diff": "^7.0.0",
         "zod": "^3.24.2",
       },
       "devDependencies": {

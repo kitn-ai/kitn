@@ -14,48 +14,39 @@ export function PermissionPrompt({ toolName, input, onDecision }: PermissionProm
   useKeyboard((event) => {
     if (event.name === "y" || event.name === "Y") {
       onDecision("allow");
-    } else if (event.name === "n" || event.name === "N") {
+    } else if (event.name === "n" || event.name === "N" || event.name === "escape") {
       onDecision("deny");
     } else if (event.name === "a" || event.name === "A") {
       onDecision("trust");
-    } else if (event.name === "d" || event.name === "D") {
-      if (action.canGrantDir) {
-        onDecision("grant-dir");
-      }
+    } else if ((event.name === "d" || event.name === "D") && action.canGrantDir) {
+      onDecision("grant-dir");
     }
   });
 
-  const borderColor = action.destructive ? "#FF4444" : "#FFAA00";
+  const borderColor = action.destructive ? "#FF4466" : "#FFAA44";
+  const iconColor = action.destructive ? "#FF4466" : "#FFAA44";
 
-  const options = action.canGrantDir
-    ? "[Y]es / [N]o / [A]lways trust / [D]irectory trust"
-    : "[Y]es / [N]o / [A]lways trust this tool";
+  // Build lines as a single string to avoid OpenTUI y=0 overlap bug with multiple <text> children
+  const lines: string[] = [
+    `${action.icon}  ${action.summary}`,
+    ...(action.detail ? [`   ${action.detail}`] : []),
+    ...(action.canGrantDir && action.grantDirLabel ? [`   → ${action.grantDirLabel}`] : []),
+    "",
+    action.canGrantDir
+      ? "[Y] Allow  [N] Deny  [A] Always trust  [D] Trust directory  (Esc = deny)"
+      : "[Y] Allow  [N] Deny  [A] Always trust this tool  (Esc = deny)",
+  ];
 
   return (
     <box
       width="100%"
+      height={lines.length + 2}
       borderStyle="single"
       borderColor={borderColor}
-      paddingLeft={1}
-      paddingRight={1}
-      flexDirection="column"
+      paddingLeft={2}
+      paddingRight={2}
     >
-      <text fg={borderColor}>
-        {`${action.icon}  ${action.summary}`}
-      </text>
-      {action.detail ? (
-        <text fg="#888888">
-          {`   ${action.detail}`}
-        </text>
-      ) : null}
-      {action.canGrantDir && action.grantDirLabel ? (
-        <text fg="#888888">
-          {`   [D] ${action.grantDirLabel}`}
-        </text>
-      ) : null}
-      <text>
-        {options}
-      </text>
+      <text fg={iconColor}>{lines.join("\n")}</text>
     </box>
   );
 }

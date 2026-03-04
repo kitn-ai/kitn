@@ -1,5 +1,6 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
+import { execSync } from "child_process";
 import { existsSync } from "fs";
 import { writeFile } from "fs/promises";
 import { homedir } from "os";
@@ -75,11 +76,10 @@ export async function setupWizard(): Promise<void> {
       ? `${currentKey.slice(0, 4)}...${currentKey.slice(-4)}`
       : undefined;
 
-    const keyInput = await p.text({
-      message: `Enter your ${providerType} API key:`,
-      placeholder: maskedCurrent
-        ? `Press Enter to keep current (${maskedCurrent})`
-        : "sk-...",
+    const keyInput = await p.password({
+      message: maskedCurrent
+        ? `Enter your ${providerType} API key ${pc.dim(`(Enter to keep ${maskedCurrent})`)}`
+        : `Enter your ${providerType} API key:`,
       validate: (val) => {
         if (!val && !currentKey) return "API key is required";
       },
@@ -233,7 +233,7 @@ export async function setupWizard(): Promise<void> {
     (grantedDirs.length > 0 ? `\n  Granted dirs: ${pc.dim(grantedDirs.join(", "))}` : ""),
   );
 
-  // Install provider SDK hint
+  // Auto-install provider SDK if missing
   const sdkMap: Record<string, string> = {
     openrouter: "@openrouter/ai-sdk-provider",
     openai: "@ai-sdk/openai",
@@ -244,7 +244,23 @@ export async function setupWizard(): Promise<void> {
   };
   const sdk = sdkMap[providerType];
   if (sdk) {
-    p.log.info(`Make sure to install the provider SDK: ${pc.cyan(`bun add ${sdk}`)}`);
+    let installed = false;
+    try {
+      require.resolve(sdk);
+      installed = true;
+    } catch {}
+
+    if (!installed) {
+      const s = p.spinner();
+      s.start(`Installing ${sdk}...`);
+      try {
+        execSync(`bun add ${sdk}`, { stdio: "pipe", cwd: process.cwd() });
+        s.stop(`Installed ${pc.green(sdk)}`);
+      } catch {
+        s.stop(`Could not auto-install ${sdk}`);
+        p.log.warn(`Install manually: ${pc.cyan(`bun add ${sdk}`)}`);
+      }
+    }
   }
 
   // Create default SOUL.md if it doesn't exist

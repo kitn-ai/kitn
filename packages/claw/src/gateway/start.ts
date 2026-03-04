@@ -1,4 +1,4 @@
-import { loadConfig, ensureClawHome, CLAW_HOME } from "../config/io.js";
+import { loadConfig, saveConfig, ensureClawHome, CLAW_HOME } from "../config/io.js";
 import { join } from "path";
 import { createClawPlugin } from "./create-plugin.js";
 import { registerBuiltinTools } from "../tools/register-builtin.js";
@@ -118,9 +118,14 @@ export async function startGateway(): Promise<GatewayContext> {
   console.log(`[kitnclaw] HTTP server listening on ${bindHost}:${addr.port}`);
 
   // 9. Start terminal TUI if enabled
+  let tuiCleanup: (() => void) | undefined;
   if (config.channels.terminal?.enabled !== false) {
     const { startTUI } = await import("../tui/index.js");
-    await startTUI(config, channels, plugin);
+    const tui = await startTUI(config, channels, plugin, async (newModel: string) => {
+      config.model = newModel; // mutates in-memory — takes effect for next agent call
+      await saveConfig({ ...config });
+    });
+    tuiCleanup = tui.cleanup;
   }
 
   // 10. Start remaining channels
@@ -130,13 +135,24 @@ export async function startGateway(): Promise<GatewayContext> {
 
   const ctx: GatewayContext = { config, plugin, permissions, users, channels, watcher, httpServer, scheduler };
 
+  // Disable terminal mouse tracking on any exit
+  const DISABLE_MOUSE =
+    "\x1b[?1000l\x1b[?1002l\x1b[?1003l\x1b[?1006l\x1b[?25h";
+  process.on("exit", () => {
+    try { process.stdout.write(DISABLE_MOUSE); } catch {}
+  });
+
   // Graceful shutdown
   process.on("SIGINT", () => {
-    console.log("\n[kitnclaw] Shutting down...");
+    process.stdout.write(DISABLE_MOUSE);
+    tuiCleanup?.();
     scheduler.stop();
     httpServer.stop();
     watcher.stop();
-    channels.stopAll().then(() => process.exit(0));
+    channels.stopAll().then(() => {
+      process.stdout.write(DISABLE_MOUSE);
+      process.exit(0);
+    });
   });
 
   return ctx;

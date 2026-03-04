@@ -24,7 +24,7 @@ export const createToolTool = tool({
     ),
   }),
   execute: async ({ name, description, parameters, executeBody }) => {
-    const source = `import { registerTool } from "@kitnai/core";
+    const source = `import { registerTool } from "@kitn/core";
 import { tool } from "ai";
 import { z } from "zod";
 
@@ -69,7 +69,7 @@ export const createAgentTool = tool({
     toolNames: z.array(z.string()).describe("Names of existing registered tools this agent can use"),
   }),
   execute: async ({ name, description, system, toolNames }) => {
-    const source = `import { registerAgent } from "@kitnai/core";
+    const source = `import { registerAgent } from "@kitn/core";
 
 registerAgent({
   name: ${JSON.stringify(name)},

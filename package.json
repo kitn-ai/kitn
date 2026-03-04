@@ -16,6 +16,7 @@
     "dev:voice": "bun run --cwd examples/voice dev",
     "dev:mcp": "bun --watch packages/mcp-server/src/index.ts",
     "dev:cli": "bun run --cwd packages/cli-core build && bun run --cwd packages/cli build && bun run packages/cli/dist/index.js",
+    "dev:claw-web": "bun run --cwd packages/claw-web dev",
 
     "mcp": "bun run packages/mcp-server/dist/index.js",
     "mcp:http": "bun run packages/mcp-server/dist/http.js",
